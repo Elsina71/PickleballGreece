@@ -11,6 +11,19 @@
   const colorName = hex => (COLORI.find(c => c[0] === hex) || [hex, ''])[1];
   const colorSelect = (name, sel) => `<select name="${name}">${COLORI.map(([h, l]) => `<option value="${h}" ${h === sel ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
   const shirt = (r, i) => (r.colori && r.colori[i] ? `<span class="shirt" style="background:${r.colori[i]}" title="${colorName(r.colori[i])}"></span>` : '');
+  // scelte sul cambio campo (scoresheet libero e scheda del torneo)
+  function ccFields(c) {
+    return `<fieldset><legend>${T("Cambio campo")}</legend><div class="row">
+      <label>${T("Tra un game e l’altro")}<select name="ccTra"><option value="1">${T("Sì")}</option><option value="0" ${c.ccTra === false ? 'selected' : ''}>${T("No")}</option></select></label>
+      <label>${T("Durante il game")}<select name="ccDurante"><option value="decisivo">${T("Solo nel game decisivo")}</option><option value="tutti" ${c.ccDurante === 'tutti' ? 'selected' : ''}>${T("In ogni game")}</option><option value="no" ${c.ccDurante === 'no' ? 'selected' : ''}>${T("Mai")}</option></select></label>
+      <label>${T("A quanti punti")}<input type="number" name="ccA" min="0" max="20" value="${Number(c.ccA) || ''}" placeholder="${T("a metà")}"></label></div>
+      <p class="muted small">${T("Vuoto = a metà del game (6 ai 11, 8 ai 15, 11 ai 21): si cambia quando una squadra arriva a quel punteggio.")}</p></fieldset>`;
+  }
+  const readCc = v => ({ tra: v.ccTra !== '0', durante: ['no', 'tutti'].includes(v.ccDurante) ? v.ccDurante : 'decisivo', a: Math.max(0, Math.round(Number(v.ccA) || 0)) });
+  const ccText = cfg => { const c = Score.ccCfg(cfg), parts = [];
+    if (c.tra) parts.push(T("cambio campo tra i game"));
+    if (c.durante !== 'no') parts.push(`${c.durante === 'tutti' ? T("in ogni game") : T("nel game decisivo")} ${Number(c.a) ? T("a {0} punti", [c.a]) : T("a metà")}`);
+    return parts.length ? parts.join(', ') : T("nessun cambio campo"); };
   const refId = (tid, key) => `${tid}__${String(key).replace(/\//g, '_')}`;
   const sistemaLabel = c => (c.sistema === 'rally' ? T("Rally scoring") : T("Punteggio classico"));
 
@@ -21,7 +34,8 @@
     const nomi = [H.sidePlayers(t, m.a), H.sidePlayers(t, m.b)];
     const doppio = nomi[0].length === 2 && nomi[1].length === 2;
     const c = t.config;
-    const cfg = { sistema: c.sistema === 'rally' ? 'rally' : 'sideout', doppio, giochi: Number(c.sets) === 3 ? 3 : 1, punti: [c.punti, c.punti, c.puntiDecisivo].map(Number) };
+    const cfg = { sistema: c.sistema === 'rally' ? 'rally' : 'sideout', doppio, giochi: Number(c.sets) === 3 ? 3 : 1, punti: [c.punti, c.punti, c.puntiDecisivo].map(Number),
+      cc: { tra: c.ccTra !== false, durante: ['no', 'tutti'].includes(c.ccDurante) ? c.ccDurante : 'decisivo', a: Number(c.ccA) || 0 } };
     return { m, nomi, cfg };
   }
   const teamLabel = (ref, i) => ref.nomi[i].join(' / ');
@@ -93,7 +107,7 @@
     const back = r.libero ? `<a href="#/tornei">${T("{0} Tornei", [H.icon('arrow-left')])}</a>` : `<a href="#/tornei/${r.tid}">${T("{0} Torneo", [H.icon('arrow-left')])}</a>`;
     const head = `<div class="sb-head"><p>${back}</p>
       <h1 class="sb-title">${H.icon('clipboard-text')} ${r.libero ? T("Scoresheet libero") : T("Scoresheet")}</h1>
-      <p class="muted small">${t ? H.esc(t.nome) + ' · ' : ''}${sistemaLabel(r.cfg)} · ${r.cfg.giochi === 1 ? T("game unico") : T("{0} game su {1}", [Score.needWins(r.cfg), r.cfg.giochi])} · ${T("ai {0}", [r.cfg.punti[0]])}${r.cfg.giochi > 1 && r.cfg.punti[r.cfg.giochi - 1] !== r.cfg.punti[0] ? ' ' + T("(decisivo ai {0})", [r.cfg.punti[r.cfg.giochi - 1]]) : ''}</p></div>`;
+      <p class="muted small">${t ? H.esc(t.nome) + ' · ' : ''}${sistemaLabel(r.cfg)} · ${r.cfg.giochi === 1 ? T("game unico") : T("{0} game su {1}", [Score.needWins(r.cfg), r.cfg.giochi])} · ${T("ai {0}", [r.cfg.punti[0]])}${r.cfg.giochi > 1 && r.cfg.punti[r.cfg.giochi - 1] !== r.cfg.punti[0] ? ' ' + T("(decisivo ai {0})", [r.cfg.punti[r.cfg.giochi - 1]]) : ''} · ${ccText(r.cfg)}</p></div>`;
     if (!r.libero && !r.loaded) return head + `<p class="muted">${T("Caricamento…")}</p>`;
     if (!edit && !r.ev.length) return head + H.empty(T("Lo scoresheet di questa gara non è ancora iniziato."), 'clipboard-text');
     let body;
@@ -117,6 +131,7 @@
           <label>${T("Punti per game")}<select name="punti">${pts}</select></label>
           <label>${T("Game decisivo ai")}<select name="decisivo">${pts}</select></label>
         </div>
+        ${ccFields({})}
         ${['a', 'b'].map((k, i) => `<fieldset><legend>${T("Squadra {0}", [i + 1])}</legend>
           <div class="row"><label>${T("Giocatore 1 (parte a destra)")}<input name="${k}0" maxlength="40" required></label>
             <label>${T("Giocatore 2 (parte a sinistra)")}<input name="${k}1" maxlength="40"></label>
@@ -144,7 +159,7 @@
 
   function gameOverBanner(r, st) {
     const g = st.games[st.games.length - 1];
-    return `<div class="notice ok sb-banner">${H.icon('flag')} <span>${T("Game {0} a {1}: {2}", [g.n + 1, H.esc(teamLabel(r, g.winner)), g.score[g.winner] + '-' + g.score[1 - g.winner]])}. ${T("Si cambia campo.")}</span></div>`;
+    return `<div class="notice ok sb-banner">${H.icon('flag')} <span>${T("Game {0} a {1}: {2}", [g.n + 1, H.esc(teamLabel(r, g.winner)), g.score[g.winner] + '-' + g.score[1 - g.winner]])}.${Score.ccCfg(r.cfg).tra ? ' ' + T("Si cambia campo.") : ''}</span></div>`;
   }
 
   function board(r, st, edit) {
@@ -164,7 +179,7 @@
           <button class="btn small" data-action="ref-to" data-t="${i}" ${G.toLeft[i] ? '' : 'disabled'}>${H.icon('clock-pause')} ${T("Timeout ({0})", [G.toLeft[i]])}</button>` : ''}
       </div>`;
     };
-    const cc = G.needCC ? `<div class="notice warn-box sb-banner">${H.icon('arrows-exchange')} <span><strong>${T("Cambio campo!")}</strong> ${T("Nel game decisivo si cambia lato a {0} punti.", [Score.ccAt(r.cfg, G.n)])}</span>
+    const cc = G.needCC ? `<div class="notice warn-box sb-banner">${H.icon('arrows-exchange')} <span><strong>${T("Cambio campo!")}</strong> ${T("Si cambia lato a {0} punti.", [Score.ccAt(r.cfg, G.n)])}</span>
       ${edit ? `<button class="btn small primary" data-action="ref-cc">${T("Fatto")}</button>` : ''}</div>` : '';
     const to = ui.to && ui.to.id === (r.id || 'libero') ? `<div class="notice sb-banner">${H.icon('clock-pause')} <span>${T("Timeout {0}", [H.esc(teamLabel(r, ui.to.t))])}: <strong data-to-left>${toLeft()}</strong></span>
       <button class="btn small" data-action="ref-to-end">${T("Riprendi")}</button></div>` : '';
@@ -262,7 +277,7 @@
       const nomi = [[v.a0, v.a1], [v.b0, v.b1]].map(x => (doppio ? x : x.slice(0, 1)).map(s => (s || '').trim()));
       if (nomi.some(x => x.some(s => !s))) return H.formError(f, doppio ? T("Scrivi i nomi dei 4 giocatori.") : T("Scrivi i nomi dei 2 giocatori."));
       const g = Number(v.giochi) || 1, p = Number(v.punti) || 11, dec = Number(v.decisivo) || p;
-      ui.ref = { libero: true, cfg: { sistema: v.sistema === 'rally' ? 'rally' : 'sideout', doppio, giochi: g, punti: Array.from({ length: g }, (_, i) => (i === g - 1 && g > 1 ? dec : p)) }, nomi, colori: [v.c0, v.c1], ev: [] };
+      ui.ref = { libero: true, cfg: { sistema: v.sistema === 'rally' ? 'rally' : 'sideout', doppio, giochi: g, punti: Array.from({ length: g }, (_, i) => (i === g - 1 && g > 1 ? dec : p)), cc: readCc(v) }, nomi, colori: [v.c0, v.c1], ev: [] };
       persist(); H.render();
     },
     'ref-start': v => {
@@ -361,7 +376,7 @@
 
   window.Referto = {
     init: helpers => { H = helpers; },
-    view, close, actions, forms, liveChip, matchLink, pendingBlock, refId,
+    view, close, actions, forms, liveChip, matchLink, pendingBlock, refId, ccFields, readCc,
     get cur() { return ui.ref; }
   };
 })();

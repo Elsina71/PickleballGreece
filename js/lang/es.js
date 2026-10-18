@@ -1181,5 +1181,21 @@ I18n.add('es', {
  "Giocatore 2 (parte a sinistra)": "Jugador 2 (empieza a la izquierda)",
  "Colore maglia": "Color de camiseta",
  "Nel singolo basta il giocatore 1. Chi serve per primo e chi parte a destra si possono cambiare all’inizio di ogni game.": "En individual basta el jugador 1. Quién saca primero y quién empieza a la derecha se puede cambiar al inicio de cada game.",
- "maglia": "camiseta"
+ "maglia": "camiseta",
+ "Tra un game e l’altro": "Entre games",
+ "Sì": "Sí",
+ "No": "No",
+ "Durante il game": "Durante el game",
+ "Solo nel game decisivo": "Solo en el game decisivo",
+ "In ogni game": "En cada game",
+ "Mai": "Nunca",
+ "A quanti punti": "A cuántos puntos",
+ "a metà": "a la mitad",
+ "Vuoto = a metà del game (6 ai 11, 8 ai 15, 11 ai 21): si cambia quando una squadra arriva a quel punteggio.": "Vacío = a la mitad del game (6 a 11, 8 a 15, 11 a 21): se cambia cuando un equipo llega a esa puntuación.",
+ "cambio campo tra i game": "cambio de lado entre games",
+ "in ogni game": "en cada game",
+ "nel game decisivo": "en el game decisivo",
+ "a {0} punti": "a {0} puntos",
+ "nessun cambio campo": "sin cambio de lado",
+ "Si cambia lato a {0} punti.": "Cambio de lado a {0} puntos."
 });

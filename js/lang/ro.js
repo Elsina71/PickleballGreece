@@ -1181,5 +1181,21 @@ I18n.add('ro', {
  "Giocatore 2 (parte a sinistra)": "Jucătorul 2 (începe pe stânga)",
  "Colore maglia": "Culoarea tricoului",
  "Nel singolo basta il giocatore 1. Chi serve per primo e chi parte a destra si possono cambiare all’inizio di ogni game.": "La simplu ajunge jucătorul 1. Cine servește primul și cine începe pe dreapta se pot schimba la începutul fiecărui game.",
- "maglia": "tricou"
+ "maglia": "tricou",
+ "Tra un game e l’altro": "Între game-uri",
+ "Sì": "Da",
+ "No": "Nu",
+ "Durante il game": "În timpul game-ului",
+ "Solo nel game decisivo": "Doar în game-ul decisiv",
+ "In ogni game": "În fiecare game",
+ "Mai": "Niciodată",
+ "A quanti punti": "La câte puncte",
+ "a metà": "la jumătate",
+ "Vuoto = a metà del game (6 ai 11, 8 ai 15, 11 ai 21): si cambia quando una squadra arriva a quel punteggio.": "Gol = la jumătatea game-ului (6 la 11, 8 la 15, 11 la 21): se schimbă când o echipă ajunge la acel scor.",
+ "cambio campo tra i game": "schimbare de teren între game-uri",
+ "in ogni game": "în fiecare game",
+ "nel game decisivo": "în game-ul decisiv",
+ "a {0} punti": "la {0} puncte",
+ "nessun cambio campo": "fără schimbare de teren",
+ "Si cambia lato a {0} punti.": "Schimbare de teren la {0} puncte."
 });

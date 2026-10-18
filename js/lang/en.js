@@ -1181,5 +1181,21 @@ I18n.add('en', {
  "Giocatore 2 (parte a sinistra)": "Player 2 (starts on the left)",
  "Colore maglia": "Shirt colour",
  "Nel singolo basta il giocatore 1. Chi serve per primo e chi parte a destra si possono cambiare all’inizio di ogni game.": "In singles, player 1 is enough. Who serves first and who starts on the right can be changed at the start of each game.",
- "maglia": "shirt"
+ "maglia": "shirt",
+ "Tra un game e l’altro": "Between games",
+ "Sì": "Yes",
+ "No": "No",
+ "Durante il game": "During the game",
+ "Solo nel game decisivo": "Deciding game only",
+ "In ogni game": "Every game",
+ "Mai": "Never",
+ "A quanti punti": "At how many points",
+ "a metà": "halfway",
+ "Vuoto = a metà del game (6 ai 11, 8 ai 15, 11 ai 21): si cambia quando una squadra arriva a quel punteggio.": "Empty = halfway through the game (6 at 11, 8 at 15, 11 at 21): ends change when a team reaches that score.",
+ "cambio campo tra i game": "change ends between games",
+ "in ogni game": "in every game",
+ "nel game decisivo": "in the deciding game",
+ "a {0} punti": "at {0} points",
+ "nessun cambio campo": "no change of ends",
+ "Si cambia lato a {0} punti.": "Change ends at {0} points."
 });

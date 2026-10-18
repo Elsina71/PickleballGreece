@@ -1181,5 +1181,21 @@ I18n.add('pt', {
  "Giocatore 2 (parte a sinistra)": "Jogador 2 (começa à esquerda)",
  "Colore maglia": "Cor da camisola",
  "Nel singolo basta il giocatore 1. Chi serve per primo e chi parte a destra si possono cambiare all’inizio di ogni game.": "Em singulares basta o jogador 1. Quem serve primeiro e quem começa à direita podem ser alterados no início de cada game.",
- "maglia": "camisola"
+ "maglia": "camisola",
+ "Tra un game e l’altro": "Entre games",
+ "Sì": "Sim",
+ "No": "Não",
+ "Durante il game": "Durante o game",
+ "Solo nel game decisivo": "Só no game decisivo",
+ "In ogni game": "Em cada game",
+ "Mai": "Nunca",
+ "A quanti punti": "A quantos pontos",
+ "a metà": "a meio",
+ "Vuoto = a metà del game (6 ai 11, 8 ai 15, 11 ai 21): si cambia quando una squadra arriva a quel punteggio.": "Vazio = a meio do game (6 a 11, 8 a 15, 11 a 21): troca-se quando uma equipa chega a essa pontuação.",
+ "cambio campo tra i game": "troca de campo entre games",
+ "in ogni game": "em cada game",
+ "nel game decisivo": "no game decisivo",
+ "a {0} punti": "aos {0} pontos",
+ "nessun cambio campo": "sem troca de campo",
+ "Si cambia lato a {0} punti.": "Troca de campo aos {0} pontos."
 });

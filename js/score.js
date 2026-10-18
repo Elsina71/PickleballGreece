@@ -1,7 +1,8 @@
 // Motore dello scoresheet del pickleball (nessun accesso a pagina o database).
 // La partita è una lista di eventi; lo stato si ricalcola sempre da capo (così "Annulla" toglie l'ultimo evento).
 //
-// cfg: { sistema: 'sideout' | 'rally', doppio: true/false, giochi: 1 | 3 | 5, punti: [11, 11, 11] (punti per game) }
+// cfg: { sistema: 'sideout' | 'rally', doppio: true/false, giochi: 1 | 3 | 5, punti: [11, 11, 11] (punti per game),
+//        cc: { tra: true (cambio campo tra un game e l'altro), durante: 'decisivo' | 'tutti' | 'no', a: 0 (punteggio; 0 = metà) } }
 // eventi:
 //   'G<s><a><b>'  inizio game: s = squadra al servizio (0/1), a/b = giocatore che parte a destra (0/1) per la squadra 0 e 1
 //   'A' / 'B'     scambio vinto dalla squadra 0 / 1
@@ -14,8 +15,14 @@
   const needWins = cfg => Math.ceil(giochi(cfg) / 2);
   // timeout per game: 2 nei game a 11 e 15, 3 nei game a 21
   const timeouts = (cfg, g) => (target(cfg, g) >= 21 ? 3 : 2);
-  // nel game decisivo (anche in una partita a game unico) si cambia campo a metà: 6 (a 11), 8 (a 15), 11 (a 21)
-  const ccAt = (cfg, g) => (g === giochi(cfg) - 1 ? Math.ceil(target(cfg, g) / 2) : 0);
+  // cambio campo: di norma tra i game e, nel game decisivo (anche a game unico), a metà: 6 (a 11), 8 (a 15), 11 (a 21)
+  const ccCfg = cfg => Object.assign({ tra: true, durante: 'decisivo', a: 0 }, cfg.cc || {});
+  const ccAt = (cfg, g) => {
+    const c = ccCfg(cfg);
+    if (c.durante === 'no' || (c.durante !== 'tutti' && g !== giochi(cfg) - 1)) return 0;
+    const a = Number(c.a) || Math.ceil(target(cfg, g) / 2);
+    return a > 0 && a < target(cfg, g) ? a : Math.ceil(target(cfg, g) / 2);
+  };
 
   function replay(cfg, ev) {
     const doppio = cfg.doppio !== false, rally = cfg.sistema === 'rally';
@@ -76,7 +83,9 @@
       G.toLeft = [0, 1].map(t => timeouts(cfg, G.n) - G.to[t]);
       G.needCC = G.cc && !G.ccDone && st.phase === 'play';
       // lato dello schermo: si cambia a ogni game e a metà del game decisivo
-      G.flip = (G.n % 2 === 1) !== G.ccDone;
+      // ogni cambio campo fatto (tra i game e durante) inverte i lati
+      const flips = (ccCfg(cfg).tra ? G.n : 0) + st.games.filter(x => x.ccDone).length;
+      G.flip = flips % 2 === 1;
     }
     if (st.phase === 'end' || st.phase === 'gameover') st.next = st.games.length;
     return st;
@@ -88,6 +97,6 @@
     return { sets, forfeit: st.retired == null ? null : st.retired === 0 ? 'a' : 'b', winner: st.winner };
   }
 
-  window.Score = { replay, result, target, giochi, timeouts, ccAt, needWins };
+  window.Score = { replay, result, target, giochi, timeouts, ccAt, ccCfg, needWins };
   if (typeof module !== 'undefined') module.exports = window.Score;
 })();

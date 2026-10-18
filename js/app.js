@@ -1438,6 +1438,7 @@ const App = (() => {
             <label data-show-sets>${T("Terzo set ai")}<select name="puntiDecisivo">${pts(c.puntiDecisivo)}</select></label>
           </div>
           <label>${T("Sistema di punteggio (scoresheet)")}<select name="sistema"><option value="sideout">${T("Classico (punto solo a chi serve)")}</option><option value="rally" ${c.sistema === 'rally' ? 'selected' : ''}>${T("Rally scoring (ogni scambio è un punto)")}</option></select></label>
+          ${window.Referto.ccFields(c)}
         </fieldset>
         <fieldset data-show="gironi_ko"><legend>${T("Gironi")}</legend>
           <div class="row">
@@ -3194,6 +3195,7 @@ const App = (() => {
       const formato = t && t.seeds ? t.formato : v.formato;
       const config = {
         sets: Number(v.sets), punti: Number(v.punti), puntiDecisivo: Number(v.puntiDecisivo || v.punti), sistema: v.sistema === 'rally' ? 'rally' : 'sideout',
+        ccTra: v.ccTra !== '0', ccDurante: window.Referto.readCc(v).durante, ccA: window.Referto.readCc(v).a,
         poolSize: Number(v.poolSize) || 4, qualify: Number(v.qualify) || 1, poolType: v.poolType,
         thirdPlace: f.elements.thirdPlace.checked, criterio: v.criterio,
         turni: Number(formato === 'americana_tempo' ? v.tTurni : v.turni) || 1, campi: Number(formato === 'americana_tempo' ? v.tCampi : v.campi) || 0,

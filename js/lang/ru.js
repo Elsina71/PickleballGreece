@@ -1181,5 +1181,21 @@ I18n.add('ru', {
  "Giocatore 2 (parte a sinistra)": "Игрок 2 (начинает слева)",
  "Colore maglia": "Цвет формы",
  "Nel singolo basta il giocatore 1. Chi serve per primo e chi parte a destra si possono cambiare all’inizio di ogni game.": "В одиночном достаточно игрока 1. Кто подаёт первым и кто начинает справа, можно изменить в начале каждого гейма.",
- "maglia": "форма"
+ "maglia": "форма",
+ "Tra un game e l’altro": "Между геймами",
+ "Sì": "Да",
+ "No": "Нет",
+ "Durante il game": "Во время гейма",
+ "Solo nel game decisivo": "Только в решающем гейме",
+ "In ogni game": "В каждом гейме",
+ "Mai": "Никогда",
+ "A quanti punti": "При скольких очках",
+ "a metà": "на середине",
+ "Vuoto = a metà del game (6 ai 11, 8 ai 15, 11 ai 21): si cambia quando una squadra arriva a quel punteggio.": "Пусто = на середине гейма (6 из 11, 8 из 15, 11 из 21): смена сторон, когда команда набирает этот счёт.",
+ "cambio campo tra i game": "смена сторон между геймами",
+ "in ogni game": "в каждом гейме",
+ "nel game decisivo": "в решающем гейме",
+ "a {0} punti": "при {0} очках",
+ "nessun cambio campo": "без смены сторон",
+ "Si cambia lato a {0} punti.": "Смена сторон при {0} очках."
 });

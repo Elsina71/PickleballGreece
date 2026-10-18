@@ -1181,5 +1181,21 @@ I18n.add('el', {
  "Giocatore 2 (parte a sinistra)": "Παίκτης 2 (ξεκινά αριστερά)",
  "Colore maglia": "Χρώμα φανέλας",
  "Nel singolo basta il giocatore 1. Chi serve per primo e chi parte a destra si possono cambiare all’inizio di ogni game.": "Στο μονό αρκεί ο παίκτης 1. Ποιος σερβίρει πρώτος και ποιος ξεκινά δεξιά αλλάζει στην αρχή κάθε game.",
- "maglia": "φανέλα"
+ "maglia": "φανέλα",
+ "Tra un game e l’altro": "Ανάμεσα στα game",
+ "Sì": "Ναι",
+ "No": "Όχι",
+ "Durante il game": "Κατά το game",
+ "Solo nel game decisivo": "Μόνο στο αποφασιστικό game",
+ "In ogni game": "Σε κάθε game",
+ "Mai": "Ποτέ",
+ "A quanti punti": "Σε πόσους πόντους",
+ "a metà": "στη μέση",
+ "Vuoto = a metà del game (6 ai 11, 8 ai 15, 11 ai 21): si cambia quando una squadra arriva a quel punteggio.": "Κενό = στη μέση του game (6 στους 11, 8 στους 15, 11 στους 21): αλλαγή όταν μια ομάδα φτάσει σε αυτό το σκορ.",
+ "cambio campo tra i game": "αλλαγή γηπέδου ανάμεσα στα game",
+ "in ogni game": "σε κάθε game",
+ "nel game decisivo": "στο αποφασιστικό game",
+ "a {0} punti": "στους {0} πόντους",
+ "nessun cambio campo": "χωρίς αλλαγή γηπέδου",
+ "Si cambia lato a {0} punti.": "Αλλαγή γηπέδου στους {0} πόντους."
 });
