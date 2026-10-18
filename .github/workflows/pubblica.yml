@@ -1,8 +1,8 @@
-# Pubblica automaticamente l'app Pickleball Greece su Firebase (sito + regole del database)
+# Pubblica automaticamente l'app Pickleball Tribe su Firebase (sito + regole del database)
 # a ogni modifica salvata sul ramo main.
 # Serve il secret del repository PICKLEBALLGREECE (o FIREBASE_SA_PICKLEBALLGREECE) (Settings → Secrets and variables → Actions):
 # chiave JSON dell'account di servizio del progetto pickleballgreece-955da.
-name: Pubblica Pickleball Greece
+name: Pubblica Pickleball Tribe
 
 permissions:
   contents: read
@@ -51,6 +51,23 @@ jobs:
             exit 1
           fi
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> "$GITHUB_ENV"
+      - name: Secondo indirizzo pickleballtribe.web.app
+        continue-on-error: true
+        run: |
+          FB="npx --yes firebase-tools@13 --project pickleballgreece-955da --non-interactive"
+          if $FB hosting:sites:get pickleballtribe >/dev/null 2>&1 || $FB hosting:sites:create pickleballtribe; then
+            echo "Sito pickleballtribe pronto."
+            # stessa configurazione del sito principale, pubblicata su entrambi gli indirizzi
+            python3 - <<'PY'
+          import json
+          c = json.load(open('firebase.json'))
+          h = c['hosting']
+          c['hosting'] = [dict(h, site='pickleballgreece-955da'), dict(h, site='pickleballtribe')]
+          json.dump(c, open('firebase.json', 'w'), indent=2)
+          PY
+          else
+            echo "::warning::Non sono riuscito a creare il sito pickleballtribe (nome già preso o permessi mancanti)."
+          fi
       - name: Pubblicazione (sito e regole del database)
         run: npx --yes firebase-tools@13 deploy --only hosting,firestore:rules --project pickleballgreece-955da --non-interactive
       - name: Pulizia
