@@ -663,3 +663,11 @@ form.scheda .actions { border-top: 1px solid var(--border); box-shadow: 0 -6px 1
 fieldset.levels { display: flex; flex-wrap: wrap; gap: 4px 14px; }
 fieldset.levels legend { width: 100%; }
 fieldset.levels p { flex-basis: 100%; margin: 4px 0 0; }
+/* logo delle leghe */
+.lega-logo { border-radius: 12px; object-fit: contain; flex: none; background: transparent; }
+.lega-logo.none { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 12px; background: var(--surface-2); color: var(--muted); font-size: 26px; }
+.lega-head { display: flex; align-items: center; gap: 14px; }
+.lega-head h1 { margin: 0; }
+.lega-logo-edit { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 10px; }
+.chip-lega img { vertical-align: middle; border-radius: 4px; }
+.tour-card .lega-logo { margin-right: 4px; }

@@ -287,6 +287,26 @@ const App = (() => {
     });
   }
 
+  // Logo (leghe): al massimo 256 px, trasparenza conservata (webp), qualche decina di KB.
+  function shrinkLogo(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, 256 / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        let url = c.toDataURL('image/webp', 0.85);
+        if (!url.startsWith('data:image/webp')) url = c.toDataURL('image/png');
+        URL.revokeObjectURL(img.src);
+        resolve(url);
+      };
+      img.onerror = () => reject(new Error('Immagine non leggibile.'));
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  const legaLogo = (l, size) => (l && l.logo ? `<img class="lega-logo" src="${l.logo}" alt="" width="${size}" height="${size}">` : '');
+
   function articleForm(i) {
     const a = articolo(i), foto = ui.artFoto && ui.artFoto[i] != null ? ui.artFoto[i] : a.foto;
     return `<form data-form="articolo" class="article-form"><input type="hidden" name="i" value="${i}">
@@ -780,7 +800,7 @@ const App = (() => {
         <div>
           <h1>${esc(t.nome)}</h1>
           <p class="muted">${icon('calendar')} ${fmtDate(t.data, true)}${t.luogo ? ' · ' + icon('map-pin') + ' ' + esc(t.luogo) : ''}</p>
-          <p class="chips">${statusBadge(t)}${t.lega && legaById(t.lega) ? `<a class="chip" href="#/leghe/${t.lega}">${icon('trophy')} ${esc(legaById(t.lega).nome)}</a>` : ''}${t.livelli && t.livelli.length ? `<span class="chip">${icon('stairs')} Livelli: ${esc(levelsText(t.livelli))}</span>` : ''}<span class="chip">${esc(Logic.FORMATS[t.formato])}</span><span class="chip">${DISCIPLINE[t.disciplina]} ${GENERI[t.genere] || ''}</span>
+          <p class="chips">${statusBadge(t)}${t.lega && legaById(t.lega) ? `<a class="chip chip-lega" href="#/leghe/${t.lega}">${legaLogo(legaById(t.lega), 20) || icon('shield')} ${esc(legaById(t.lega).nome)}</a>` : ''}${t.livelli && t.livelli.length ? `<span class="chip">${icon('stairs')} Livelli: ${esc(levelsText(t.livelli))}</span>` : ''}<span class="chip">${esc(Logic.FORMATS[t.formato])}</span><span class="chip">${DISCIPLINE[t.disciplina]} ${GENERI[t.genere] || ''}</span>
             <span class="chip">${scoring}</span><span class="chip">${icon('list-numbers')} ${esc(pointsLabel(t))}${Logic.givesPoints(S(), t) && Number(t.coefficiente) !== 1 ? ' ×' + t.coefficiente : ''}</span></p>
           ${t.descrizione ? `<p>${esc(t.descrizione)}</p>` : ''}
         </div>
@@ -1899,7 +1919,7 @@ const App = (() => {
       <p class="muted">Una lega è un insieme di tornei e sfide con una classifica tutta sua. Partecipano i giocatori abilitati dall’admin della lega; tutti possono seguirla.</p>
       ${list.length ? `<div class="grid">${list.map(l => {
         const n = legaTornei(l).length;
-        return `<a class="card tour-card" href="#/leghe/${l.id}"><div class="tour-main"><h3>${esc(l.nome)}</h3>
+        return `<a class="card tour-card" href="#/leghe/${l.id}">${legaLogo(l, 52) || `<span class="lega-logo none">${icon('shield')}</span>`}<div class="tour-main"><h3>${esc(l.nome)}</h3>
           <p class="muted small">${n}${l.previsti ? ` di ${l.previsti}` : ''} ${n === 1 ? 'torneo' : 'tornei'} · ${(l.membri || []).length} giocatori</p>
           <p class="small">${l.stato === 'chiusa' ? '<span class="badge">Conclusa</span>' : '<span class="badge ok">In corso</span>'}
             ${u && isMembro(l, u.id) ? '<span class="badge live">Sei abilitato</span>' : ''}${isLegaAdmin(l) && !isAdmin() ? '<span class="badge">Sei admin di lega</span>' : ''}</p></div>${icon('chevron-right')}</a>`;
@@ -1956,6 +1976,9 @@ const App = (() => {
           <label>Nome della lega<input name="nome" required maxlength="80" value="${esc(l.nome)}"></label>
           <label>Descrizione<textarea name="descrizione" rows="3">${esc(l.descrizione || '')}</textarea></label>
           <label>Tornei previsti (0 = non definito)<input type="number" min="0" max="100" name="previsti" value="${l.previsti || 0}"></label>
+          <div class="lega-logo-edit"><span>${legaLogo(l, 64) || `<span class="lega-logo none">${icon('shield')}</span>`}</span>
+            <label class="btn small">${icon('photo')} ${l.logo ? 'Cambia logo' : 'Carica il logo della lega'}<input type="file" accept="image/*" data-change="lega-logo" data-id="${l.id}" hidden></label>
+            ${l.logo ? `<button type="button" class="btn small danger" data-action="lega-logo-del" data-id="${l.id}">Togli logo</button>` : ''}</div>
           ${isAdmin() ? `<fieldset><legend>Admin di lega</legend><p class="muted small">Gestiscono questa lega: tornei, sfide, giocatori abilitati e chiusura.</p>
             ${regs.map(x => `<label class="check"><input type="checkbox" name="admins" value="${x.id}" ${(l.admins || []).includes(x.id) ? 'checked' : ''}> ${esc(x.cognome + ' ' + x.nome)}</label>`).join('')}</fieldset>` : ''}
           <div class="actions"><button class="btn primary">${icon('device-floppy')} Salva</button></div></form>
@@ -1967,7 +1990,7 @@ const App = (() => {
     }
     return `
       <p><a href="#/leghe">${icon('arrow-left')} Leghe</a></p>
-      <h1>${esc(l.nome)}</h1>
+      <div class="lega-head">${legaLogo(l, 84)}<h1>${esc(l.nome)}</h1></div>
       <p class="chips">${closed ? '<span class="badge">Conclusa</span>' : '<span class="badge ok">In corso</span>'}<span class="chip">${legaTornei(l).length}${l.previsti ? '/' + l.previsti : ''} tornei</span>
         <span class="chip">Admin di lega: ${(l.admins || []).length ? esc((l.admins || []).map(userName).join(', ')) : '—'}</span></p>
       ${l.descrizione ? `<p>${esc(l.descrizione)}</p>` : ''}
@@ -2346,10 +2369,13 @@ const App = (() => {
 
   const sfById = id => (S().sfide || []).find(x => x.id === id);
   const actions = {
-    'lega-new': () => openDialog(`<form data-form="lega-new"><h2>Nuova lega</h2>
+    'lega-logo-del': d => { const l = legaById(d.id); if (l && confirm('Togliere il logo della lega?')) { l.logo = ''; save(); } },
+    'lega-new': () => (ui.legaLogoNew = '') || openDialog(`<form data-form="lega-new"><h2>Nuova lega</h2>
         <label>Nome della lega<input name="nome" required maxlength="80" placeholder="Lega Amici"></label>
         <label>Descrizione<textarea name="descrizione" rows="3"></textarea></label>
         <label>Tornei previsti (0 = non definito)<input type="number" min="0" max="100" name="previsti" value="0"></label>
+        <div class="lega-logo-edit"><span class="lega-logo-prev"><span class="lega-logo none">${icon('shield')}</span></span>
+          <label class="btn small">${icon('photo')} Logo della lega (facoltativo)<input type="file" accept="image/*" data-change="lega-logo-new" hidden></label></div>
         <p class="muted small">Dopo la creazione scegli gli admin di lega e i giocatori abilitati.</p>
         <p class="form-error" hidden></p>
         <div class="actions"><button type="button" class="btn" data-action="close-dialog">Annulla</button><button class="btn primary">Crea</button></div></form>`),
@@ -2794,6 +2820,16 @@ const App = (() => {
   };
 
   const changes = {
+    'lega-logo': el => {
+      const l = legaById(el.dataset.id), file = el.files && el.files[0];
+      if (!l || !file) return;
+      shrinkLogo(file).then(url => { l.logo = url; save(); toast('Logo della lega salvato.', 'ok'); }).catch(e => toast(e.message, 'err'));
+    },
+    'lega-logo-new': el => {
+      const file = el.files && el.files[0];
+      if (!file) return;
+      shrinkLogo(file).then(url => { ui.legaLogoNew = url; const pv = el.form.querySelector('.lega-logo-prev'); if (pv) pv.innerHTML = `<img class="lega-logo" src="${url}" alt="" width="64" height="64">`; }).catch(e => toast(e.message, 'err'));
+    },
     'lega-add-tour': el => { const t = tourById(el.value), l = legaById(el.dataset.id); if (t && l) { t.lega = l.id; save(); toast(`“${t.nome}” aggiunto alla lega.`, 'ok'); } },
     'lega-add-membro': el => { const l = legaById(el.dataset.id); if (l && el.value && !l.membri.includes(el.value)) { l.membri = l.membri.concat([el.value]); save(); toast(`${userName(el.value)} abilitato/a alla lega.`, 'ok'); } },
     'sf-form': () => syncSfForm(),
@@ -2845,7 +2881,8 @@ const App = (() => {
   const forms = {
     'lega-new': (v, f) => {
       if (!v.nome.trim()) return formError(f, 'Scrivi il nome della lega.');
-      const l = { id: Store.uid('l'), nome: v.nome.trim(), descrizione: (v.descrizione || '').trim(), previsti: Number(v.previsti) || 0, admins: [], membri: [], stato: 'aperta' };
+      const l = { id: Store.uid('l'), nome: v.nome.trim(), descrizione: (v.descrizione || '').trim(), previsti: Number(v.previsti) || 0, admins: [], membri: [], stato: 'aperta', logo: ui.legaLogoNew || '' };
+      ui.legaLogoNew = '';
       (S().leghe || (S().leghe = [])).push(l);
       closeDialog(); location.hash = '#/leghe/' + l.id; (ui.legaTab || (ui.legaTab = {}))[l.id] = 'gestione'; save();
     },
