@@ -12,7 +12,7 @@
 //   notifiche/{id}       avvisi per un utente o per "admins"
 //   courses/{id}, enrollments/{corso_utente}   corsi e iscrizioni
 //   tournaments/{id}, entries/{id}             tornei e iscrizioni ai tornei
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager, connectFirestoreEmulator,
   doc, collection, onSnapshot, setDoc, deleteDoc, getDoc, addDoc, query, where, updateDoc, increment
@@ -46,7 +46,7 @@ const isMain = id => mainAdminUids.includes(id);
 
 // ---------- dati ricevuti dal database ----------
 
-const raw = { leghe: {}, sfide: {}, sfidePAll: {}, sfidePInv: {}, sfidePMie: {}, gruppi: {}, nascosti: [], rispOrg: {}, rispMie: {}, articoli: null, settings: null, players: {}, users: {}, admins: new Set(), tourAdmins: new Set(), bookings: {}, courses: {}, enrollments: {}, tournaments: {}, entries: {}, notifiche: {} };
+const raw = { leghe: {}, sfide: {}, sfidePAll: {}, sfidePInv: {}, sfidePMie: {}, gruppi: {}, nascosti: [], referti: {}, refertoCur: null, scorers: {}, rispOrg: {}, rispMie: {}, articoli: null, settings: null, players: {}, users: {}, admins: new Set(), tourAdmins: new Set(), bookings: {}, courses: {}, enrollments: {}, tournaments: {}, entries: {}, notifiche: {} };
 const loaded = new Set();
 const NEEDED = ['settings', 'players', 'sfide', 'leghe', 'courses', 'enrollments', 'tournaments', 'entries'];
 
@@ -86,6 +86,8 @@ function rebuild() {
     .sort((a, b) => ((a.data || '') + (a.ora || '')).localeCompare((b.data || '') + (b.ora || '')));
   st.gruppi = Object.entries(raw.gruppi).map(([id, g]) => Object.assign({ membri: [] }, g, { id })).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
   st.nascosti = raw.nascosti || [];
+  st.referti = Object.entries(raw.referti).map(([id, r]) => unpackRef(id, r));
+  st.scorers = Object.entries(raw.scorers).map(([id, x]) => Object.assign({}, x, { id })).sort((a, b) => String(a.campo).localeCompare(String(b.campo), undefined, { numeric: true }));
   st.risp = Object.entries(Object.assign({}, raw.rispOrg, raw.rispMie)).map(([id, x]) => Object.assign({}, x, { id }));
   st.notifiche = Object.entries(raw.notifiche).map(([id, n]) => Object.assign({ id }, n)).sort((a, b) => (b.at || 0) - (a.at || 0));
   const enr = Object.values(raw.enrollments).sort((a, b) => (a.at || 0) - (b.at || 0));
@@ -147,6 +149,7 @@ onAuthStateChanged(auth, async u => {
   raw.notifiche = {};
   raw.rispOrg = {}; raw.rispMie = {};
   raw.sfidePAll = {}; raw.sfidePInv = {}; raw.sfidePMie = {}; raw.gruppi = {}; raw.nascosti = [];
+  raw.scorers = {}; scorer = null;
   allUsers = false;
   isTourAdmin = false;
   if (u) {
@@ -161,8 +164,11 @@ onAuthStateChanged(auth, async u => {
       privUnsubs.push(listen('notifiche', query(collection(db, 'notifiche'), where('to', 'in', [u.uid, 'admins'])), s => { raw.notifiche = byId(s); }));
       privUnsubs.push(listen('risp', collection(db, 'sfideRisp'), s => { raw.rispOrg = byId(s); }));
       privUnsubs.push(listen('sfideP', collection(db, 'sfideP'), s => { raw.sfidePAll = byId(s); }));
+      privUnsubs.push(listen('scorers', collection(db, 'scorers'), s => { raw.scorers = byId(s); }));
     } else {
       try { isTourAdmin = (await getDoc(doc(db, 'tourAdmins', u.uid))).exists(); } catch (e) { isTourAdmin = false; }
+      // account di un campo (tablet a bordo campo): compila gli scoresheet dei tornei
+      if (!isTourAdmin && !raw.players[u.uid]) { try { const sc = await getDoc(doc(db, 'scorers', u.uid)); scorer = sc.exists() ? Object.assign({ id: u.uid }, sc.data()) : null; } catch (e) { scorer = null; } }
       privUnsubs.push(listen('users', doc(db, 'users', u.uid), s => { raw.users = s.exists() ? { [u.uid]: s.data() } : {}; }));
       privUnsubs.push(listen('notifiche', query(collection(db, 'notifiche'), where('to', '==', u.uid)), s => { raw.notifiche = byId(s); }));
       // candidature: le proprie e quelle alle sfide lanciate da questo utente
@@ -187,6 +193,8 @@ let last = null;
 let allUsers = false;
 // Gestore tornei (ruolo limitato ai tornei).
 let isTourAdmin = false;
+// Account di un campo: { campo, tid ('' = tutti i tornei) }
+let scorer = null;
 
 function shapes(st) {
   const d = { leghe: {}, data: {}, players: {}, users: {}, admins: {}, tourAdmins: {}, bookings: {}, courses: {}, enrollments: {}, tournaments: {}, entries: {} };
@@ -320,6 +328,43 @@ function applySfida(sfida, me, partner, stato) {
 function updateRisp(id, patch) { return updateDoc(doc(db, 'sfideRisp', id), patch); }
 function deleteRisp(id) { return deleteDoc(doc(db, 'sfideRisp', id)); }
 
+// ---------- scoresheet ----------
+// Le gare di un torneo con lo scoresheet aperto (punteggio in diretta): solo mentre si guarda quel torneo.
+let refUnsub = null, refTid = null;
+function watchReferti(tid) {
+  if (tid === refTid) return;
+  if (refUnsub) refUnsub();
+  refUnsub = null; refTid = tid; raw.referti = {};
+  if (tid) refUnsub = onSnapshot(query(collection(db, 'referti'), where('tid', '==', tid)), s => { raw.referti = byId(s); rebuild(); refresh(); }, onError);
+  rebuild();
+}
+// Lo scoresheet aperto su questo dispositivo (per riprenderlo anche da un altro telefono).
+let curUnsub = null, curId = null;
+function watchReferto(id, cb) {
+  if (id === curId) return;
+  if (curUnsub) curUnsub();
+  curUnsub = null; curId = id; raw.refertoCur = null;
+  if (id) curUnsub = onSnapshot(doc(db, 'referti', id), s => { raw.refertoCur = s.exists() ? unpackRef(id, s.data()) : null; if (cb) cb(raw.refertoCur); }, onError);
+}
+// nomi delle due squadre salvati in due campi (niente liste dentro liste nel database)
+const unpackRef = (id, r) => Object.assign({}, r, { id, nomi: r.nomi0 ? [r.nomi0, r.nomi1 || []] : r.nomi || [[], []] });
+const saveReferto = (id, data) => setDoc(doc(db, 'referti', id), Object.assign({}, data, { at: Date.now() }), { merge: true });
+const deleteReferto = id => deleteDoc(doc(db, 'referti', id));
+
+// Account dei campi: li crea l'admin con un'app secondaria (così resta collegato con il proprio account).
+async function createScorer(email, password, campo, tid) {
+  const app2 = initializeApp(firebaseConfig, 'campo-' + Date.now());
+  const auth2 = getAuth(app2);
+  if (useEmulator) connectAuthEmulator(auth2, 'http://127.0.0.1:9099', { disableWarnings: true });
+  try {
+    const cred = await createUserWithEmailAndPassword(auth2, email.trim(), password);
+    await setDoc(doc(db, 'scorers', cred.user.uid), { email: email.trim(), campo: String(campo).trim(), tid: tid || '' });
+    await signOut(auth2);
+  } catch (e) { throw authError(e); } finally { deleteApp(app2).catch(() => {}); }
+}
+const updateScorer = (id, patch) => updateDoc(doc(db, 'scorers', id), patch);
+const deleteScorer = id => deleteDoc(doc(db, 'scorers', id));
+
 const mioRef = () => doc(db, 'mio', user.uid);
 function saveMio(patch) { rebuild(); refresh(); return setDoc(mioRef(), patch, { merge: true }); }
 function saveGruppo(id, nome, membri) {
@@ -361,6 +406,9 @@ window.Cloud = {
   get allUsers() { return allUsers; },
   get lastError() { return lastError; },
   get verified() { return !!user && user.emailVerified; },
+  get scorer() { return scorer; },
+  get refertoCur() { return raw.refertoCur; },
+  watchReferti, watchReferto, saveReferto, deleteReferto, createScorer, updateScorer, deleteScorer,
   resendVerification,
   checkVerified,
   isMain,

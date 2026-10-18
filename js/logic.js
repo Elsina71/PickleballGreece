@@ -39,7 +39,7 @@ const Logic = (() => {
 
   function defaultConfig() {
     return {
-      sets: 1, punti: 11, puntiDecisivo: 11,
+      sets: 1, punti: 11, puntiDecisivo: 11, sistema: 'sideout',
       poolSize: 4, qualify: 2, poolType: 'rr', thirdPlace: true,
       turni: 5, campi: 0, criterio: 'punti',
       poolPlayers: 8, poolTurni: 4, finalisti: 8,

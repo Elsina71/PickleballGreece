@@ -104,6 +104,31 @@ service cloud.firestore {
       allow delete: if signedIn() && (resource.data.by == request.auth.uid || isAdmin());
     }
 
+    // Account dei campi (scoresheet a bordo campo): li gestisce l'admin.
+    match /scorers/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow write: if isAdmin();
+    }
+    function scorerFor(tid) {
+      return signedIn() && exists(/databases/$(database)/documents/scorers/$(request.auth.uid))
+        && get(/databases/$(database)/documents/scorers/$(request.auth.uid)).data.tid in ['', tid];
+    }
+    function tourMgr(tid) {
+      let t = get(/databases/$(database)/documents/tournaments/$(tid)).data;
+      return signedIn() && (t.owner == request.auth.uid || legaAdmin(t.lega));
+    }
+    // Scoresheet delle gare (pubblici: punteggio in diretta). Li compilano admin, organizzatori e account dei campi;
+    // il risultato entra nel torneo solo quando l'organizzatore lo conferma (stato "omologato").
+    match /referti/{id} {
+      allow read: if true;
+      function okRef() { return signedIn() && data().tid is string && id.matches(data().tid + '__.+') && data().ev is list && data().ev.size() <= 3000; }
+      allow create: if okRef() && (scorerFor(data().tid) ? data().stato in ['live', 'finito'] : (isTourAdmin() || tourMgr(data().tid)));
+      // l'account del campo non tocca più lo scoresheet dopo la conferma dell'organizzatore
+      allow update: if okRef() && data().tid == resource.data.tid
+        && (scorerFor(data().tid) ? (data().stato in ['live', 'finito'] && resource.data.stato in ['live', 'finito']) : (isTourAdmin() || tourMgr(data().tid)));
+      allow delete: if signedIn() && (isTourAdmin() || tourMgr(resource.data.tid));
+    }
+
     // Documento personale: gruppi di invito salvati e avvisi nascosti ("Non mi interessa").
     match /mio/{uid} {
       allow read, delete: if isSelf(uid);

@@ -11,6 +11,12 @@ const App = (() => {
   const canTours = () => isAdmin() || (!!me() && me().role === 'tornei') || (!!curTour && !!me() && (curTour.owner === me().id
     || (!!curTour.lega && ((S().leghe || []).find(l => l.id === curTour.lega) || { admins: [] }).admins.includes(me().id))));
 
+  // Account di un campo (tablet a bordo campo): compila gli scoresheet.
+  const scorerNow = () => (window.Cloud && window.Cloud.scorer) || null;
+  // chi gestisce il torneo t (anche fuori dalla sua pagina)
+  const tourMgr = t => !!t && (isAdmin() || (!!me() && me().role === 'tornei') || (!!me() && !me().pending && (t.owner === me().id
+    || (!!t.lega && ((S().leghe || []).find(l => l.id === t.lega) || { admins: [] }).admins.includes(me().id)))));
+  const canScore = t => !!t && !t.closed && !t.tempo && (tourMgr(t) || (!!scorerNow() && (!scorerNow().tid || scorerNow().tid === t.id)));
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const todayKey = () => new Date().toLocaleDateString('sv');
   const nowHM = () => new Date().toTimeString().slice(0, 5);
@@ -676,7 +682,7 @@ const App = (() => {
     const list = S().tournaments.slice().sort((a, b) => (a.data || '').localeCompare(b.data || ''));
     const open = list.filter(t => !t.closed), done = list.filter(t => t.closed).reverse();
     return `
-      ${sectionHead('<span class="h1">' + T("Tornei") + '</span>', canTours() ? `<button class="btn primary" data-action="tour-new">${T("{0} Nuovo torneo", [icon('plus')])}</button>` : '')}
+      ${sectionHead('<span class="h1">' + T("Tornei") + '</span>', `<span class="actions"><a class="btn" href="#/referto/libero">${T("{0} Scoresheet libero", [icon('clipboard-text')])}</a>${canTours() ? `<button class="btn primary" data-action="tour-new">${T("{0} Nuovo torneo", [icon('plus')])}</button>` : ''}</span>`)}
       <section>${sectionHead(T("In corso e in programma"))}
         ${open.length ? `<div class="grid">${open.map(tourCard).join('')}</div>` : empty(T("Nessun torneo in programma."), 'trophy')}</section>
       <section>${sectionHead(T("Conclusi"))}
@@ -695,12 +701,14 @@ const App = (() => {
     const w = m.stats ? m.stats.winner : null;
     const canEdit = canTours() && !t.closed && names.ok;
     const tag = canEdit ? 'button' : 'div';
-    return `<${tag} class="match ${m.stats ? 'played' : ''} ${canEdit ? 'editable' : ''}" ${canEdit ? `data-action="result" data-key="${m.key}"` : ''}>
+    const row = `<${tag} class="match ${m.stats ? 'played' : ''} ${canEdit ? 'editable' : ''}" ${canEdit ? `data-action="result" data-key="${m.key}"` : ''}>
       ${label ? `<span class="match-label">${label}</span>` : ''}
       <span class="side ${w === 'a' ? 'win' : ''}">${names[0]}</span>
       <span class="score">${m.stats ? esc(scoreText(m)) : canEdit ? icon('pencil') : 'vs'}</span>
       <span class="side right ${w === 'b' ? 'win' : ''}">${names[1]}</span>
     </${tag}>`;
+    const live = names.ok && !t.tempo ? window.Referto.liveChip(t, m) : '', link = names.ok && !t.tempo ? window.Referto.matchLink(t, m) : '';
+    return live || link ? `<div class="match-wrap">${row}<span class="match-extra">${live}${link}</span></div>` : row;
   }
 
   function teamNames(t, m, fallback) {
@@ -812,6 +820,7 @@ const App = (() => {
       ${pdfSections(t).length ? `<p class="pdf-row"><button type="button" class="btn small" data-action="tour-pdf" data-id="${t.id}">${T("{0} Scarica calendario (PDF)", [icon('file-download')])}</button></p>` : ''}
       ${timerBlock(t)}
       <nav class="tabs">${tabs.map(([k, l]) => `<button class="${k === tab ? 'on' : ''} ${k === 'scheda' ? 'tab-admin' : ''}" data-action="tour-tab" data-id="${t.id}" data-tab="${k}">${k === 'scheda' ? icon('adjustments') + ' ' : ''}${l}</button>`).join('')}</nav>
+      ${window.Referto.pendingBlock(t)}
       <div class="tab-body">${body}</div>`;
   }
 
@@ -1226,6 +1235,31 @@ const App = (() => {
   }
 
   // Tutte le partite del torneo (per la finestra del risultato).
+  // Nomi dei giocatori di un lato della gara (squadra iscritta o coppia dell'americana), in chiaro.
+  function sidePlayers(t, side) {
+    const nm = id => { const e = t.entries.find(x => x.id === id); return e ? guestName(e) || userName(e.p1) : '—'; };
+    if (Array.isArray(side)) return side.map(nm);
+    const e = t.entries.find(x => x.id === side);
+    if (!e) return ['—'];
+    const out = [guestName(e) || userName(e.p1)];
+    if (isPairs(t) && e.p2) out.push(userName(e.p2));
+    return out;
+  }
+  // Tutte le gare con le due squadre note (per lo scoresheet).
+  function tourMatches(t) {
+    if (!t || t.tempo) return [];
+    let out = [];
+    if (t.americana) out = Logic.americanaMatches(t);
+    else if (t.fantasma) out = t.fantasma.pools.flatMap((_, pi) => Logic.fantasmaPoolMatches(t, pi)).concat(Logic.fantasmaKo(t).flatMap(rd => rd.matches));
+    else {
+      if (t.pools) t.pools.forEach((_, pi) => out.push(...Logic.poolMatches(t, pi)));
+      const cm = Logic.computeMain(t);
+      if (cm && cm.type === 'single') { out.push(...cm.rounds.flat()); if (cm.third) out.push(cm.third); }
+      if (cm && cm.type === 'double') out.push(...cm.wb.flat(), ...cm.lb.flat(), cm.gf);
+    }
+    return out.filter(m => m && !m.bye && (Array.isArray(m.a) ? m.a.length && m.b && m.b.length : Logic.real(m.a) && Logic.real(m.b)));
+  }
+
   function findMatch(t, key) {
     if (t.tempo) return Logic.tempoMatches(t).find(m => m.key === key);
     if (t.americana) return Logic.americanaMatches(t).find(m => m.key === key);
@@ -1403,6 +1437,7 @@ const App = (() => {
             <label>${T("Punti per set")}<select name="punti">${pts(c.punti)}</select></label>
             <label data-show-sets>${T("Terzo set ai")}<select name="puntiDecisivo">${pts(c.puntiDecisivo)}</select></label>
           </div>
+          <label>${T("Sistema di punteggio (scoresheet)")}<select name="sistema"><option value="sideout">${T("Classico (punto solo a chi serve)")}</option><option value="rally" ${c.sistema === 'rally' ? 'selected' : ''}>${T("Rally scoring (ogni scambio è un punto)")}</option></select></label>
         </fieldset>
         <fieldset data-show="gironi_ko"><legend>${T("Gironi")}</legend>
           <div class="row">
@@ -2186,6 +2221,10 @@ const App = (() => {
   function viewProfile() {
     const u = me();
     if (!u) return viewAuth();
+    if (scorerNow()) return `<h1>${T("Account del campo {0}", [esc(scorerNow().campo)])}</h1>
+      <p class="muted">${esc(window.Cloud.user.email)}</p>
+      <section class="card"><p>${T("Con questo account compili gli scoresheet delle gare dei tornei.")}</p>
+        <div class="actions"><a class="btn primary" href="#/campo">${T("{0} Le mie gare", [icon('clipboard-text')])}</a><button class="btn" data-action="logout">${T("Esci")}</button></div></section>`;
     const s = S();
     const courses = s.courses.filter(c => c.iscritti.includes(u.id));
     const tours = s.tournaments.filter(t => t.entries.some(e => e.p1 === u.id || e.p2 === u.id));
@@ -2263,6 +2302,43 @@ const App = (() => {
 
   // ---------- amministrazione ----------
 
+  // ---------- le gare per lo scoresheet (account dei campi e organizzatori) ----------
+  function viewCampo(tid) {
+    const sc = scorerNow();
+    const tours = S().tournaments.filter(t => !t.closed && t.seeds && !t.tempo && canScore(t));
+    if (!tours.length) return `<h1>${T("{0} Le mie gare", [icon('clipboard-text')])}</h1>` + empty(sc ? T("Nessun torneo in corso per questo campo.") : T("Nessun torneo in corso da refertare."), 'clipboard-text');
+    const t = tid ? tours.find(x => x.id === tid) : tours.length === 1 ? tours[0] : null;
+    if (!t) return `<h1>${T("{0} Le mie gare", [icon('clipboard-text')])}</h1>${sc ? `<p class="muted">${T("Campo {0}", [esc(sc.campo)])}</p>` : ''}
+      <div class="grid">${tours.map(x => `<a class="card" href="#/campo/${x.id}"><h3>${esc(x.nome)}</h3><p class="muted small">${fmtDate(x.data, true)}</p></a>`).join('')}</div>`;
+    curTour = t;
+    const ms = tourMatches(t).filter(m => !m.stats);
+    return `<p>${tours.length > 1 ? `<a href="#/campo">${T("{0} Tutti i tornei", [icon('arrow-left')])}</a>` : ''}</p>
+      <h1>${T("{0} Le mie gare", [icon('clipboard-text')])}</h1>
+      <p class="muted">${esc(t.nome)}${sc ? ' · ' + T("Campo {0}", [esc(sc.campo)]) : ''}</p>
+      ${ms.length ? ms.map(m => `<div class="match-wrap"><div class="match"><span class="side">${esc(sidePlayers(t, m.a).join(' / '))}</span><span class="score">${m.label ? esc(m.label) : 'vs'}</span><span class="side right">${esc(sidePlayers(t, m.b).join(' / '))}</span></div>
+          <span class="match-extra">${window.Referto.liveChip(t, m)}<a class="btn small primary" href="#/referto/${t.id}/${encodeURIComponent(m.key)}">${icon('clipboard-text')} ${T("Scoresheet")}</a></span></div>`).join('')
+        : empty(T("Tutte le gare hanno già il risultato."), 'circle-check')}`;
+  }
+
+  function scorersCard() {
+    const list = S().scorers || [];
+    const opts = sel => `<option value="">${T("Tutti i tornei")}</option>` + S().tournaments.filter(t => !t.closed).map(t => `<option value="${t.id}" ${t.id === sel ? 'selected' : ''}>${esc(t.nome)}</option>`).join('');
+    return `<section class="card" id="scorers">
+      <h2>${T("{0} Account dei campi (scoresheet)", [icon('device-tablet')])}</h2>
+      <p class="muted small">${T("Un account per ogni campo, da usare sul tablet o sul telefono a bordo campo: vede le gare dei tornei e compila gli scoresheet. I risultati restano in attesa finché l’organizzatore non li conferma.")}</p>
+      ${list.length ? `<ul class="plain scorer-list">${list.map(x => `<li><span class="badge">${T("Campo {0}", [esc(x.campo)])}</span> ${esc(x.email)}
+          <select data-change="scorer-tour" data-id="${x.id}" aria-label="${T("Torneo")}">${opts(x.tid)}</select>
+          <button class="btn small danger" data-action="scorer-remove" data-id="${x.id}">${T("Disattiva")}</button></li>`).join('')}</ul>` : `<p class="muted">${T("Nessun account dei campi.")}</p>`}
+      <form data-form="scorer-add" autocomplete="off">
+        <div class="row"><label>${T("Campo")}<input name="campo" required maxlength="20" placeholder="1"></label>
+          <label>${T("Email dell’account")}<input name="email" type="email" required placeholder="campo1@…" autocapitalize="off" spellcheck="false"></label>
+          <label>${T("Password")}<input name="password" type="text" required minlength="6" autocapitalize="off" spellcheck="false"></label></div>
+        <label>${T("Torneo")}<select name="tid">${opts('')}</select></label>
+        <p class="form-error" hidden></p>
+        <div class="actions"><button class="btn primary">${T("{0} Crea l’account del campo", [icon('user-plus')])}</button></div>
+      </form></section>`;
+  }
+
   function viewAdmin() {
     if (!isAdmin()) return empty(T("Area riservata agli amministratori."), 'lock');
     const s = S(), st = s.settings;
@@ -2270,6 +2346,7 @@ const App = (() => {
     const users = s.users.slice().sort((a, b) => (a.cognome + a.nome).localeCompare(b.cognome + b.nome));
     return `
       <h1>${T("Amministrazione")}</h1>
+      ${scorersCard()}
       <div class="grid two">
         <section class="card">
           <h2>${T("{0} Spazio editoriale della home", [icon('news')])}</h2>
@@ -2368,10 +2445,17 @@ const App = (() => {
     // Stile salvato nel profilo: si applica quando l'utente accede.
     if (u0 && u0.tema && u0.id + u0.tema !== themeFor) { themeFor = u0.id + u0.tema; applyTheme(u0.tema); }
     if (fixData()) { save(); return; }
+    // diretta degli scoresheet solo per il torneo che si sta guardando
+    if (window.Cloud && window.Cloud.watchReferti) window.Cloud.watchReferti((page === 'tornei' || page === 'campo') && parts[1] ? parts[1] : null);
+    if (page !== 'referto' && window.Referto) window.Referto.close();
+    // l'account del campo, appena entrato, va alle sue gare
+    if (scorerNow() && !ui.campoRouted && (page === '' || page === 'profilo')) { ui.campoRouted = true; location.hash = '#/campo'; return; }
     let html;
     if (!Store.ready && page !== 'profilo') html = loadingView();
     else if (page === 'tornei' && parts[1]) html = viewTournament(parts[1]);
     else if (page === 'leghe' && parts[1]) html = viewLega(parts[1]);
+    else if (page === 'referto') html = window.Referto.view(parts);
+    else if (page === 'campo') html = viewCampo(parts[1]);
     else html = (VIEWS[page] || viewHome)();
     if (page === 'profilo' && u0 && !u0.pending && Store.ready) setTimeout(() => loadCount(u0.id), 0);
     if (Store.ready || page === 'profilo') html = verifyNotice() + html;
@@ -2380,6 +2464,7 @@ const App = (() => {
     $app.innerHTML = html;
     document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('on', a.dataset.nav === page));
     document.querySelectorAll('[data-admin-only]').forEach(el => { el.hidden = !isAdmin(); });
+    document.querySelectorAll('[data-scorer-only]').forEach(el => { el.hidden = !scorerNow(); });
     const u = me();
     // Badge dell'utente al centro dell'header: stelle fedeltà, medaglie, trofeo, racchetta.
     const hb = document.getElementById('hdrBadges');
@@ -2390,7 +2475,8 @@ const App = (() => {
     const nb = document.getElementById('notifBtn');
     if (nb) { const n = notifList().length; nb.hidden = !n; nb.querySelector('.notif-count').textContent = n > 9 ? '9+' : n; }
     const who = document.getElementById('who');
-    who.innerHTML = u ? `<span class="avatar">${esc((u.nome[0] || '') + (u.cognome[0] || ''))}</span><span class="lbl">${esc(u.nome)}</span>` : `${icon('login-2')}<span class="lbl">${T("Accedi")}</span>`;
+    if (scorerNow()) who.innerHTML = `${icon('device-tablet')}<span class="lbl">${esc(T("Campo {0}", [scorerNow().campo]))}</span>`;
+    else who.innerHTML = u ? `<span class="avatar">${esc((u.nome[0] || '') + (u.cognome[0] || ''))}</span><span class="lbl">${esc(u.nome)}</span>` : `${icon('login-2')}<span class="lbl">${T("Accedi")}</span>`;
     if ($app.querySelector('form.tour-form')) syncTourForm();
     document.getElementById('clubName').textContent = S().settings.nome;
     document.title = S().settings.nome;
@@ -2405,7 +2491,7 @@ const App = (() => {
 
   function verifyNotice() {
     const u = me();
-    if (!u || !window.Cloud || window.Cloud.verified) return '';
+    if (!u || !window.Cloud || window.Cloud.verified || scorerNow()) return '';
     return `<div class="notice">${icon('mail')} <span>${T("Ti abbiamo inviato un’email a")} <strong>${esc(window.Cloud.user.email)}</strong>: ${T("apri il link per confermare l’indirizzo.\n      Finché non è confermato non puoi prenotare né iscriverti. Non la trovi? Guarda anche nello spam.")}</span>
       <button class="btn small primary" data-action="verify-check">${T("Ho confermato")}</button><button class="btn small" data-action="verify-resend">${T("Invia di nuovo")}</button></div>`;
   }
@@ -2542,6 +2628,10 @@ const App = (() => {
       if (!g || !confirm(T("Eliminare il gruppo «{0}»?", [g.nome]))) return;
       const chip = el.closest('.chip');
       window.Cloud.deleteGruppo(g.id).then(() => { if (chip) chip.remove(); }).catch(sfErr);
+    },
+    'scorer-remove': d => {
+      if (!confirm(T("Disattivare questo account del campo? Non potrà più compilare gli scoresheet."))) return;
+      window.Cloud.deleteScorer(d.id).then(() => toast(T("Account del campo disattivato."), 'ok')).catch(sfErr);
     },
     'sfide-punti-reset': () => {
       if (!confirm(T("Rimettere la tabella punti iniziale delle sfide?"))) return;
@@ -3103,7 +3193,7 @@ const App = (() => {
       let t = v.id ? tourById(v.id) : null;
       const formato = t && t.seeds ? t.formato : v.formato;
       const config = {
-        sets: Number(v.sets), punti: Number(v.punti), puntiDecisivo: Number(v.puntiDecisivo || v.punti),
+        sets: Number(v.sets), punti: Number(v.punti), puntiDecisivo: Number(v.puntiDecisivo || v.punti), sistema: v.sistema === 'rally' ? 'rally' : 'sideout',
         poolSize: Number(v.poolSize) || 4, qualify: Number(v.qualify) || 1, poolType: v.poolType,
         thirdPlace: f.elements.thirdPlace.checked, criterio: v.criterio,
         turni: Number(formato === 'americana_tempo' ? v.tTurni : v.turni) || 1, campi: Number(formato === 'americana_tempo' ? v.tCampi : v.campi) || 0,
@@ -3258,6 +3348,11 @@ const App = (() => {
       save();
       toast(T("Premi salvati."), 'ok');
     },
+    'scorer-add': (v, f) => {
+      const btn = f.querySelector('button.primary'); btn.disabled = true;
+      window.Cloud.createScorer(v.email, v.password, v.campo, v.tid).then(() => { f.reset(); toast(T("Account del campo creato: entra con quell’email e password sul tablet del campo."), 'ok'); })
+        .catch(e => formError(f, e.message)).finally(() => { btn.disabled = false; });
+    },
     'sfide-punti': (v, f) => {
       const rows = parseRows(v.rows);
       if (!rows || !rows.length) return toast(T("Inserisci almeno una riga, es. 1=100."), 'err');
@@ -3307,6 +3402,11 @@ const App = (() => {
   // Azioni consentite senza essere amministratori.
   const PUBLIC = new Set(['lang', 'set-lang', 'am-sort', 'tour-pdf', 'pick-date', 'timer-sound', 'timer-full', 'rank-cat', 'close-dialog', 'theme', 'set-theme', 'logout', 'reset-password', 'verify-resend', 'verify-check', 'auth-tab', 'day', 'band', 'slot', 'sel-clear', 'sel-shorter', 'sel-longer', 'booking-open', 'booking-confirm', 'booking-delete', 'notice-dismiss', 'tour-tab', 'tour-join', 'tour-leave', 'player', 'course-join', 'course-leave']);
   const PUBLIC_FORMS = new Set(['login', 'register', 'profile', 'entry']);
+  Object.assign(actions, window.Referto.actions);
+  Object.assign(forms, window.Referto.forms);
+  Object.keys(window.Referto.actions).forEach(a => PUBLIC.add(a));
+  Object.keys(window.Referto.forms).forEach(a => PUBLIC_FORMS.add(a));
+  window.Referto.init({ findMatch, sidePlayers, tourById, refresh, render: () => render(), toast, empty, icon, esc, canScore, tourMgr, S, save, formError, pdfLibs });
   // Azioni e moduli del gestore tornei.
   const TOUR = new Set(['tour-new', 'tour-edit', 'tour-toggle-reg', 'entry-add', 'entry-edit', 'entry-remove', 'entry-bulk', 'tour-draw', 'tour-undraw',
     'tour-redraw', 'tour-bracket', 'tour-close', 'tour-reopen', 'tour-delete', 'fantasma-next', 'fantasma-undo', 'final-pairs', 'result', 'result-clear',
@@ -3330,6 +3430,7 @@ const App = (() => {
     else actions[a](el.dataset, el, e);
   });
 
+  changes['scorer-tour'] = el => window.Cloud.updateScorer(el.dataset.id, { tid: el.value }).then(() => toast(T("Salvato."), 'ok')).catch(sfErr);
   document.addEventListener('change', e => {
     const el = e.target.closest('[data-change]');
     if (el && changes[el.dataset.change]) changes[el.dataset.change](el);
@@ -3346,6 +3447,7 @@ const App = (() => {
     }
   });
   document.addEventListener('change', e => { const f = e.target.closest && e.target.closest('form.sf-form'); if (f) f.dataset.dirty = '1'; });
+
 
   document.addEventListener('submit', e => {
     const f = e.target, name = f.dataset.form;
