@@ -60,5 +60,13 @@
   <script src="js/referto.js"></script>
   <script src="js/app.js"></script>
   <script type="module" src="js/cloud.js"></script>
+  <script>
+    // copia dell'app sul telefono (si apre anche senza internet)
+    if ('serviceWorker' in navigator) window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').then(() => {
+      // anche il file della lingua in uso
+      const l = document.querySelector('script[src^="js/lang/"]');
+      if (l && window.caches) caches.open('pbm-app-v1').then(c => c.add(l.getAttribute('src'))).catch(() => {});
+    }).catch(() => {}); });
+  </script>
 </body>
 </html>
