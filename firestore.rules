@@ -1,0 +1,122 @@
+rules_version = '2';
+
+// Pickleball Greece: regole di accesso al database.
+// - Tutti possono leggere circolo, giocatori (nome/cognome/sesso), tornei, corsi, occupazione dei campi.
+// - Email e telefono (raccolta "users") li vedono solo l'interessato e gli amministratori.
+// - Gli utenti registrati possono: modificare il proprio profilo, prenotare/annullare i propri slot,
+//   iscriversi/ritirarsi da tornei con iscrizioni aperte e dai corsi.
+// - Tutto il resto solo gli amministratori (UID principale qui sotto + raccolta "admins").
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn()
+        && (request.auth.uid in []
+            || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+    // Gestore tornei: crea e gestisce i tornei, senza gli altri poteri dell'amministratore.
+    function isTourAdmin() {
+      return isAdmin() || (signedIn() && exists(/databases/$(database)/documents/tourAdmins/$(request.auth.uid)));
+    }
+    function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
+    // Utente con indirizzo email confermato (link ricevuto dopo la registrazione).
+    function verified() { return signedIn() && request.auth.token.email_verified == true; }
+    function data() { return request.resource.data; }
+    function shortText(v, max) { return v is string && v.size() <= max; }
+
+    match /data/{docId} {
+      allow read: if true;
+      allow write: if isAdmin() && docId in ['settings', 'articoli'];
+    }
+
+    match /players/{uid} {
+      allow read: if true;
+      allow write: if isAdmin();
+      allow create, update: if isSelf(uid)
+        && data().keys().hasOnly(['nome', 'cognome', 'sesso'])
+        && shortText(data().nome, 60) && shortText(data().cognome, 60) && data().sesso in ['M', 'F'];
+      // Il gestore tornei inserisce i giocatori senza account (sesso facoltativo nei tornei open).
+      allow create, update: if isTourAdmin()
+        && data().keys().hasOnly(['nome', 'cognome', 'sesso'])
+        && shortText(data().nome, 60) && shortText(data().cognome, 60) && data().sesso in ['M', 'F', ''];
+    }
+
+    match /tourAdmins/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /users/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow write: if isAdmin();
+      allow create, update: if isSelf(uid)
+        && data().keys().hasOnly(['email', 'tel', 'tema'])
+        && data().email == request.auth.token.email
+        && shortText(data().tel, 30) && shortText(data().tema, 20);
+    }
+
+    match /admins/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Un documento per ogni mezz'ora prenotata (campo/giorno/ora): se lo slot è già occupato
+    // da un altro la creazione è rifiutata. Ognuno può modificare e cancellare solo i propri slot.
+    function validSlot(id) {
+      return data().keys().hasOnly(['courtId', 'date', 'start', 'from', 'to', 'gid', 'userId', 'blocked', 'first'])
+        && id == data().date + '_' + data().courtId + '_' + data().start
+        && data().from <= data().start && data().start < data().to
+        && data().userId == request.auth.uid && data().blocked == '';
+    }
+
+    match /bookings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+      allow create: if verified() && validSlot(id);
+      allow update: if verified() && resource.data.userId == request.auth.uid && validSlot(id);
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Avvisi di prenotazioni modificate o cancellate: destinatario un utente o "admins".
+    match /notifiche/{id} {
+      allow read: if signedIn() && (resource.data.to == request.auth.uid || isAdmin());
+      allow create: if signedIn()
+        && data().keys().hasOnly(['to', 'text', 'at', 'by'])
+        && data().by == request.auth.uid && shortText(data().text, 400) && data().to is string;
+      allow delete: if signedIn() && (resource.data.to == request.auth.uid || isAdmin());
+    }
+
+    match /courses/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /enrollments/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+      allow create: if verified()
+        && data().keys().hasOnly(['courseId', 'userId', 'at'])
+        && data().userId == request.auth.uid
+        && id == data().courseId + '_' + request.auth.uid
+        && exists(/databases/$(database)/documents/courses/$(data().courseId));
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /tournaments/{id} {
+      allow read: if true;
+      allow write: if isTourAdmin();
+    }
+
+    match /entries/{id} {
+      allow read: if true;
+      allow write: if isTourAdmin();
+      allow create: if verified()
+        && data().keys().hasOnly(['tid', 'p1', 'p2', 'at'])
+        && data().p1 == request.auth.uid && data().p2 != request.auth.uid
+        && get(/databases/$(database)/documents/tournaments/$(data().tid)).data.open == true;
+      allow delete: if signedIn()
+        && (resource.data.p1 == request.auth.uid || resource.data.p2 == request.auth.uid)
+        && get(/databases/$(database)/documents/tournaments/$(resource.data.tid)).data.open == true;
+    }
+  }
+}

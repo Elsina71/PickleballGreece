@@ -1,0 +1,41 @@
+# Pubblica automaticamente l'app Pickleball Greece su Firebase (sito + regole del database)
+# a ogni modifica salvata sul ramo main.
+# Serve il secret del repository FIREBASE_SA_PICKLEBALLGREECE (Settings → Secrets and variables → Actions):
+# chiave JSON dell'account di servizio del progetto pickleballgreece-955da.
+name: Pubblica Pickleball Greece
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pubblica-pickleball-greece
+  cancel-in-progress: false
+
+jobs:
+  pubblica:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Credenziali Firebase
+        env:
+          FIREBASE_SA_PICKLEBALLGREECE: ${{ secrets.FIREBASE_SA_PICKLEBALLGREECE }}
+        run: |
+          if [ -z "$FIREBASE_SA_PICKLEBALLGREECE" ]; then
+            echo "::error::Manca il segreto FIREBASE_SA_PICKLEBALLGREECE nelle impostazioni del repository."
+            exit 1
+          fi
+          printf '%s' "$FIREBASE_SA_PICKLEBALLGREECE" > "$RUNNER_TEMP/firebase-key.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> "$GITHUB_ENV"
+      - name: Pubblicazione (sito e regole del database)
+        run: npx --yes firebase-tools@13 deploy --only hosting,firestore:rules --project pickleballgreece-955da --non-interactive
+      - name: Pulizia
+        if: always()
+        run: rm -f "$RUNNER_TEMP/firebase-key.json"
