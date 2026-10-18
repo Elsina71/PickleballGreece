@@ -33,5 +33,5 @@
       document.querySelectorAll('[data-t-aria]').forEach(el => { el.setAttribute('aria-label', T(el.getAttribute('aria-label'))); });
     }
   };
-  if (lang !== 'it') document.write(`<script src="js/lang/${lang}.js?v=8"><\/script>`);
+  if (lang !== 'it') document.write(`<script src="js/lang/${lang}.js?v=9"><\/script>`);
 })();

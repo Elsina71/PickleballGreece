@@ -1774,6 +1774,27 @@ const App = (() => {
       ${list.length > 3 ? `<p><button class="btn small" data-action="notifiche">${T("{0} Tutti gli avvisi ({1})", [icon('bell'), list.length])}</button></p>` : ''}</section>`;
   }
 
+  // ---------- calendario del telefono ----------
+  // Evento della sfida (2 ore) con due promemoria: il giorno prima e un'ora prima.
+  function sfEvent(x) {
+    const [y, mo, d] = x.data.split('-').map(Number), [h, mi] = (x.ora || '18:00').split(':').map(Number);
+    const start = new Date(y, mo - 1, d, h, mi), end = new Date(start.getTime() + 2 * 3600e3);
+    const f = dt => `${dt.getFullYear()}${String(dt.getMonth() + 1).padStart(2, '0')}${String(dt.getDate()).padStart(2, '0')}T${String(dt.getHours()).padStart(2, '0')}${String(dt.getMinutes()).padStart(2, '0')}00`;
+    const title = `${T("Sfida di pickleball")} · ${sfByName(x)}`, place = x.luogo || '', note = `${sfTipo(x)}${x.nota ? ' — ' + x.nota : ''} · ${location.origin}${location.pathname}#/sfide`;
+    return { start: f(start), end: f(end), title, place, note };
+  }
+  const icsText = s => String(s).replace(/\\/g, '\\\\').replace(/[,;]/g, m => '\\' + m).replace(/\n/g, '\\n');
+  function sfIcs(x) {
+    const e = sfEvent(x), now = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+    return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Pickleball Tribe//IT', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+      `UID:sfida-${x.id}@pickleballtribe`, `DTSTAMP:${now}`, `DTSTART:${e.start}`, `DTEND:${e.end}`, `SUMMARY:${icsText(e.title)}`, `LOCATION:${icsText(e.place)}`, `DESCRIPTION:${icsText(e.note)}`,
+      'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsText(e.title)}`, 'TRIGGER:-P1D', 'END:VALARM',
+      'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsText(e.title)}`, 'TRIGGER:-PT1H', 'END:VALARM',
+      'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  }
+  const sfGoogleUrl = x => { const e = sfEvent(x); return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}&dates=${e.start}/${e.end}&location=${encodeURIComponent(e.place)}&details=${encodeURIComponent(e.note)}`; };
+  const calBtn = x => `<button class="btn small" data-action="sf-cal" data-id="${x.id}">${icon('calendar-plus')} ${T("Aggiungi al calendario")}</button>`;
+
   // Avvisi (home e pagina Sfide).
   function sfideAlerts() {
     const u = me();
@@ -1789,7 +1810,7 @@ const App = (() => {
       out.push(`<div class="notice ${ok ? 'ok' : 'warn-box'}" role="alert">${icon(ok ? 'circle-check' : 'alert-triangle')}
         <span>${ok ? `${T("La tua partecipazione alla sfida di")} <strong>${esc(sfByName(x))}</strong> ${T("del {0} è", [sfWhen(x)])} <strong>${T("confermata")}</strong>.`
           : `<strong>${T("Registrazione alla sfida non confermata o non più posti disponibili")}</strong> — ${T("sfida di {0} del {1}.", [esc(sfByName(x)), sfWhen(x)])}`}</span>
-        <button class="btn small" data-action="sf-visto" data-id="${r.id}">${T("OK")}</button></div>`);
+        ${ok && !sfPast(x) ? calBtn(x) : ''}<button class="btn small" data-action="sf-visto" data-id="${r.id}">${T("OK")}</button></div>`);
     });
     return out.join('');
   }
@@ -1823,7 +1844,7 @@ const App = (() => {
     const pill = x.stato === 'chiusa' ? '<span class="badge">' + T("Chiusa") + '</span>' : past ? '<span class="badge">' + T("Passata") + '</span>' : sfFull(x) ? '<span class="badge live">' + T("Completa") + '</span>' : '<span class="badge ok">' + T("Aperta") + '</span>';
     let me_ = '';
     if (my) {
-      me_ = `<p>${sfStatoBadge(my)} ${['attesa', 'confermata'].includes(my.stato) && !past ? `<button class="btn small danger" data-action="sf-ritira" data-id="${my.id}">${T("Ritira la candidatura")}</button>` : ''}</p>`;
+      me_ = `<p>${sfStatoBadge(my)} ${my.stato === 'confermata' && !past ? calBtn(x) : ''} ${['attesa', 'confermata'].includes(my.stato) && !past ? `<button class="btn small danger" data-action="sf-ritira" data-id="${my.id}">${T("Ritira la candidatura")}</button>` : ''}</p>`;
     } else if (!mine && x.stato === 'aperta' && !past) {
       me_ = !u ? '<p><a class="btn small" href="#/profilo">' + T("Accedi per partecipare") + '</a></p>'
         : sfFull(x) ? '<p class="muted small">' + T("Posti esauriti.") + '</p>'
@@ -1842,6 +1863,7 @@ const App = (() => {
     const manage = canManage ? `<div class="actions wrap">
         ${x.stato === 'aperta' && !x.tid ? `<button class="btn small" data-action="sf-guest" data-id="${x.id}">${T("{0} Aggiungi un non registrato", [icon('user-plus')])}</button>
           <button class="btn small primary" data-action="sf-chiudi" data-id="${x.id}">${T("{0} Chiudi la sfida", [icon('lock')])}</button>` : ''}
+        ${mine && !past ? calBtn(x) : ''}
         ${!x.tid ? `<button class="btn small" data-action="sf-modifica" data-id="${x.id}">${T("{0} Modifica", [icon('edit')])}</button>` : ''}
         ${x.stato === 'chiusa' && !x.tid ? `<button class="btn small" data-action="sf-riapri" data-id="${x.id}">${T("{0} Riapri", [icon('lock-open')])}</button>` : ''}
         ${x.tipo === 'torneo' ? (t ? `<a class="btn small primary" href="#/tornei/${t.id}">${T("{0} Vai al torneo", [icon('trophy')])}</a>`
@@ -2613,6 +2635,26 @@ const App = (() => {
         <label>${T("Sesso")}<select name="sesso" required><option value="">—</option>${Object.entries(SESSI).map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
         <p class="form-error" hidden></p>
         <div class="actions"><button type="button" class="btn" data-action="close-dialog">${T("Annulla")}</button><button class="btn primary">${T("Aggiungi")}</button></div></form>`);
+    },
+    'sf-cal': d => {
+      const x = sfById(d.id);
+      if (!x) return;
+      openDialog(`<h2>${icon('calendar-plus')} ${T("Aggiungi al calendario")}</h2>
+        <p class="muted">${esc(sfEvent(x).title)} — ${sfWhen(x)}${x.luogo ? ' · ' + esc(x.luogo) : ''}</p>
+        <p class="small">${T("Con i promemoria il giorno prima e un’ora prima.")}</p>
+        <div class="actions wrap"><button class="btn primary" data-action="sf-ics" data-id="${x.id}">${icon('device-mobile')} ${T("Calendario del telefono")}</button>
+          <a class="btn" href="${sfGoogleUrl(x)}" target="_blank" rel="noopener">${icon('brand-google')} ${T("Google Calendar")}</a>
+          <button class="btn" data-action="close-dialog">${T("Chiudi")}</button></div>`);
+    },
+    'sf-ics': d => {
+      const x = sfById(d.id);
+      if (!x) return;
+      const blob = new Blob([sfIcs(x)], { type: 'text/calendar;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = `sfida-${x.data}.ics`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+      closeDialog();
     },
     notifiche: () => {
       const list = notifList();
@@ -3430,7 +3472,7 @@ const App = (() => {
     'timer-start', 'timer-pause', 'timer-resume', 'timer-reset']);
   const TOUR_FORMS = new Set(['tour', 'entry-bulk', 'result', 'final-pairs']);
   // Sfide: i controlli (accesso, chi organizza) sono nelle azioni e nelle regole del database.
-  const SFIDE = new Set(['sf-candida', 'sf-ritira', 'sf-risp', 'sf-guest', 'sf-guest-del', 'sf-chiudi', 'sf-riapri', 'sf-elimina', 'sf-torneo', 'sf-visto', 'sf-modifica', 'notifiche', 'notif-no', 'notif-vai', 'gruppo-usa', 'gruppo-salva', 'gruppo-elimina']);
+  const SFIDE = new Set(['sf-candida', 'sf-ritira', 'sf-risp', 'sf-guest', 'sf-guest-del', 'sf-chiudi', 'sf-riapri', 'sf-elimina', 'sf-torneo', 'sf-visto', 'sf-modifica', 'notifiche', 'notif-no', 'notif-vai', 'gruppo-usa', 'gruppo-salva', 'gruppo-elimina', 'sf-cal', 'sf-ics']);
   const SFIDE_FORMS = new Set(['sfida', 'sf-guest', 'sf-coppia', 'lega', 'sf-modifica']);
   ['lega-tab', 'lega-kind', 'lega-tour', 'lega-sfida', 'lega-remove-tour', 'lega-del-membro', 'lega-chiudi', 'lega-riapri'].forEach(a => SFIDE.add(a));
 

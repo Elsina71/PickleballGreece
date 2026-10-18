@@ -1200,5 +1200,10 @@ I18n.add('ro', {
  "Si cambia lato a {0} punti.": "Schimbare de teren la {0} puncte.",
  "Cambio campo durante il game": "Schimbare de teren în timpul game-ului",
  "In quali game": "În ce game-uri",
- "{0} La tua prossima sfida": "{0} Următoarea ta provocare"
+ "{0} La tua prossima sfida": "{0} Următoarea ta provocare",
+ "Sfida di pickleball": "Provocare de pickleball",
+ "Aggiungi al calendario": "Adaugă în calendar",
+ "Con i promemoria il giorno prima e un’ora prima.": "Cu mementouri cu o zi înainte și cu o oră înainte.",
+ "Calendario del telefono": "Calendarul telefonului",
+ "Google Calendar": "Google Calendar"
 });

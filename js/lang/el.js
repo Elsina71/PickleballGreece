@@ -1200,5 +1200,10 @@ I18n.add('el', {
  "Si cambia lato a {0} punti.": "Αλλαγή γηπέδου στους {0} πόντους.",
  "Cambio campo durante il game": "Αλλαγή γηπέδου κατά το game",
  "In quali game": "Σε ποια game",
- "{0} La tua prossima sfida": "{0} Η επόμενη πρόκλησή σου"
+ "{0} La tua prossima sfida": "{0} Η επόμενη πρόκλησή σου",
+ "Sfida di pickleball": "Πρόκληση pickleball",
+ "Aggiungi al calendario": "Προσθήκη στο ημερολόγιο",
+ "Con i promemoria il giorno prima e un’ora prima.": "Με υπενθυμίσεις την προηγούμενη μέρα και μία ώρα πριν.",
+ "Calendario del telefono": "Ημερολόγιο κινητού",
+ "Google Calendar": "Google Calendar"
 });

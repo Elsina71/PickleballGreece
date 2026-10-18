@@ -1200,5 +1200,10 @@ I18n.add('es', {
  "Si cambia lato a {0} punti.": "Cambio de lado a {0} puntos.",
  "Cambio campo durante il game": "Cambio de lado durante el game",
  "In quali game": "En qué games",
- "{0} La tua prossima sfida": "{0} Tu próximo reto"
+ "{0} La tua prossima sfida": "{0} Tu próximo reto",
+ "Sfida di pickleball": "Reto de pickleball",
+ "Aggiungi al calendario": "Añadir al calendario",
+ "Con i promemoria il giorno prima e un’ora prima.": "Con recordatorios el día antes y una hora antes.",
+ "Calendario del telefono": "Calendario del móvil",
+ "Google Calendar": "Google Calendar"
 });

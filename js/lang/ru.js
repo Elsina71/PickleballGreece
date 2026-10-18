@@ -1200,5 +1200,10 @@ I18n.add('ru', {
  "Si cambia lato a {0} punti.": "Смена сторон при {0} очках.",
  "Cambio campo durante il game": "Смена сторон во время гейма",
  "In quali game": "В каких геймах",
- "{0} La tua prossima sfida": "{0} Ваш следующий вызов"
+ "{0} La tua prossima sfida": "{0} Ваш следующий вызов",
+ "Sfida di pickleball": "Вызов по пиклболу",
+ "Aggiungi al calendario": "Добавить в календарь",
+ "Con i promemoria il giorno prima e un’ora prima.": "С напоминаниями за день и за час.",
+ "Calendario del telefono": "Календарь телефона",
+ "Google Calendar": "Google Календарь"
 });
