@@ -5,7 +5,7 @@ dati, utenti, amministratori e indirizzo sono indipendenti.
 
 - Progetto Firebase: `pickleballgreece-955da`
 - Indirizzo: https://pickleballgreece-955da.web.app
-- Pubblicazione automatica: `.github/workflows/pubblica.yml` (segreto `FIREBASE_SA_PICKLEBALLGREECE`)
+- Pubblicazione automatica: `.github/workflows/pubblica.yml` (segreto `PICKLEBALLGREECE`)
 - Amministratore principale: da indicare in `js/firebase-config.js` (`mainAdminUids`) e in `firestore.rules` dopo la prima registrazione.
 - Logo provvisorio in `img/` (da sostituire con quello del club).
 

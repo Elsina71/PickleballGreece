@@ -1,6 +1,6 @@
 # Pubblica automaticamente l'app Pickleball Greece su Firebase (sito + regole del database)
 # a ogni modifica salvata sul ramo main.
-# Serve il secret del repository FIREBASE_SA_PICKLEBALLGREECE (Settings → Secrets and variables → Actions):
+# Serve il secret del repository PICKLEBALLGREECE (o FIREBASE_SA_PICKLEBALLGREECE) (Settings → Secrets and variables → Actions):
 # chiave JSON dell'account di servizio del progetto pickleballgreece-955da.
 name: Pubblica Pickleball Greece
 
@@ -32,10 +32,11 @@ jobs:
           SA4: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           SA5: ${{ secrets.FIREBASE_SA }}
           SA6: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PICKLEBALLGREECE_955DA }}
+          SA7: ${{ secrets.PICKLEBALLGREECE }}
         run: |
           # Si accetta il primo segreto presente tra i nomi previsti (nel registro compare solo il nome, mai il contenuto).
           KEY=""; NAME=""
-          for n in 1:FIREBASE_SA_PICKLEBALLGREECE 2:FIREBASE_SA_PICKLEBALL_GREECE 3:FIREBASE_SA_PICKLEBALL 4:FIREBASE_SERVICE_ACCOUNT 5:FIREBASE_SA 6:FIREBASE_SERVICE_ACCOUNT_PICKLEBALLGREECE_955DA; do
+          for n in 7:PICKLEBALLGREECE 1:FIREBASE_SA_PICKLEBALLGREECE 2:FIREBASE_SA_PICKLEBALL_GREECE 3:FIREBASE_SA_PICKLEBALL 4:FIREBASE_SERVICE_ACCOUNT 5:FIREBASE_SA 6:FIREBASE_SERVICE_ACCOUNT_PICKLEBALLGREECE_955DA; do
             v="SA${n%%:*}"
             if [ -n "${!v}" ]; then KEY="${!v}"; NAME="${n#*:}"; break; fi
           done
