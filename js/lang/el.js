@@ -896,7 +896,7 @@ I18n.add('el', {
  "{0} secondi posti": "{0} δεύτερες θέσεις",
  "{0} terzi posti": "{0} τρίτες θέσεις",
  "Racchetta {0}: {1} tornei": "Ρακέτα {0}: {1} τουρνουά",
- "Pickleball Greece": "Pickleball Greece",
+ "Pickleball Tribe": "Pickleball Tribe",
  "Connessione al database non disponibile. Controlla la rete e ricarica la pagina.": "Η σύνδεση με τη βάση δεδομένων δεν είναι διαθέσιμη. Έλεγξε το δίκτυο και ανανέωσε τη σελίδα.",
  "Email o password non corretti.": "Λάθος email ή κωδικός.",
  "Email non valida.": "Μη έγκυρο email.",
@@ -1018,5 +1018,13 @@ I18n.add('el', {
  "Giocatore senza account.": "Παίκτης χωρίς λογαριασμό.",
  "uomini": "άνδρες",
  "donne": "γυναίκες",
- "persone": "άτομα"
+ "persone": "άτομα",
+ "{0} Punti delle sfide a torneo": "{0} Πόντοι τουρνουά προκλήσεων",
+ "La tabella che ricevono i tornei nati dalle sfide (e i nuovi tornei di lega). Stesso formato: posizione=punti, punti di coppia. Ogni torneo si può poi modificare nella sua scheda.": "Ο πίνακας που παίρνουν τα τουρνουά που προκύπτουν από προκλήσεις (και τα νέα τουρνουά λίγκας). Ίδια μορφή: θέση=πόντοι, πόντοι ανά ζευγάρι. Κάθε τουρνουά μπορεί μετά να αλλάξει στην καρτέλα του.",
+ "Ripristina i valori iniziali": "Επαναφορά αρχικών τιμών",
+ "Inserisci almeno una riga, es. 1=100.": "Γράψε τουλάχιστον μία γραμμή, π.χ. 1=100.",
+ "Punti delle sfide salvati.": "Οι πόντοι των προκλήσεων αποθηκεύτηκαν.",
+ "Sfida aggiornata.": "Η πρόκληση ενημερώθηκε.",
+ "Rimettere la tabella punti iniziale delle sfide?": "Επαναφορά του αρχικού πίνακα πόντων των προκλήσεων;",
+ "Modifica la sfida": "Επεξεργασία πρόκλησης"
 });

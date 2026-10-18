@@ -896,7 +896,7 @@ I18n.add('fr', {
  "{0} secondi posti": "{0} deuxièmes places",
  "{0} terzi posti": "{0} troisièmes places",
  "Racchetta {0}: {1} tornei": "Raquette {0} : {1} tournois",
- "Pickleball Greece": "Pickleball Greece",
+ "Pickleball Tribe": "Pickleball Tribe",
  "Connessione al database non disponibile. Controlla la rete e ricarica la pagina.": "Connexion à la base de données indisponible. Vérifie le réseau et recharge la page.",
  "Email o password non corretti.": "Email ou mot de passe incorrect.",
  "Email non valida.": "Email invalide.",
@@ -1018,5 +1018,13 @@ I18n.add('fr', {
  "Giocatore senza account.": "Joueur sans compte.",
  "uomini": "hommes",
  "donne": "femmes",
- "persone": "personnes"
+ "persone": "personnes",
+ "{0} Punti delle sfide a torneo": "{0} Points des tournois de défi",
+ "La tabella che ricevono i tornei nati dalle sfide (e i nuovi tornei di lega). Stesso formato: posizione=punti, punti di coppia. Ogni torneo si può poi modificare nella sua scheda.": "Le barème appliqué aux tournois créés à partir des défis (et aux nouveaux tournois de ligue). Même format : position=points, points par paire. Chaque tournoi peut ensuite être modifié dans sa fiche.",
+ "Ripristina i valori iniziali": "Rétablir les valeurs initiales",
+ "Inserisci almeno una riga, es. 1=100.": "Saisis au moins une ligne, ex. 1=100.",
+ "Punti delle sfide salvati.": "Points des défis enregistrés.",
+ "Sfida aggiornata.": "Défi mis à jour.",
+ "Rimettere la tabella punti iniziale delle sfide?": "Rétablir le barème initial des défis ?",
+ "Modifica la sfida": "Modifier le défi"
 });

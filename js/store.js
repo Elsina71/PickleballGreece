@@ -5,7 +5,7 @@ const Store = (() => {
   }
 
   function defaultSettings() {
-    return { nome: T("Pickleball Greece"), maxGiorno: 2, maxOre: 2, giorniAnticipo: 7, avviso: '', premi: null, sfidePunti: null };
+    return { nome: T("Pickleball Tribe"), maxGiorno: 2, maxOre: 2, giorniAnticipo: 7, avviso: '', premi: null, sfidePunti: null };
   }
 
   // Campo: nome, visibile (prenotabile) e orari di apertura per giorno della settimana (1 = lunedì … 7 = domenica).

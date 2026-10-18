@@ -1731,6 +1731,7 @@ const App = (() => {
     const manage = canManage ? `<div class="actions wrap">
         ${x.stato === 'aperta' && !x.tid ? `<button class="btn small" data-action="sf-guest" data-id="${x.id}">${T("{0} Aggiungi un non registrato", [icon('user-plus')])}</button>
           <button class="btn small primary" data-action="sf-chiudi" data-id="${x.id}">${T("{0} Chiudi la sfida", [icon('lock')])}</button>` : ''}
+        ${!x.tid ? `<button class="btn small" data-action="sf-modifica" data-id="${x.id}">${T("{0} Modifica", [icon('edit')])}</button>` : ''}
         ${x.stato === 'chiusa' && !x.tid ? `<button class="btn small" data-action="sf-riapri" data-id="${x.id}">${T("{0} Riapri", [icon('lock-open')])}</button>` : ''}
         ${x.tipo === 'torneo' ? (t ? `<a class="btn small primary" href="#/tornei/${t.id}">${T("{0} Vai al torneo", [icon('trophy')])}</a>`
           : `<button class="btn small primary" data-action="sf-torneo" data-id="${x.id}">${T("{0} Crea il torneo della sfida", [icon('tournament')])}</button>`) : ''}
@@ -2229,6 +2230,12 @@ const App = (() => {
           <div class="actions"><button class="btn" data-action="category-add">${T("{0} Aggiungi tipologia", [icon('plus')])}</button></div>
         </section>
         <section class="card">
+          <h2>${T("{0} Punti delle sfide a torneo", [icon('swords')])}</h2>
+          <p class="muted small">${T("La tabella che ricevono i tornei nati dalle sfide (e i nuovi tornei di lega). Stesso formato: posizione=punti, punti di coppia. Ogni torneo si può poi modificare nella sua scheda.")}</p>
+          <form data-form="sfide-punti"><label>${T("Punti")}<textarea name="rows" rows="6">${rowsText(st.sfidePunti || Logic.SFIDE_PUNTI)}</textarea></label>
+            <div class="actions"><button type="button" class="btn" data-action="sfide-punti-reset">${T("Ripristina i valori iniziali")}</button><button class="btn primary">${T("Salva")}</button></div></form>
+        </section>
+        <section class="card">
           <h2>${T("{0} Premi fedeltà e performance", [icon('award')])}</h2>
           ${(() => { const c = Premi.cfg(s); return `<form data-form="premi">
             <label>${T("Stelle fedeltà: sfide giocate per ogni stella (separate da virgola)")}<input name="stelle" value="${c.stelle.join(', ')}" placeholder="5, 10, 20, 35, 50"></label>
@@ -2434,6 +2441,34 @@ const App = (() => {
         <label>${T("Sesso")}<select name="sesso" required><option value="">—</option>${Object.entries(SESSI).map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
         <p class="form-error" hidden></p>
         <div class="actions"><button type="button" class="btn" data-action="close-dialog">${T("Annulla")}</button><button class="btn primary">${T("Aggiungi")}</button></div></form>`);
+    },
+    'sfide-punti-reset': () => {
+      if (!confirm(T("Rimettere la tabella punti iniziale delle sfide?"))) return;
+      S().settings.sfidePunti = null;
+      save();
+      toast(T("Punti delle sfide salvati."), 'ok');
+    },
+    'sf-modifica': d => {
+      const x = sfById(d.id);
+      if (!x || !(sfMine(x) || isAdmin())) return;
+      openDialog(`<form data-form="sf-modifica"><input type="hidden" name="id" value="${x.id}">
+        <h2>${T("Modifica la sfida")}</h2>
+        <div class="row">
+          <label>${T("Data")}${dateField('data', x.data, { required: true })}</label>
+          <label>${T("Ora")}<input type="time" name="ora" required value="${esc(x.ora)}"></label>
+          <label>${T("Campi")}<select name="campi"><option value="1">${T("1 campo")}</option><option value="2" ${x.campi === 2 ? 'selected' : ''}>${T("2 campi")}</option></select></label>
+        </div>
+        <label>${T("Luogo")}<input name="luogo" maxlength="80" value="${esc(x.luogo || '')}"></label>
+        <div class="row">
+          ${x.modo === 'sesso' ? `<label>${T("Uomini cercati")}<input type="number" min="0" max="40" name="cercaM" value="${Number(x.cercaM) || 0}"></label>
+          <label>${T("Donne cercate")}<input type="number" min="0" max="40" name="cercaF" value="${Number(x.cercaF) || 0}"></label>`
+          : `<label>${T("Persone cercate")}<input type="number" min="1" max="80" name="cercaTot" value="${Number(x.cercaTot) || 1}"></label>`}
+          <label>${T("Numero massimo di persone")}<input type="number" min="1" max="80" name="max" value="${Number(x.max) || 0}"></label>
+        </div>
+        ${levelsBox(x.livelli || [], T("Solo i giocatori di questi livelli possono partecipare. Nessuna casella = aperta a tutti i livelli."))}
+        <label>${T("Note (facoltative)")}<textarea name="nota" rows="2" maxlength="300">${esc(x.nota || '')}</textarea></label>
+        <p class="form-error" hidden></p>
+        <div class="actions"><button type="button" class="btn" data-action="close-dialog">${T("Annulla")}</button><button class="btn primary">${T("Salva")}</button></div></form>`);
     },
     'sf-guest-del': d => {
       const x = sfById(d.id);
@@ -3118,6 +3153,26 @@ const App = (() => {
       save();
       toast(T("Premi salvati."), 'ok');
     },
+    'sfide-punti': (v, f) => {
+      const rows = parseRows(v.rows);
+      if (!rows || !rows.length) return toast(T("Inserisci almeno una riga, es. 1=100."), 'err');
+      S().settings.sfidePunti = rows;
+      save();
+      toast(T("Punti delle sfide salvati."), 'ok');
+    },
+    'sf-modifica': (v, f) => {
+      const x = sfById(v.id);
+      if (!x || !(sfMine(x) || isAdmin())) return closeDialog();
+      const n = k => Math.max(0, Math.round(Number(v[k]) || 0));
+      const ch = { data: v.data, ora: v.ora, luogo: (v.luogo || '').trim(), campi: Number(v.campi) === 2 ? 2 : 1,
+        cercaM: n('cercaM'), cercaF: n('cercaF'), cercaTot: n('cercaTot'), max: n('max'), nota: (v.nota || '').trim(), livelli: readLevels(f) };
+      if (!ch.data || !ch.ora) return formError(f, T("Indica data e ora."));
+      const sought = x.modo === 'sesso' ? ch.cercaM + ch.cercaF : ch.cercaTot;
+      if (sought < 1) return formError(f, T("Indica quante persone cerchi."));
+      if (!ch.max) ch.max = sought;
+      if (ch.max < sought) return formError(f, `${T("Il numero massimo di persone non può essere minore di quelle cercate ({0}).", [sought])}`);
+      window.Cloud.updateSfida(x.id, ch).then(() => { closeDialog(); toast(T("Sfida aggiornata."), 'ok'); }).catch(sfErr);
+    },
     category: v => {
       Object.assign(S().categories.find(c => c.id === v.id), { nome: v.nome.trim() || T("Tipologia"), rows: parseRows(v.rows) });
       save();
@@ -3152,8 +3207,8 @@ const App = (() => {
     'timer-start', 'timer-pause', 'timer-resume', 'timer-reset']);
   const TOUR_FORMS = new Set(['tour', 'entry-bulk', 'result', 'final-pairs']);
   // Sfide: i controlli (accesso, chi organizza) sono nelle azioni e nelle regole del database.
-  const SFIDE = new Set(['sf-candida', 'sf-ritira', 'sf-risp', 'sf-guest', 'sf-guest-del', 'sf-chiudi', 'sf-riapri', 'sf-elimina', 'sf-torneo', 'sf-visto']);
-  const SFIDE_FORMS = new Set(['sfida', 'sf-guest', 'sf-coppia', 'lega']);
+  const SFIDE = new Set(['sf-candida', 'sf-ritira', 'sf-risp', 'sf-guest', 'sf-guest-del', 'sf-chiudi', 'sf-riapri', 'sf-elimina', 'sf-torneo', 'sf-visto', 'sf-modifica']);
+  const SFIDE_FORMS = new Set(['sfida', 'sf-guest', 'sf-coppia', 'lega', 'sf-modifica']);
   ['lega-tab', 'lega-kind', 'lega-tour', 'lega-sfida', 'lega-remove-tour', 'lega-del-membro', 'lega-chiudi', 'lega-riapri'].forEach(a => SFIDE.add(a));
 
   document.addEventListener('click', e => {

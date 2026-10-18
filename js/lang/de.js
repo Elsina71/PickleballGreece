@@ -896,7 +896,7 @@ I18n.add('de', {
  "{0} secondi posti": "{0} zweite Plätze",
  "{0} terzi posti": "{0} dritte Plätze",
  "Racchetta {0}: {1} tornei": "Schläger {0}: {1} Turniere",
- "Pickleball Greece": "Pickleball Greece",
+ "Pickleball Tribe": "Pickleball Tribe",
  "Connessione al database non disponibile. Controlla la rete e ricarica la pagina.": "Keine Verbindung zur Datenbank. Prüfe das Netzwerk und lade die Seite neu.",
  "Email o password non corretti.": "E-Mail oder Passwort falsch.",
  "Email non valida.": "Ungültige E-Mail.",
@@ -1018,5 +1018,13 @@ I18n.add('de', {
  "Giocatore senza account.": "Spieler ohne Konto.",
  "uomini": "Männer",
  "donne": "Frauen",
- "persone": "Personen"
+ "persone": "Personen",
+ "{0} Punti delle sfide a torneo": "{0} Punkte der Challenge-Turniere",
+ "La tabella che ricevono i tornei nati dalle sfide (e i nuovi tornei di lega). Stesso formato: posizione=punti, punti di coppia. Ogni torneo si può poi modificare nella sua scheda.": "Die Tabelle für Turniere aus Challenges (und neue Ligaturniere). Gleiches Format: Platz=Punkte, Punkte pro Paar. Jedes Turnier kann danach in seinem Steckbrief geändert werden.",
+ "Ripristina i valori iniziali": "Ursprungswerte wiederherstellen",
+ "Inserisci almeno una riga, es. 1=100.": "Gib mindestens eine Zeile ein, z. B. 1=100.",
+ "Punti delle sfide salvati.": "Challenge-Punkte gespeichert.",
+ "Sfida aggiornata.": "Challenge aktualisiert.",
+ "Rimettere la tabella punti iniziale delle sfide?": "Ursprüngliche Punktetabelle der Challenges wiederherstellen?",
+ "Modifica la sfida": "Challenge bearbeiten"
 });

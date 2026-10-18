@@ -896,7 +896,7 @@ I18n.add('pt', {
  "{0} secondi posti": "{0} segundos lugares",
  "{0} terzi posti": "{0} terceiros lugares",
  "Racchetta {0}: {1} tornei": "Raquete {0}: {1} torneios",
- "Pickleball Greece": "Pickleball Greece",
+ "Pickleball Tribe": "Pickleball Tribe",
  "Connessione al database non disponibile. Controlla la rete e ricarica la pagina.": "Ligação à base de dados indisponível. Verifica a rede e recarrega a página.",
  "Email o password non corretti.": "Email ou palavra-passe incorretos.",
  "Email non valida.": "Email inválido.",
@@ -1018,5 +1018,13 @@ I18n.add('pt', {
  "Giocatore senza account.": "Jogador sem conta.",
  "uomini": "homens",
  "donne": "mulheres",
- "persone": "pessoas"
+ "persone": "pessoas",
+ "{0} Punti delle sfide a torneo": "{0} Pontos dos torneios de desafio",
+ "La tabella che ricevono i tornei nati dalle sfide (e i nuovi tornei di lega). Stesso formato: posizione=punti, punti di coppia. Ogni torneo si può poi modificare nella sua scheda.": "A tabela que recebem os torneios criados a partir de desafios (e os novos torneios de liga). Mesmo formato: posição=pontos, pontos por dupla. Cada torneio pode depois ser alterado na sua ficha.",
+ "Ripristina i valori iniziali": "Repor os valores iniciais",
+ "Inserisci almeno una riga, es. 1=100.": "Escreve pelo menos uma linha, p. ex. 1=100.",
+ "Punti delle sfide salvati.": "Pontos dos desafios guardados.",
+ "Sfida aggiornata.": "Desafio atualizado.",
+ "Rimettere la tabella punti iniziale delle sfide?": "Repor a tabela de pontos inicial dos desafios?",
+ "Modifica la sfida": "Editar o desafio"
 });

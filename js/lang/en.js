@@ -896,7 +896,7 @@ I18n.add('en', {
  "{0} secondi posti": "{0} second places",
  "{0} terzi posti": "{0} third places",
  "Racchetta {0}: {1} tornei": "{0} paddle: {1} tournaments",
- "Pickleball Greece": "Pickleball Greece",
+ "Pickleball Tribe": "Pickleball Tribe",
  "Connessione al database non disponibile. Controlla la rete e ricarica la pagina.": "Database connection unavailable. Check your network and reload the page.",
  "Email o password non corretti.": "Incorrect email or password.",
  "Email non valida.": "Invalid email.",
@@ -1018,5 +1018,13 @@ I18n.add('en', {
  "Giocatore senza account.": "Player without an account.",
  "uomini": "men",
  "donne": "women",
- "persone": "people"
+ "persone": "people",
+ "{0} Punti delle sfide a torneo": "{0} Challenge tournament points",
+ "La tabella che ricevono i tornei nati dalle sfide (e i nuovi tornei di lega). Stesso formato: posizione=punti, punti di coppia. Ogni torneo si può poi modificare nella sua scheda.": "The table given to tournaments created from challenges (and to new league tournaments). Same format: position=points, points per pair. Each tournament can then be changed in its info sheet.",
+ "Ripristina i valori iniziali": "Restore the original values",
+ "Inserisci almeno una riga, es. 1=100.": "Enter at least one row, e.g. 1=100.",
+ "Punti delle sfide salvati.": "Challenge points saved.",
+ "Sfida aggiornata.": "Challenge updated.",
+ "Rimettere la tabella punti iniziale delle sfide?": "Restore the original challenge points table?",
+ "Modifica la sfida": "Edit the challenge"
 });

@@ -896,7 +896,7 @@ I18n.add('ru', {
  "{0} secondi posti": "Вторых мест: {0}",
  "{0} terzi posti": "Третьих мест: {0}",
  "Racchetta {0}: {1} tornei": "Ракетка {0}: {1} турниров",
- "Pickleball Greece": "Pickleball Greece",
+ "Pickleball Tribe": "Pickleball Tribe",
  "Connessione al database non disponibile. Controlla la rete e ricarica la pagina.": "Нет подключения к базе данных. Проверьте сеть и перезагрузите страницу.",
  "Email o password non corretti.": "Неверный email или пароль.",
  "Email non valida.": "Неверный email.",
@@ -1018,5 +1018,13 @@ I18n.add('ru', {
  "Giocatore senza account.": "Игрок без аккаунта.",
  "uomini": "мужчины",
  "donne": "женщины",
- "persone": "человек"
+ "persone": "человек",
+ "{0} Punti delle sfide a torneo": "{0} Очки турниров-вызовов",
+ "La tabella che ricevono i tornei nati dalle sfide (e i nuovi tornei di lega). Stesso formato: posizione=punti, punti di coppia. Ogni torneo si può poi modificare nella sua scheda.": "Таблица для турниров, созданных из вызовов (и для новых турниров лиги). Тот же формат: место=очки, очки на пару. Каждый турнир потом можно изменить в его карточке.",
+ "Ripristina i valori iniziali": "Восстановить исходные значения",
+ "Inserisci almeno una riga, es. 1=100.": "Введите хотя бы одну строку, напр. 1=100.",
+ "Punti delle sfide salvati.": "Очки вызовов сохранены.",
+ "Sfida aggiornata.": "Вызов обновлён.",
+ "Rimettere la tabella punti iniziale delle sfide?": "Восстановить исходную таблицу очков вызовов?",
+ "Modifica la sfida": "Изменить вызов"
 });

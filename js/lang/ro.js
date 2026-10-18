@@ -896,7 +896,7 @@ I18n.add('ro', {
  "{0} secondi posti": "{0} locuri doi",
  "{0} terzi posti": "{0} locuri trei",
  "Racchetta {0}: {1} tornei": "Paletă {0}: {1} turnee",
- "Pickleball Greece": "Pickleball Greece",
+ "Pickleball Tribe": "Pickleball Tribe",
  "Connessione al database non disponibile. Controlla la rete e ricarica la pagina.": "Conexiunea la baza de date nu e disponibilă. Verifică rețeaua și reîncarcă pagina.",
  "Email o password non corretti.": "Email sau parolă incorecte.",
  "Email non valida.": "Email invalid.",
@@ -1018,5 +1018,13 @@ I18n.add('ro', {
  "Giocatore senza account.": "Jucător fără cont.",
  "uomini": "bărbați",
  "donne": "femei",
- "persone": "persoane"
+ "persone": "persoane",
+ "{0} Punti delle sfide a torneo": "{0} Punctele turneelor din provocări",
+ "La tabella che ricevono i tornei nati dalle sfide (e i nuovi tornei di lega). Stesso formato: posizione=punti, punti di coppia. Ogni torneo si può poi modificare nella sua scheda.": "Tabelul primit de turneele create din provocări (și de noile turnee de ligă). Același format: poziție=puncte, puncte pe pereche. Fiecare turneu poate fi apoi modificat în fișa sa.",
+ "Ripristina i valori iniziali": "Restabilește valorile inițiale",
+ "Inserisci almeno una riga, es. 1=100.": "Scrie cel puțin un rând, de ex. 1=100.",
+ "Punti delle sfide salvati.": "Punctele provocărilor au fost salvate.",
+ "Sfida aggiornata.": "Provocare actualizată.",
+ "Rimettere la tabella punti iniziale delle sfide?": "Restabilești tabelul inițial de puncte al provocărilor?",
+ "Modifica la sfida": "Modifică provocarea"
 });

@@ -1,4 +1,4 @@
-# Pickleball Greece
+# Pickleball Tribe
 
 Copia dell'app **Pickleball Quattro Mori** (repository Repository-principale, cartella `pickleball-manager`) per un altro club, con un progetto Firebase separato:
 dati, utenti, amministratori e indirizzo sono indipendenti.
