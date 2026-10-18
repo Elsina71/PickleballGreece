@@ -1642,8 +1642,8 @@ const App = (() => {
       const l = line.replace(/^[\s\-–•*\d.)]+/, '').replace(/[\s\-–,;.:]+$/, '').trim();
       if (!l) return;
       const low = l.toLowerCase();
-      if (/(?<!\p{L})(donne|femminil[ei]|ragazze|women|females?|ladies|girls|γυναίκες|γυναικες|κορίτσια|mujeres|femenino|chicas|mulheres|feminino|raparigas|femmes|filles|féminines|frauen|damen|mädchen|femei|fete|женщины|девушки)(?!\p{L})/u.test(low)) { sex = 'F'; return; }
-      if (/(?<!\p{L})(uomini|maschil[ei]|ragazzi|men|males?|boys|άνδρες|ανδρες|άντρες|αντρες|αγόρια|hombres|masculino|chicos|homens|rapazes|hommes|garçons|masculins|männer|herren|jungen|bărbați|barbati|băieți|мужчины|парни)(?!\p{L})/u.test(low)) { sex = 'M'; return; }
+      if (/(?<!\p{L})(donne|femminil[ei]|ragazze|women|females?|ladies|girls|γυναίκες|γυναικες|κορίτσια|mujeres|femenino|chicas|mulheres|feminino|raparigas|femmes|filles|féminines|frauen|damen|mädchen|femei|fete|женщины|девушки|wanawake|mwanamke)(?!\p{L})/u.test(low)) { sex = 'F'; return; }
+      if (/(?<!\p{L})(uomini|maschil[ei]|ragazzi|men|males?|boys|άνδρες|ανδρες|άντρες|αντρες|αγόρια|hombres|masculino|chicos|homens|rapazes|hommes|garçons|masculins|männer|herren|jungen|bărbați|barbati|băieți|мужчины|парни|wanaume|mwanaume)(?!\p{L})/u.test(low)) { sex = 'M'; return; }
       const parts = l.split(/\s+/);
       // Righe di testo (frasi del messaggio) e non nomi: si saltano.
       if (parts.length < 2 || parts.length > 4 || /[^\p{L}\s'’-]/u.test(l) || parts.some(w => NOT_NAME.has(w.toLowerCase()))) return;

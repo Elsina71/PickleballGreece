@@ -10,7 +10,8 @@
     fr: { nome: 'Français', locale: 'fr-FR', flag: '🇫🇷' },
     de: { nome: 'Deutsch', locale: 'de-DE', flag: '🇩🇪' },
     ro: { nome: 'Română', locale: 'ro-RO', flag: '🇷🇴' },
-    ru: { nome: 'Русский', locale: 'ru-RU', flag: '🇷🇺' }
+    ru: { nome: 'Русский', locale: 'ru-RU', flag: '🇷🇺' },
+    sw: { nome: 'Kiswahili', locale: 'sw-KE', flag: '🇰🇪' }
   };
   const KEY = 'pbm-lingua';
   let saved = '';
