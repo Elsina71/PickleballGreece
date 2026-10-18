@@ -1197,5 +1197,7 @@ I18n.add('fr', {
  "nel game decisivo": "au game décisif",
  "a {0} punti": "à {0} points",
  "nessun cambio campo": "pas de changement de côté",
- "Si cambia lato a {0} punti.": "Changement de côté à {0} points."
+ "Si cambia lato a {0} punti.": "Changement de côté à {0} points.",
+ "Cambio campo durante il game": "Changement de côté pendant le game",
+ "In quali game": "Dans quels games"
 });

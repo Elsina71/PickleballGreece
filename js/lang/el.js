@@ -1197,5 +1197,7 @@ I18n.add('el', {
  "nel game decisivo": "στο αποφασιστικό game",
  "a {0} punti": "στους {0} πόντους",
  "nessun cambio campo": "χωρίς αλλαγή γηπέδου",
- "Si cambia lato a {0} punti.": "Αλλαγή γηπέδου στους {0} πόντους."
+ "Si cambia lato a {0} punti.": "Αλλαγή γηπέδου στους {0} πόντους.",
+ "Cambio campo durante il game": "Αλλαγή γηπέδου κατά το game",
+ "In quali game": "Σε ποια game"
 });

@@ -1197,5 +1197,7 @@ I18n.add('ro', {
  "nel game decisivo": "în game-ul decisiv",
  "a {0} punti": "la {0} puncte",
  "nessun cambio campo": "fără schimbare de teren",
- "Si cambia lato a {0} punti.": "Schimbare de teren la {0} puncte."
+ "Si cambia lato a {0} punti.": "Schimbare de teren la {0} puncte.",
+ "Cambio campo durante il game": "Schimbare de teren în timpul game-ului",
+ "In quali game": "În ce game-uri"
 });

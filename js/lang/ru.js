@@ -1197,5 +1197,7 @@ I18n.add('ru', {
  "nel game decisivo": "в решающем гейме",
  "a {0} punti": "при {0} очках",
  "nessun cambio campo": "без смены сторон",
- "Si cambia lato a {0} punti.": "Смена сторон при {0} очках."
+ "Si cambia lato a {0} punti.": "Смена сторон при {0} очках.",
+ "Cambio campo durante il game": "Смена сторон во время гейма",
+ "In quali game": "В каких геймах"
 });

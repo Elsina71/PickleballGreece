@@ -2452,7 +2452,7 @@ const App = (() => {
     // l'account del campo, appena entrato, va alle sue gare
     if (scorerNow() && !ui.campoRouted && (page === '' || page === 'profilo')) { ui.campoRouted = true; location.hash = '#/campo'; return; }
     let html;
-    if (!Store.ready && page !== 'profilo') html = loadingView();
+    if (!Store.ready && page !== 'profilo' && !(page === 'referto' && parts[1] === 'libero')) html = loadingView();
     else if (page === 'tornei' && parts[1]) html = viewTournament(parts[1]);
     else if (page === 'leghe' && parts[1]) html = viewLega(parts[1]);
     else if (page === 'referto') html = window.Referto.view(parts);

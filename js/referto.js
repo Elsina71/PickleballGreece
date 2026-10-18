@@ -13,13 +13,21 @@
   const shirt = (r, i) => (r.colori && r.colori[i] ? `<span class="shirt" style="background:${r.colori[i]}" title="${colorName(r.colori[i])}"></span>` : '');
   // scelte sul cambio campo (scoresheet libero e scheda del torneo)
   function ccFields(c) {
-    return `<fieldset><legend>${T("Cambio campo")}</legend><div class="row">
-      <label>${T("Tra un game e l’altro")}<select name="ccTra"><option value="1">${T("Sì")}</option><option value="0" ${c.ccTra === false ? 'selected' : ''}>${T("No")}</option></select></label>
-      <label>${T("Durante il game")}<select name="ccDurante"><option value="decisivo">${T("Solo nel game decisivo")}</option><option value="tutti" ${c.ccDurante === 'tutti' ? 'selected' : ''}>${T("In ogni game")}</option><option value="no" ${c.ccDurante === 'no' ? 'selected' : ''}>${T("Mai")}</option></select></label>
-      <label>${T("A quanti punti")}<input type="number" name="ccA" min="0" max="20" value="${Number(c.ccA) || ''}" placeholder="${T("a metà")}"></label></div>
+    const on = c.ccDurante !== 'no';
+    return `<fieldset class="cc-box"><legend>${T("Cambio campo")}</legend><div class="row">
+      <label>${T("Cambio campo durante il game")}<select name="ccSi" data-cc-toggle><option value="1">${T("Sì")}</option><option value="0" ${on ? '' : 'selected'}>${T("No")}</option></select></label>
+      <label>${T("A quanti punti")}<input type="number" name="ccA" min="1" max="20" value="${Number(c.ccA) || ''}" placeholder="${T("a metà")}" data-cc-on ${on ? '' : 'disabled'}></label>
+      <label>${T("In quali game")}<select name="ccDove" data-cc-on ${on ? '' : 'disabled'}><option value="decisivo">${T("Solo nel game decisivo")}</option><option value="tutti" ${c.ccDurante === 'tutti' ? 'selected' : ''}>${T("In ogni game")}</option></select></label>
+      <label>${T("Tra un game e l’altro")}<select name="ccTra"><option value="1">${T("Sì")}</option><option value="0" ${c.ccTra === false ? 'selected' : ''}>${T("No")}</option></select></label></div>
       <p class="muted small">${T("Vuoto = a metà del game (6 ai 11, 8 ai 15, 11 ai 21): si cambia quando una squadra arriva a quel punteggio.")}</p></fieldset>`;
   }
-  const readCc = v => ({ tra: v.ccTra !== '0', durante: ['no', 'tutti'].includes(v.ccDurante) ? v.ccDurante : 'decisivo', a: Math.max(0, Math.round(Number(v.ccA) || 0)) });
+  // Sì / No: con "No" la casella dei punti e la scelta dei game si spengono
+  document.addEventListener('change', e => {
+    if (!e.target.matches || !e.target.matches('[data-cc-toggle]')) return;
+    const on = e.target.value === '1';
+    e.target.closest('.cc-box').querySelectorAll('[data-cc-on]').forEach(el => { el.disabled = !on; });
+  });
+  const readCc = v => ({ tra: v.ccTra !== '0', durante: v.ccSi === '0' ? 'no' : v.ccDove === 'tutti' ? 'tutti' : 'decisivo', a: Math.max(0, Math.round(Number(v.ccA) || 0)) });
   const ccText = cfg => { const c = Score.ccCfg(cfg), parts = [];
     if (c.tra) parts.push(T("cambio campo tra i game"));
     if (c.durante !== 'no') parts.push(`${c.durante === 'tutti' ? T("in ogni game") : T("nel game decisivo")} ${Number(c.a) ? T("a {0} punti", [c.a]) : T("a metà")}`);
