@@ -674,3 +674,13 @@ fieldset.levels p { flex-basis: 100%; margin: 4px 0 0; }
 .lang-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 10px 0; }
 .lang-list .btn { justify-content: flex-start; }
 .lang-list .flag { font-size: 1.3em; }
+
+/* Avvisi e sfide private */
+.notif-btn { position: relative; }
+.notif-btn .notif-count { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: #e53935; color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; }
+.notice.notif { flex-wrap: wrap; }
+.notif-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.notif-list .notice { margin: 0 0 10px; }
+.invite-box .invite-list { max-height: 220px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 2px 12px; margin: 8px 0; padding: 6px; border: 1px solid var(--line, rgba(127,127,127,.3)); border-radius: 8px; }
+.invite-box .invite-groups .chip { display: inline-flex; gap: 4px; align-items: center; margin: 2px 4px 2px 0; }
+.invite-box .invite-save { align-items: flex-end; }

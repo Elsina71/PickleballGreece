@@ -90,14 +90,39 @@ service cloud.firestore {
       allow delete: if signedIn() && (resource.data.by == request.auth.uid || isAdmin());
     }
 
+    // Sfide private: le vedono solo chi le ha lanciate, gli invitati (utenti registrati) e gli admin.
+    match /sfideP/{id} {
+      allow read: if signedIn() && (resource.data.by == request.auth.uid || request.auth.uid in resource.data.invitati || isAdmin());
+      allow create: if (verified() || isAdmin()) && data().by == request.auth.uid
+        && data().data is string && data().ora is string && data().invitati is list && data().invitati.size() <= 300
+        && (!('lega' in data()) || data().lega == '' || isAdmin() || legaAdmin(data().lega));
+      allow update: if signedIn() && (resource.data.by == request.auth.uid || isAdmin())
+        && data().by == resource.data.by;
+      // l'invitato che entra (o esce) aggiorna solo il conteggio dei posti
+      allow update: if signedIn() && request.auth.uid in resource.data.invitati
+        && data().diff(resource.data).affectedKeys().hasOnly(['conf']);
+      allow delete: if signedIn() && (resource.data.by == request.auth.uid || isAdmin());
+    }
+
+    // Documento personale: gruppi di invito salvati e avvisi nascosti ("Non mi interessa").
+    match /mio/{uid} {
+      allow read, delete: if isSelf(uid);
+      allow create, update: if isSelf(uid) && data().keys().hasOnly(['ids', 'gruppi'])
+        && (!('ids' in data()) || (data().ids is list && data().ids.size() <= 2000))
+        && (!('gruppi' in data()) || (data().gruppi is map && data().gruppi.size() <= 100));
+    }
+
     // Candidature: id = sfida_utente; org = chi ha lanciato la sfida.
-    function sfidaOf(sid) { return get(/databases/$(database)/documents/sfide/$(sid)).data; }
+    function pubSfida(sid) { return exists(/databases/$(database)/documents/sfide/$(sid)); }
+    function sfidaOf(sid) { return pubSfida(sid) ? get(/databases/$(database)/documents/sfide/$(sid)).data : get(/databases/$(database)/documents/sfideP/$(sid)).data; }
     match /sfideRisp/{id} {
       allow read: if signedIn() && (resource.data.uid == request.auth.uid || resource.data.org == request.auth.uid || isAdmin());
       allow create: if (verified() || isAdmin())
         && data().uid == request.auth.uid && id == data().sid + '_' + request.auth.uid
-        && data().stato == 'attesa' && data().org == sfidaOf(data().sid).by
-        && sfidaOf(data().sid).stato == 'aperta' && data().org != request.auth.uid;
+        && data().org == sfidaOf(data().sid).by
+        && sfidaOf(data().sid).stato == 'aperta' && data().org != request.auth.uid
+        // nelle sfide private l'invitato entra direttamente (confermato)
+        && (data().stato == 'attesa' || (data().stato == 'confermata' && !pubSfida(data().sid) && request.auth.uid in sfidaOf(data().sid).invitati));
       // il candidato può solo ritirarsi o segnare come letto l'avviso; chi organizza (o l'admin) conferma o rifiuta
       allow update: if signedIn() && data().sid == resource.data.sid && data().uid == resource.data.uid && data().org == resource.data.org
         && (resource.data.org == request.auth.uid || isAdmin()

@@ -15,7 +15,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager, connectFirestoreEmulator,
-  doc, collection, onSnapshot, setDoc, deleteDoc, getDoc, addDoc, query, where, updateDoc
+  doc, collection, onSnapshot, setDoc, deleteDoc, getDoc, addDoc, query, where, updateDoc, increment
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import {
   getAuth, connectAuthEmulator, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
@@ -46,7 +46,7 @@ const isMain = id => mainAdminUids.includes(id);
 
 // ---------- dati ricevuti dal database ----------
 
-const raw = { leghe: {}, sfide: {}, rispOrg: {}, rispMie: {}, articoli: null, settings: null, players: {}, users: {}, admins: new Set(), tourAdmins: new Set(), bookings: {}, courses: {}, enrollments: {}, tournaments: {}, entries: {}, notifiche: {} };
+const raw = { leghe: {}, sfide: {}, sfidePAll: {}, sfidePInv: {}, sfidePMie: {}, gruppi: {}, nascosti: [], rispOrg: {}, rispMie: {}, articoli: null, settings: null, players: {}, users: {}, admins: new Set(), tourAdmins: new Set(), bookings: {}, courses: {}, enrollments: {}, tournaments: {}, entries: {}, notifiche: {} };
 const loaded = new Set();
 const NEEDED = ['settings', 'players', 'sfide', 'leghe', 'courses', 'enrollments', 'tournaments', 'entries'];
 
@@ -79,8 +79,13 @@ function rebuild() {
   });
   st.bookings = [];
   st.leghe = Object.entries(raw.leghe).map(([id, x]) => Object.assign({ admins: [], membri: [], stato: 'aperta' }, x.json ? JSON.parse(x.json) : {}, { id, admins: x.admins || [] }));
-  st.sfide = Object.entries(raw.sfide).map(([id, x]) => Object.assign({ guests: [], conf: {} }, x, { id }))
+  // sfide private (sfideP): le vedono solo chi le ha lanciate, gli invitati e gli admin
+  const priv = Object.assign({}, raw.sfidePAll, raw.sfidePInv, raw.sfidePMie);
+  st.sfide = Object.entries(raw.sfide).map(([id, x]) => Object.assign({ guests: [], conf: {} }, x, { id, privata: false }))
+    .concat(Object.entries(priv).map(([id, x]) => Object.assign({ guests: [], conf: {}, invitati: [] }, x, { id, privata: true })))
     .sort((a, b) => ((a.data || '') + (a.ora || '')).localeCompare((b.data || '') + (b.ora || '')));
+  st.gruppi = Object.entries(raw.gruppi).map(([id, g]) => Object.assign({ membri: [] }, g, { id })).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+  st.nascosti = raw.nascosti || [];
   st.risp = Object.entries(Object.assign({}, raw.rispOrg, raw.rispMie)).map(([id, x]) => Object.assign({}, x, { id }));
   st.notifiche = Object.entries(raw.notifiche).map(([id, n]) => Object.assign({ id }, n)).sort((a, b) => (b.at || 0) - (a.at || 0));
   const enr = Object.values(raw.enrollments).sort((a, b) => (a.at || 0) - (b.at || 0));
@@ -141,6 +146,7 @@ onAuthStateChanged(auth, async u => {
   raw.tourAdmins = new Set();
   raw.notifiche = {};
   raw.rispOrg = {}; raw.rispMie = {};
+  raw.sfidePAll = {}; raw.sfidePInv = {}; raw.sfidePMie = {}; raw.gruppi = {}; raw.nascosti = [];
   allUsers = false;
   isTourAdmin = false;
   if (u) {
@@ -154,6 +160,7 @@ onAuthStateChanged(auth, async u => {
       privUnsubs.push(listen('tourAdmins', collection(db, 'tourAdmins'), s => { raw.tourAdmins = new Set(s.docs.map(d => d.id)); }));
       privUnsubs.push(listen('notifiche', query(collection(db, 'notifiche'), where('to', 'in', [u.uid, 'admins'])), s => { raw.notifiche = byId(s); }));
       privUnsubs.push(listen('risp', collection(db, 'sfideRisp'), s => { raw.rispOrg = byId(s); }));
+      privUnsubs.push(listen('sfideP', collection(db, 'sfideP'), s => { raw.sfidePAll = byId(s); }));
     } else {
       try { isTourAdmin = (await getDoc(doc(db, 'tourAdmins', u.uid))).exists(); } catch (e) { isTourAdmin = false; }
       privUnsubs.push(listen('users', doc(db, 'users', u.uid), s => { raw.users = s.exists() ? { [u.uid]: s.data() } : {}; }));
@@ -161,7 +168,12 @@ onAuthStateChanged(auth, async u => {
       // candidature: le proprie e quelle alle sfide lanciate da questo utente
       privUnsubs.push(listen('rispMie', query(collection(db, 'sfideRisp'), where('uid', '==', u.uid)), s => { raw.rispMie = byId(s); }));
       privUnsubs.push(listen('rispOrg', query(collection(db, 'sfideRisp'), where('org', '==', u.uid)), s => { raw.rispOrg = byId(s); }));
+      // sfide private: quelle a cui si è invitati e quelle lanciate
+      privUnsubs.push(listen('sfidePInv', query(collection(db, 'sfideP'), where('invitati', 'array-contains', u.uid)), s => { raw.sfidePInv = byId(s); }));
+      privUnsubs.push(listen('sfidePMie', query(collection(db, 'sfideP'), where('by', '==', u.uid)), s => { raw.sfidePMie = byId(s); }));
     }
+    // un solo documento personale (una lettura): gruppi di invito e avvisi nascosti ("Non mi interessa")
+    privUnsubs.push(listen('mio', doc(db, 'mio', u.uid), s => { const d = s.exists() ? s.data() : {}; raw.gruppi = d.gruppi || {}; raw.nascosti = d.ids || []; }));
   }
   rebuild();
   refresh();
@@ -283,19 +295,48 @@ async function checkVerified() {
 // Costa una sola lettura ogni 1000 prenotazioni.
 // ---------- sfide ----------
 // Scritture dirette (non passano dal confronto dello stato): sfide e candidature.
-const sfidaRef = id => doc(db, 'sfide', id);
-function createSfida(id, data) { return setDoc(sfidaRef(id), Object.assign({}, data, { by: user.uid, at: Date.now() })); }
+const isPriv = id => id in raw.sfidePAll || id in raw.sfidePInv || id in raw.sfidePMie;
+const sfidaRef = id => doc(db, isPriv(id) ? 'sfideP' : 'sfide', id);
+function createSfida(id, data) {
+  const { privata, ...d } = data;
+  if (!privata) delete d.invitati;
+  return setDoc(doc(db, privata ? 'sfideP' : 'sfide', id), Object.assign({}, d, { by: user.uid, at: Date.now() }));
+}
+// invitato a una sfida privata: aggiorna i posti confermati (+ o -) senza riscrivere il resto
+function bumpSfida(id, sessi, dir) {
+  const p = { 'conf.tot': increment(dir * sessi.length) };
+  ['M', 'F'].forEach(k => { const n = sessi.filter(x => x === k).length; if (n) p['conf.' + k] = increment(dir * n); });
+  return updateDoc(sfidaRef(id), p);
+}
 function updateSfida(id, patch) { return updateDoc(sfidaRef(id), patch); }
 function deleteSfida(id) { return deleteDoc(sfidaRef(id)); }
 // Candidatura: id = sfida_utente; org = chi ha lanciato la sfida (serve alle regole di lettura).
 // partner (sfide a coppie fisse): { uid } se registrato, altrimenti { nome, cognome, sesso }; con il nome da mostrare.
-function applySfida(sfida, me, partner) {
-  const d = { sid: sfida.id, uid: user.uid, org: sfida.by, nome: `${me.nome} ${me.cognome}`, sesso: me.sesso || '', stato: 'attesa', visto: false, at: Date.now() };
+function applySfida(sfida, me, partner, stato) {
+  const d = { sid: sfida.id, uid: user.uid, org: sfida.by, nome: `${me.nome} ${me.cognome}`, sesso: me.sesso || '', stato: stato || 'attesa', visto: stato === 'confermata', at: Date.now() };
   if (partner) d.partner = partner;
   return setDoc(doc(db, 'sfideRisp', sfida.id + '_' + user.uid), d);
 }
 function updateRisp(id, patch) { return updateDoc(doc(db, 'sfideRisp', id), patch); }
 function deleteRisp(id) { return deleteDoc(doc(db, 'sfideRisp', id)); }
+
+const mioRef = () => doc(db, 'mio', user.uid);
+function saveMio(patch) { rebuild(); refresh(); return setDoc(mioRef(), patch, { merge: true }); }
+function saveGruppo(id, nome, membri) {
+  raw.gruppi = Object.assign({}, raw.gruppi, { [id]: { nome, membri } });
+  return saveMio({ gruppi: raw.gruppi });
+}
+function deleteGruppo(id) {
+  const g = Object.assign({}, raw.gruppi); delete g[id]; raw.gruppi = g;
+  return setDoc(mioRef(), { gruppi: g, ids: raw.nascosti || [] });
+}
+// "Non mi interessa": l'avviso non compare più (su tutti i dispositivi). Si tengono solo quelli di sfide e tornei che esistono ancora.
+function nascondi(id) {
+  if (!user) return Promise.resolve();
+  const live = new Set(Object.keys(raw.sfide).concat(Object.keys(raw.sfidePAll), Object.keys(raw.sfidePInv)).map(k => 's:' + k).concat(Object.keys(raw.tournaments).map(k => 't:' + k)));
+  raw.nascosti = (raw.nascosti || []).filter(k => live.has(k)).concat(id);
+  return saveMio({ ids: raw.nascosti });
+}
 
 function notify(to, text) {
   if (!user || !to) return;
@@ -326,7 +367,7 @@ window.Cloud = {
   push,
   notify,
   dismiss,
-  createSfida, updateSfida, deleteSfida, applySfida, updateRisp, deleteRisp,
+  createSfida, updateSfida, deleteSfida, bumpSfida, applySfida, updateRisp, deleteRisp, saveGruppo, deleteGruppo, nascondi,
   login,
   register,
   logout: () => signOut(auth),

@@ -224,6 +224,7 @@ const App = (() => {
     const promo = s.courses.filter(c => c.promo && (c.fine || c.inizio) >= todayKey());
     return `
       ${noticesBlock()}
+      ${notifBlock()}
       ${sfideAlerts()}
       <section class="hero">
         <div>
@@ -1653,6 +1654,7 @@ const App = (() => {
   const sfRisp = x => (S().risp || []).filter(r => r.sid === x.id);
   const sfMyRisp = x => !!me() && (S().risp || []).find(r => r.sid === x.id && r.uid === me().id);
   const sfSeesNames = x => isAdmin() || sfMine(x);
+  const sfInvitato = x => !!me() && !!x.privata && (x.invitati || []).includes(me().id);
   const sfMax = x => Number(x.max) || (x.modo === 'sesso' ? (Number(x.cercaM) || 0) + (Number(x.cercaF) || 0) : Number(x.cercaTot) || 0);
   const sfConf = x => ({ M: (x.conf && x.conf.M) || 0, F: (x.conf && x.conf.F) || 0, tot: (x.conf && x.conf.tot) || 0 });
   const sfFull = x => sfConf(x).tot >= sfMax(x);
@@ -1677,6 +1679,64 @@ const App = (() => {
     return { M: ok.filter(g => g === 'M').length, F: ok.filter(g => g === 'F').length, tot: ok.length };
   }
   const sfErr = e => toast(e && e.code === 'permission-denied' ? T("Operazione non consentita.") : T("Errore di collegamento al database") + (e && e.code ? ` (${e.code})` : '') + '.', 'err');
+
+  // Inviti alle sfide private: si scelgono gli utenti registrati (anche da un gruppo salvato).
+  function invitePicker(sel) {
+    const u = me(), set = new Set(sel || []);
+    const people = S().users.filter(p => registered(p) && (!u || p.id !== u.id))
+      .sort((a, b) => (a.cognome + a.nome).localeCompare(b.cognome + b.nome));
+    const groups = S().gruppi || [];
+    return `<fieldset class="invite-box"><legend>${T("Chi inviti")}</legend>
+      ${groups.length ? `<p class="small invite-groups">${T("I tuoi gruppi:")} ${groups.map(g => `<span class="chip"><button type="button" class="link" data-action="gruppo-usa" data-id="${g.id}">${icon('users-group')} ${esc(g.nome)} (${g.membri.length})</button>
+        <button type="button" class="link danger" data-action="gruppo-elimina" data-id="${g.id}" title="${T("Elimina il gruppo")}" aria-label="${T("Elimina il gruppo")}">×</button></span>`).join(' ')}</p>` : ''}
+      <input type="search" placeholder="${T("Cerca un giocatore")}" data-invite-filter aria-label="${T("Cerca un giocatore")}">
+      <div class="invite-list">${people.map(p => `<label class="check" data-name="${esc((p.nome + ' ' + p.cognome + ' ' + p.cognome).toLowerCase())}"><input type="checkbox" name="invitati" value="${p.id}" ${set.has(p.id) ? 'checked' : ''}> ${esc(p.cognome + ' ' + p.nome)}</label>`).join('') || `<p class="muted small">${T("Nessun utente registrato.")}</p>`}</div>
+      <div class="row invite-save"><label>${T("Salva gli invitati scelti come gruppo")}<input name="gruppoNome" maxlength="60" placeholder="${T("Nome del gruppo, es. Giovedì sera")}"></label>
+        <button type="button" class="btn small" data-action="gruppo-salva">${T("{0} Salva gruppo", [icon('device-floppy')])}</button></div>
+      <p class="muted small">${T("La sfida privata la vedono solo le persone invitate: ricevono l’avviso e possono entrare direttamente.")}</p>
+    </fieldset>`;
+  }
+  const readInvitati = f => [...f.querySelectorAll('input[name=invitati]:checked')].map(el => el.value);
+
+  // Avvisi per i registrati: sfide aperte (e inviti), nuovi tornei. "Non mi interessa" li nasconde.
+  function notifList() {
+    const u = me();
+    if (!u || u.pending || !Store.ready) return [];
+    const hid = new Set(S().nascosti || []), out = [];
+    (S().sfide || []).forEach(x => {
+      if (x.stato !== 'aperta' || sfPast(x) || sfMine(x) || sfMyRisp(x) || hid.has('s:' + x.id) || sfFull(x)) return;
+      const inv = x.privata && (x.invitati || []).includes(u.id);
+      if (x.privata && !inv) return;
+      if (!inv && (!levelOk(x.livelli, u.id) || legaError(x.lega, [u.id]) || (x.modo === 'sesso' && !(Number(u.sesso === 'M' ? x.cercaM : x.cercaF) > 0)))) return;
+      out.push({ k: 's:' + x.id, tipo: inv ? 'invito' : 'sfida', x });
+    });
+    (S().tournaments || []).forEach(t => {
+      if (!t.iscrizioniAperte || t.seeds || t.closed || hid.has('t:' + t.id)) return;
+      if (t.entries.some(e => e.p1 === u.id || e.p2 === u.id)) return;
+      if (genderError(t, [u.id]) || levelError(t.livelli, [u.id]) || legaError(t.lega, [u.id])) return;
+      out.push({ k: 't:' + t.id, tipo: 'torneo', t });
+    });
+    return out;
+  }
+  function notifCard(n) {
+    const no = `<button class="btn small" data-action="notif-no" data-k="${n.k}">${T("Non mi interessa")}</button>`;
+    if (n.tipo === 'torneo') {
+      const t = n.t;
+      return `<div class="notice notif">${icon('trophy')} <span><strong>${T("Nuovo torneo")}:</strong> ${esc(t.nome)} — ${fmtDate(t.data, true)}${t.luogo ? ' · ' + esc(t.luogo) : ''}</span>
+        <span class="notif-btns"><a class="btn small primary" href="#/tornei/${t.id}" data-action="notif-vai">${T("Vai al torneo")}</a>${no}</span></div>`;
+    }
+    const x = n.x;
+    return `<div class="notice notif ${n.tipo === 'invito' ? 'ok' : ''}">${icon(n.tipo === 'invito' ? 'mail-opened' : 'swords')}
+      <span>${n.tipo === 'invito' ? `<strong>${T("{0} ti ha invitato a una sfida", [esc(sfByName(x))])}</strong>` : `<strong>${T("Sfida aperta")}</strong> ${T("di {0}", [esc(sfByName(x))])}`}
+        — ${sfWhen(x)}${x.luogo ? ' · ' + esc(x.luogo) : ''} · ${esc(sfTipo(x))}</span>
+      <span class="notif-btns"><button class="btn small primary" data-action="sf-candida" data-id="${x.id}">${T("Partecipa")}</button>${no}</span></div>`;
+  }
+  function notifBlock() {
+    const list = notifList();
+    if (!list.length) return '';
+    return `<section class="notif-block">${list.slice(0, 3).map(notifCard).join('')}
+      ${list.length > 3 ? `<p><button class="btn small" data-action="notifiche">${T("{0} Tutti gli avvisi ({1})", [icon('bell'), list.length])}</button></p>` : ''}</section>`;
+  }
 
   // Avvisi (home e pagina Sfide).
   function sfideAlerts() {
@@ -1719,7 +1779,8 @@ const App = (() => {
         : sfFull(x) ? '<p class="muted small">' + T("Posti esauriti.") + '</p>'
         : `<p><button class="btn primary small" data-action="sf-candida" data-id="${x.id}">${icon('hand-finger')} ${sfCoppie(x) ? T("Partecipa con il tuo compagno/a") : T("Partecipa")}</button></p>`;
     }
-    const names = sfSeesNames(x) ? `<div class="sf-people">
+    const invited = x.privata && sfSeesNames(x) ? `<p class="small muted">${icon('mail')} ${T("Invitati")}: ${(x.invitati || []).map(id => esc(userName(id))).join(', ')}</p>` : '';
+    const names = sfSeesNames(x) ? `${invited}<div class="sf-people">
         <p class="small"><strong>${T("Partecipanti confermati")}</strong></p>
         <ul class="plain small"><li>${esc(sfByName(x))}${x.partner ? ` + ${esc(partnerName(x.partner))}` : ''} <span class="muted">${T("· organizzatore")}</span></li>
           ${conf.map(r => `<li>${esc(r.nome)} <span class="muted">${r.sesso}</span>${r.partner ? ` + ${esc(partnerName(r.partner))} <span class="muted">${partnerSex(r.partner)}</span>` : ''}${canManage && !x.tid ? ` <button class="link danger" data-action="sf-risp" data-id="${r.id}" data-v="rifiutata">${T("togli")}</button>` : ''}</li>`).join('')}
@@ -1737,7 +1798,7 @@ const App = (() => {
           : `<button class="btn small primary" data-action="sf-torneo" data-id="${x.id}">${T("{0} Crea il torneo della sfida", [icon('tournament')])}</button>`) : ''}
         <button class="btn small danger" data-action="sf-elimina" data-id="${x.id}">${T("{0} Elimina", [icon('trash')])}</button></div>` : (t ? `<p><a class="btn small" href="#/tornei/${t.id}">${T("{0} Vai al torneo", [icon('trophy')])}</a></p>` : '');
     return `<article class="card sf-card ${mine ? 'mine' : ''}">
-      <p class="kicker">${pill} ${esc(sfTipo(x))}</p>
+      <p class="kicker">${pill} ${x.privata ? `<span class="badge">${icon('lock')} ${T("Privata")}</span>` : ''} ${esc(sfTipo(x))}</p>
       <h3>${sfWhen(x)}</h3>
       <p class="muted small">${icon('map-pin')} ${esc(x.luogo || '—')} · ${Number(x.campi) === 2 ? T("2 campi") : T("1 campo")} · ${T("lanciata da")} <strong>${esc(sfByName(x))}</strong></p>
       ${x.lega && legaById(x.lega) ? `<p class="small">${T("{0} Lega:", [icon('trophy')])} <a href="#/leghe/${x.lega}">${esc(legaById(x.lega).nome)}</a></p>` : ''}
@@ -1759,6 +1820,8 @@ const App = (() => {
           <label>${T("Campi")}<select name="campi"><option value="1">${T("1 campo")}</option><option value="2">${T("2 campi")}</option></select></label>
         </div>
         <label>${T("Luogo")}<input name="luogo" maxlength="80" placeholder="${T("Centro sportivo / indirizzo")}"></label>
+        <label>${T("Chi può vederla")}<select name="vis" data-change="sf-form"><option value="pubblica">${T("Pubblica: tutti gli iscritti all’app")}</option><option value="privata">${T("Privata: solo le persone che inviti")}</option></select></label>
+        <div data-sf-vis hidden>${invitePicker([])}</div>
         <label>${T("Chi cerchi")}<select name="modo" data-change="sf-form"><option value="sesso">${T("Uomini e donne (numero per sesso)")}</option><option value="indifferente">${T("Indifferente")}</option></select></label>
         <div class="row">
           <label data-sf="sesso">${T("Uomini cercati")}<input type="number" min="0" max="40" name="cercaM" value="2"></label>
@@ -1794,6 +1857,7 @@ const App = (() => {
     const modo = f.elements.modo.value, tipo = f.elements.tipo.value, fmt = f.elements.formato.value;
     f.querySelectorAll('[data-sf]').forEach(el => { el.hidden = el.dataset.sf === 'torneo' ? tipo !== 'torneo' : el.dataset.sf !== modo; });
     f.querySelectorAll('[data-sf-f]').forEach(el => { el.hidden = !el.dataset.sfF.split(',').includes(fmt); });
+    f.querySelectorAll('[data-sf-vis]').forEach(el => { el.hidden = f.elements.vis.value !== 'privata'; });
   }
 
   function viewSfide() {
@@ -2323,6 +2387,8 @@ const App = (() => {
     if (!hb.hidden) {
       hb.innerHTML = headerBadges(u.id);
     }
+    const nb = document.getElementById('notifBtn');
+    if (nb) { const n = notifList().length; nb.hidden = !n; nb.querySelector('.notif-count').textContent = n > 9 ? '9+' : n; }
     const who = document.getElementById('who');
     who.innerHTML = u ? `<span class="avatar">${esc((u.nome[0] || '') + (u.cognome[0] || ''))}</span><span class="lbl">${esc(u.nome)}</span>` : `${icon('login-2')}<span class="lbl">${T("Accedi")}</span>`;
     if ($app.querySelector('form.tour-form')) syncTourForm();
@@ -2399,9 +2465,10 @@ const App = (() => {
       if (!u) return goProfileForLogin(T("Accedi o registrati per partecipare alle sfide."));
       if (needVerified() || !x) return;
       if (!u.sesso) return toast(T("Indica il sesso nel tuo profilo per partecipare."), 'err');
-      const lv = levelError(x.livelli, [u.id]) || legaError(x.lega, [u.id]);
+      const inv = sfInvitato(x);
+      const lv = inv ? '' : levelError(x.livelli, [u.id]) || legaError(x.lega, [u.id]);
       if (lv) return toast(lv, 'err');
-      if (x.modo === 'sesso' && !(Number(u.sesso === 'M' ? x.cercaM : x.cercaF) > 0)) return toast(`${T("Questa sfida non cerca")} ${u.sesso === 'M' ? T("uomini") : T("donne")}.`, 'err');
+      if (!inv && x.modo === 'sesso' && !(Number(u.sesso === 'M' ? x.cercaM : x.cercaF) > 0)) return toast(`${T("Questa sfida non cerca")} ${u.sesso === 'M' ? T("uomini") : T("donne")}.`, 'err');
       if (sfFull(x)) return toast(T("Posti esauriti."), 'err');
       if (sfCoppie(x)) {
         if (sfConf(x).tot + 2 > sfMax(x)) return toast(T("Non ci sono più posti per una coppia."), 'err');
@@ -2412,7 +2479,9 @@ const App = (() => {
           <p class="form-error" hidden></p>
           <div class="actions"><button type="button" class="btn" data-action="close-dialog">${T("Annulla")}</button><button class="btn primary">${T("Invia la candidatura")}</button></div></form>`);
       }
-      window.Cloud.applySfida(x, u).then(() => toast(T("Candidatura inviata: la deve confermare chi ha lanciato la sfida."), 'ok')).catch(sfErr);
+      if (inv) return window.Cloud.applySfida(x, u, null, 'confermata').then(() => window.Cloud.bumpSfida(x.id, [u.sesso], 1))
+        .then(() => { closeDialog(); toast(T("Ci sei! La tua partecipazione è confermata."), 'ok'); }).catch(sfErr);
+      window.Cloud.applySfida(x, u).then(() => { closeDialog(); toast(T("Candidatura inviata: la deve confermare chi ha lanciato la sfida."), 'ok'); }).catch(sfErr);
     },
     'sf-ritira': d => {
       if (!confirm(T("Ritirare la candidatura?"))) return;
@@ -2420,6 +2489,7 @@ const App = (() => {
       window.Cloud.updateRisp(d.id, { stato: 'ritirata', at: Date.now() }).then(() => {
         // se era confermata, chi ha lanciato la sfida aggiorna i posti al prossimo cambio; l'admin o l'organizzatore lo fa subito
         if (x && (sfMine(x) || isAdmin())) window.Cloud.updateSfida(x.id, { conf: sfCount(x) });
+        else if (x && x.privata && r.stato === 'confermata') window.Cloud.bumpSfida(x.id, [r.sesso].concat(r.partner ? [partnerSex(r.partner)] : []), -1).catch(() => {});
         toast(T("Candidatura ritirata."), 'ok');
       }).catch(sfErr);
     },
@@ -2441,6 +2511,37 @@ const App = (() => {
         <label>${T("Sesso")}<select name="sesso" required><option value="">—</option>${Object.entries(SESSI).map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
         <p class="form-error" hidden></p>
         <div class="actions"><button type="button" class="btn" data-action="close-dialog">${T("Annulla")}</button><button class="btn primary">${T("Aggiungi")}</button></div></form>`);
+    },
+    notifiche: () => {
+      const list = notifList();
+      openDialog(`<h2>${T("{0} Avvisi", [icon('bell')])}</h2><div class="notif-list">${list.length ? list.map(notifCard).join('') : `<p class="muted">${T("Nessun avviso.")}</p>`}</div>
+        <div class="actions"><button type="button" class="btn" data-action="close-dialog">${T("Chiudi")}</button></div>`);
+    },
+    'notif-no': (d, el) => {
+      const card = el.closest('.notif');
+      if (card) card.remove();
+      window.Cloud.nascondi(d.k).catch(sfErr);
+      if ($dialog.open && $dialog.querySelector('.notif-list') && !$dialog.querySelector('.notif')) closeDialog();
+    },
+    'notif-vai': () => closeDialog(),
+    'gruppo-usa': (d, el) => {
+      const g = (S().gruppi || []).find(y => y.id === d.id), f = el.closest('form');
+      if (!g || !f) return;
+      f.querySelectorAll('input[name=invitati]').forEach(c => { if (g.membri.includes(c.value)) c.checked = true; });
+      toast(T("Aggiunti gli invitati del gruppo {0}.", [g.nome]), 'ok');
+    },
+    'gruppo-salva': (d, el) => {
+      const f = el.closest('form'), nome = (f.elements.gruppoNome.value || '').trim(), membri = readInvitati(f);
+      if (!nome) return toast(T("Scrivi il nome del gruppo."), 'err');
+      if (!membri.length) return toast(T("Scegli prima le persone del gruppo."), 'err');
+      const old = (S().gruppi || []).find(g => g.nome.toLowerCase() === nome.toLowerCase());
+      window.Cloud.saveGruppo(old ? old.id : Store.uid('g'), nome, membri).then(() => { f.elements.gruppoNome.value = ''; toast(T("Gruppo «{0}» salvato ({1} persone).", [nome, membri.length]), 'ok'); }).catch(sfErr);
+    },
+    'gruppo-elimina': (d, el) => {
+      const g = (S().gruppi || []).find(y => y.id === d.id);
+      if (!g || !confirm(T("Eliminare il gruppo «{0}»?", [g.nome]))) return;
+      const chip = el.closest('.chip');
+      window.Cloud.deleteGruppo(g.id).then(() => { if (chip) chip.remove(); }).catch(sfErr);
     },
     'sfide-punti-reset': () => {
       if (!confirm(T("Rimettere la tabella punti iniziale delle sfide?"))) return;
@@ -2465,7 +2566,7 @@ const App = (() => {
           : `<label>${T("Persone cercate")}<input type="number" min="1" max="80" name="cercaTot" value="${Number(x.cercaTot) || 1}"></label>`}
           <label>${T("Numero massimo di persone")}<input type="number" min="1" max="80" name="max" value="${Number(x.max) || 0}"></label>
         </div>
-        ${levelsBox(x.livelli || [], T("Solo i giocatori di questi livelli possono partecipare. Nessuna casella = aperta a tutti i livelli."))}
+        ${x.privata ? invitePicker(x.invitati) : levelsBox(x.livelli || [], T("Solo i giocatori di questi livelli possono partecipare. Nessuna casella = aperta a tutti i livelli."))}
         <label>${T("Note (facoltative)")}<textarea name="nota" rows="2" maxlength="300">${esc(x.nota || '')}</textarea></label>
         <p class="form-error" hidden></p>
         <div class="actions"><button type="button" class="btn" data-action="close-dialog">${T("Annulla")}</button><button class="btn primary">${T("Salva")}</button></div></form>`);
@@ -2921,8 +3022,10 @@ const App = (() => {
         modo: v.modo === 'indifferente' ? 'indifferente' : 'sesso', cercaM: n('cercaM'), cercaF: n('cercaF'), cercaTot: n('cercaTot'), max: n('max'),
         tipo: v.tipo === 'torneo' ? 'torneo' : 'libero', formato: v.tipo === 'torneo' ? v.formato : '', nota: (v.nota || '').trim(),
         cfg: v.tipo === 'torneo' ? { poolSize: n('poolSize') || 4, qualify: n('qualify') || 2, punti: n('punti') || 11, turni: n('turni') || 5, minuti: n('minuti') || 12, vincolo: v.vincolo || 'equilibrato' } : {},
-        stato: 'aperta', conf: { M: 0, F: 0, tot: 0 }, guests: [], tid: '', livelli: readLevels(f), lega: v.tipo === 'torneo' ? v.lega || '' : ''
+        stato: 'aperta', conf: { M: 0, F: 0, tot: 0 }, guests: [], tid: '', livelli: readLevels(f), lega: v.tipo === 'torneo' ? v.lega || '' : '',
+        privata: v.vis === 'privata', invitati: v.vis === 'privata' ? readInvitati(f) : []
       };
+      if (x.privata && !x.invitati.length) return formError(f, T("Scegli almeno una persona da invitare."));
       if (sfCoppie(x)) {
         const pa = readPartner(v);
         if (!pa) return formError(f, T("Indica il tuo compagno/a (per un non registrato: nome, cognome e sesso)."));
@@ -2934,14 +3037,16 @@ const App = (() => {
       if (sought < 1) return formError(f, T("Indica quante persone cerchi."));
       if (!x.max) x.max = sought;
       if (x.max < sought) return formError(f, `${T("Il numero massimo di persone non può essere minore di quelle cercate ({0}).", [sought])}`);
-      window.Cloud.createSfida(Store.uid('s'), x).then(() => { ui.sfOpen = false; toast(T("Sfida lanciata!"), 'ok'); }).catch(sfErr);
+      window.Cloud.createSfida(Store.uid('s'), x).then(() => { ui.sfOpen = false; delete f.dataset.dirty; render(); toast(x.privata ? T("Sfida privata lanciata: gli invitati ricevono l’avviso.") : T("Sfida lanciata!"), 'ok'); }).catch(sfErr);
     },
     'sf-coppia': (v, f) => {
       const x = sfById(v.id), u = me(), pa = readPartner(v);
       if (!x || !u) return closeDialog();
       if (!pa) return formError(f, T("Indica il compagno/a (per un non registrato: nome, cognome e sesso)."));
-      if (pa.uid && levelError(x.livelli, [pa.uid])) return formError(f, levelError(x.livelli, [pa.uid]));
-      if (x.modo === 'sesso' && !(Number(partnerSex(pa) === 'M' ? x.cercaM : x.cercaF) > 0)) return formError(f, `${T("Questa sfida non cerca")} ${partnerSex(pa) === 'M' ? T("uomini") : T("donne")}.`);
+      if (!sfInvitato(x) && pa.uid && levelError(x.livelli, [pa.uid])) return formError(f, levelError(x.livelli, [pa.uid]));
+      if (!sfInvitato(x) && x.modo === 'sesso' && !(Number(partnerSex(pa) === 'M' ? x.cercaM : x.cercaF) > 0)) return formError(f, `${T("Questa sfida non cerca")} ${partnerSex(pa) === 'M' ? T("uomini") : T("donne")}.`);
+      if (sfInvitato(x)) return window.Cloud.applySfida(x, u, pa, 'confermata').then(() => window.Cloud.bumpSfida(x.id, [u.sesso, partnerSex(pa)], 1))
+        .then(() => { closeDialog(); toast(T("Ci sei! La tua partecipazione è confermata."), 'ok'); }).catch(sfErr);
       window.Cloud.applySfida(x, u, pa).then(() => { closeDialog(); toast(T("Candidatura della coppia inviata: la deve confermare chi ha lanciato la sfida."), 'ok'); }).catch(sfErr);
     },
     'sf-guest': (v, f) => {
@@ -3165,7 +3270,8 @@ const App = (() => {
       if (!x || !(sfMine(x) || isAdmin())) return closeDialog();
       const n = k => Math.max(0, Math.round(Number(v[k]) || 0));
       const ch = { data: v.data, ora: v.ora, luogo: (v.luogo || '').trim(), campi: Number(v.campi) === 2 ? 2 : 1,
-        cercaM: n('cercaM'), cercaF: n('cercaF'), cercaTot: n('cercaTot'), max: n('max'), nota: (v.nota || '').trim(), livelli: readLevels(f) };
+        cercaM: n('cercaM'), cercaF: n('cercaF'), cercaTot: n('cercaTot'), max: n('max'), nota: (v.nota || '').trim(), livelli: x.privata ? x.livelli || [] : readLevels(f) };
+      if (x.privata) { ch.invitati = readInvitati(f); if (!ch.invitati.length) return formError(f, T("Scegli almeno una persona da invitare.")); }
       if (!ch.data || !ch.ora) return formError(f, T("Indica data e ora."));
       const sought = x.modo === 'sesso' ? ch.cercaM + ch.cercaF : ch.cercaTot;
       if (sought < 1) return formError(f, T("Indica quante persone cerchi."));
@@ -3207,7 +3313,7 @@ const App = (() => {
     'timer-start', 'timer-pause', 'timer-resume', 'timer-reset']);
   const TOUR_FORMS = new Set(['tour', 'entry-bulk', 'result', 'final-pairs']);
   // Sfide: i controlli (accesso, chi organizza) sono nelle azioni e nelle regole del database.
-  const SFIDE = new Set(['sf-candida', 'sf-ritira', 'sf-risp', 'sf-guest', 'sf-guest-del', 'sf-chiudi', 'sf-riapri', 'sf-elimina', 'sf-torneo', 'sf-visto', 'sf-modifica']);
+  const SFIDE = new Set(['sf-candida', 'sf-ritira', 'sf-risp', 'sf-guest', 'sf-guest-del', 'sf-chiudi', 'sf-riapri', 'sf-elimina', 'sf-torneo', 'sf-visto', 'sf-modifica', 'notifiche', 'notif-no', 'notif-vai', 'gruppo-usa', 'gruppo-salva', 'gruppo-elimina']);
   const SFIDE_FORMS = new Set(['sfida', 'sf-guest', 'sf-coppia', 'lega', 'sf-modifica']);
   ['lega-tab', 'lega-kind', 'lega-tour', 'lega-sfida', 'lega-remove-tour', 'lega-del-membro', 'lega-chiudi', 'lega-riapri'].forEach(a => SFIDE.add(a));
 
@@ -3231,7 +3337,15 @@ const App = (() => {
   });
 
   // Modifiche non ancora salvate nella scheda: gli aggiornamenti dal database aspettano il salvataggio.
-  document.addEventListener('input', e => { const f = e.target.closest && e.target.closest('form.scheda'); if (f) f.dataset.dirty = '1'; });
+  document.addEventListener('input', e => {
+    const f = e.target.closest && e.target.closest('form.scheda, form.sf-form');
+    if (f) f.dataset.dirty = '1';
+    if (e.target.matches && e.target.matches('[data-invite-filter]')) {
+      const q = e.target.value.trim().toLowerCase();
+      e.target.closest('.invite-box').querySelectorAll('.invite-list label').forEach(l => { l.hidden = !!q && !l.dataset.name.includes(q); });
+    }
+  });
+  document.addEventListener('change', e => { const f = e.target.closest && e.target.closest('form.sf-form'); if (f) f.dataset.dirty = '1'; });
 
   document.addEventListener('submit', e => {
     const f = e.target, name = f.dataset.form;
