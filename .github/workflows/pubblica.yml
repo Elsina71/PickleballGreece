@@ -26,13 +26,29 @@ jobs:
           node-version: 20
       - name: Credenziali Firebase
         env:
-          FIREBASE_SA_PICKLEBALLGREECE: ${{ secrets.FIREBASE_SA_PICKLEBALLGREECE }}
+          SA1: ${{ secrets.FIREBASE_SA_PICKLEBALLGREECE }}
+          SA2: ${{ secrets.FIREBASE_SA_PICKLEBALL_GREECE }}
+          SA3: ${{ secrets.FIREBASE_SA_PICKLEBALL }}
+          SA4: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SA5: ${{ secrets.FIREBASE_SA }}
+          SA6: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PICKLEBALLGREECE_955DA }}
         run: |
-          if [ -z "$FIREBASE_SA_PICKLEBALLGREECE" ]; then
-            echo "::error::Manca il segreto FIREBASE_SA_PICKLEBALLGREECE nelle impostazioni del repository."
+          # Si accetta il primo segreto presente tra i nomi previsti (nel registro compare solo il nome, mai il contenuto).
+          KEY=""; NAME=""
+          for n in 1:FIREBASE_SA_PICKLEBALLGREECE 2:FIREBASE_SA_PICKLEBALL_GREECE 3:FIREBASE_SA_PICKLEBALL 4:FIREBASE_SERVICE_ACCOUNT 5:FIREBASE_SA 6:FIREBASE_SERVICE_ACCOUNT_PICKLEBALLGREECE_955DA; do
+            v="SA${n%%:*}"
+            if [ -n "${!v}" ]; then KEY="${!v}"; NAME="${n#*:}"; break; fi
+          done
+          if [ -z "$KEY" ]; then
+            echo "::error::Nessun segreto con la chiave Firebase trovato in questo repository (nome previsto: FIREBASE_SA_PICKLEBALLGREECE, in Settings > Secrets and variables > Actions > Repository secrets)."
             exit 1
           fi
-          printf '%s' "$FIREBASE_SA_PICKLEBALLGREECE" > "$RUNNER_TEMP/firebase-key.json"
+          echo "Chiave Firebase letta dal segreto: $NAME"
+          printf '%s' "$KEY" > "$RUNNER_TEMP/firebase-key.json"
+          if ! python3 -c "import json,sys; d=json.load(open(sys.argv[1])); assert d.get('type')=='service_account'; print('Account di servizio del progetto:', d.get('project_id'))" "$RUNNER_TEMP/firebase-key.json"; then
+            echo "::error::Il segreto $NAME non contiene il file JSON della chiave dell'account di servizio (va incollato tutto il contenuto del file .json)."
+            exit 1
+          fi
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> "$GITHUB_ENV"
       - name: Pubblicazione (sito e regole del database)
         run: npx --yes firebase-tools@13 deploy --only hosting,firestore:rules --project pickleballgreece-955da --non-interactive
