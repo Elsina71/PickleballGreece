@@ -70,7 +70,7 @@ function rebuild() {
   st.users = Object.entries(raw.players).map(([id, p]) => {
     const priv = raw.users[id] || {};
     return {
-      id, nome: p.nome || '', cognome: p.cognome || '', sesso: p.sesso || '',
+      id, nome: p.nome || '', cognome: p.cognome || '', sesso: p.sesso || '', livello: Number(p.livello) || null,
       email: priv.email || '', tel: priv.tel || '', tema: priv.tema || '',
       role: isMain(id) || raw.admins.has(id) || (user && id === user.uid && isAdmin) ? 'admin'
         : raw.tourAdmins.has(id) || (user && id === user.uid && isTourAdmin) ? 'tornei' : 'user'
@@ -179,6 +179,7 @@ function shapes(st) {
   d.data.articoli = { json: JSON.stringify(st.articoli || []) };
   st.users.forEach(u => {
     d.players[u.id] = { nome: u.nome || '', cognome: u.cognome || '', sesso: u.sesso || '' };
+    if (u.livello) d.players[u.id].livello = Number(u.livello);
     if (u.email || u.tel || u.tema) d.users[u.id] = { email: u.email || '', tel: u.tel || '', tema: u.tema || '' };
     if (u.role === 'admin' && !isMain(u.id)) d.admins[u.id] = { nome: `${u.nome} ${u.cognome}` };
     if (u.role === 'tornei') d.tourAdmins[u.id] = { nome: `${u.nome} ${u.cognome}` };
@@ -251,7 +252,9 @@ async function register(v) {
   let cred;
   try { cred = await createUserWithEmailAndPassword(auth, v.email.trim(), v.password); } catch (e) { throw authError(e); }
   const id = cred.user.uid;
-  await setDoc(doc(db, 'players', id), { nome: v.nome.trim(), cognome: v.cognome.trim(), sesso: v.sesso });
+  const pl = { nome: v.nome.trim(), cognome: v.cognome.trim(), sesso: v.sesso };
+  if (Number(v.livello)) pl.livello = Number(v.livello);
+  await setDoc(doc(db, 'players', id), pl);
   await setDoc(doc(db, 'users', id), { email: cred.user.email, tel: (v.tel || '').trim(), tema: v.tema || '' });
   try { await sendEmailVerification(cred.user); } catch (e) { console.error(e); }
 }

@@ -24,6 +24,8 @@ service cloud.firestore {
     function verified() { return signedIn() && request.auth.token.email_verified == true; }
     function data() { return request.resource.data; }
     function shortText(v, max) { return v is string && v.size() <= max; }
+    // livello di gioco facoltativo: 1 principiante … 5 pro
+    function validLevel() { return !('livello' in data()) || data().livello in [1, 2, 3, 4, 5]; }
 
     match /data/{docId} {
       allow read: if true;
@@ -34,15 +36,15 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
       allow create, update: if isSelf(uid)
-        && data().keys().hasOnly(['nome', 'cognome', 'sesso'])
+        && data().keys().hasOnly(['nome', 'cognome', 'sesso', 'livello']) && validLevel()
         && shortText(data().nome, 60) && shortText(data().cognome, 60) && data().sesso in ['M', 'F'];
       // Il gestore tornei inserisce i giocatori senza account (sesso facoltativo nei tornei open).
       allow create, update: if isTourAdmin()
-        && data().keys().hasOnly(['nome', 'cognome', 'sesso'])
+        && data().keys().hasOnly(['nome', 'cognome', 'sesso', 'livello']) && validLevel()
         && shortText(data().nome, 60) && shortText(data().cognome, 60) && data().sesso in ['M', 'F', ''];
       // Chi organizza una sfida a torneo può aggiungere giocatori senza account (id generati dall'app, non UID).
       allow create: if (verified() || isAdmin()) && uid.matches('u[a-z0-9]{6,20}')
-        && data().keys().hasOnly(['nome', 'cognome', 'sesso'])
+        && data().keys().hasOnly(['nome', 'cognome', 'sesso', 'livello']) && validLevel()
         && shortText(data().nome, 60) && shortText(data().cognome, 60) && data().sesso in ['M', 'F', ''];
     }
 

@@ -660,3 +660,6 @@ form.scheda .actions { border-top: 1px solid var(--border); box-shadow: 0 -6px 1
 .notice.warn-box { background: var(--danger-soft); }
 .badge.ok { background: var(--ok-soft); color: var(--ok); }
 .badge.warn { background: var(--warn-soft); }
+fieldset.levels { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+fieldset.levels legend { width: 100%; }
+fieldset.levels p { flex-basis: 100%; margin: 4px 0 0; }

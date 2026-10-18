@@ -27,7 +27,8 @@ const Logic = (() => {
     iscrizione: 'Coppie fisse iscritte (o composte dall’organizzatore)',
     sorteggio: 'Coppie fisse sorteggiate a inizio torneo'
   };
-  const LIVELLI = { 1: 'Principiante', 2: 'Base', 3: 'Intermedio', 4: 'Avanzato', 5: 'Esperto' };
+  // Livello di gioco dei giocatori (scelto alla registrazione) e degli iscritti.
+  const LIVELLI = { 1: 'Principiante', 2: 'Intermedio', 3: 'Intermedio avanzato', 4: 'Avanzato', 5: 'Pro' };
   const TEMPO_CRITERI = { quoziente: 'Quoziente punti (fatti / subiti)', punti: 'Punti fatti' };
   const FINALISTS = [4, 8, 16, 32];
   const POINTS = [9, 11, 15, 21];

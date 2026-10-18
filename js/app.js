@@ -39,6 +39,24 @@ const App = (() => {
   const DISCIPLINE = { singolo: 'Singolo', doppio: 'Doppio' };
   const GENERI = { open: 'Open', M: 'Maschile', F: 'Femminile', misto: 'Misto' };
   const SESSI = { M: 'Uomo', F: 'Donna' };
+  // Livelli di gioco: select e caselle "livelli ammessi" (tornei e sfide).
+  const levelSelect = (name, cur, req) => `<select name="${name}" ${req ? 'required' : ''}><option value="">—</option>${Object.entries(Logic.LIVELLI).map(([k, l]) => `<option value="${k}" ${Number(cur) === Number(k) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  const levelName = n => Logic.LIVELLI[n] || '—';
+  const levelsBox = (sel, help) => `<fieldset class="levels"><legend>Livelli ammessi</legend>
+    ${Object.entries(Logic.LIVELLI).map(([k, l]) => `<label class="check"><input type="checkbox" name="livelli" value="${k}" ${(sel || []).map(Number).includes(Number(k)) ? 'checked' : ''}> ${l}</label>`).join('')}
+    <p class="muted small">${help || 'Nessuna casella = aperto a tutti i livelli.'}</p></fieldset>`;
+  const readLevels = f => [...f.querySelectorAll('input[name=livelli]:checked')].map(el => Number(el.value)).sort();
+  const levelsText = l => (l && l.length ? l.map(levelName).join(', ') : 'tutti');
+  // Messaggio se qualcuno non ha un livello ammesso (null = tutto a posto).
+  function levelError(allowed, uids) {
+    if (!allowed || !allowed.length) return null;
+    const bad = uids.filter(Boolean).filter(id => !levelOk(allowed, id));
+    if (!bad.length) return null;
+    const u = S().users.find(x => x.id === bad[0]);
+    if (me() && bad[0] === me().id && !me().livello) return 'Indica il tuo livello di gioco nel profilo.';
+    return `${u ? u.nome + ' ' + u.cognome : 'Il giocatore'} (${levelName(u && u.livello)}) non è tra i livelli ammessi: ${levelsText(allowed)}.`;
+  }
+  const levelOk = (allowed, uid) => { if (!allowed || !allowed.length) return true; const u = S().users.find(x => x.id === uid); return !!u && allowed.map(Number).includes(Number(u.livello)); };
   // Iscrizione a coppie fisse (doppio classico); americana e fantasma sono individuali.
   const isPairs = t => t.disciplina === 'doppio' && !Logic.individualEntry(t);
 
@@ -761,7 +779,7 @@ const App = (() => {
         <div>
           <h1>${esc(t.nome)}</h1>
           <p class="muted">${icon('calendar')} ${fmtDate(t.data, true)}${t.luogo ? ' · ' + icon('map-pin') + ' ' + esc(t.luogo) : ''}</p>
-          <p class="chips">${statusBadge(t)}<span class="chip">${esc(Logic.FORMATS[t.formato])}</span><span class="chip">${DISCIPLINE[t.disciplina]} ${GENERI[t.genere] || ''}</span>
+          <p class="chips">${statusBadge(t)}${t.livelli && t.livelli.length ? `<span class="chip">${icon('stairs')} Livelli: ${esc(levelsText(t.livelli))}</span>` : ''}<span class="chip">${esc(Logic.FORMATS[t.formato])}</span><span class="chip">${DISCIPLINE[t.disciplina]} ${GENERI[t.genere] || ''}</span>
             <span class="chip">${scoring}</span><span class="chip">${icon('list-numbers')} ${esc(pointsLabel(t))}${Logic.givesPoints(S(), t) && Number(t.coefficiente) !== 1 ? ' ×' + t.coefficiente : ''}</span></p>
           ${t.descrizione ? `<p>${esc(t.descrizione)}</p>` : ''}
         </div>
@@ -1003,9 +1021,9 @@ const App = (() => {
     const rot = Logic.isRotazione(t), ind = !isPairs(t);
     const counts = rot ? `<p class="muted small">${['M', 'F'].map(k => `${SESSI[k] === 'Uomo' ? 'Uomini' : 'Donne'}: <strong>${list.filter(e => entrySex(e) === k).length}</strong>`).join(' · ')}</p>` : '';
     return `${counts}<div class="table-wrap"><table class="standings">
-      <thead><tr><th>#</th><th>${isPairs(t) ? 'Coppia' : 'Giocatore'}</th>${ind ? '<th>Sesso</th>' : ''}${rot && canTours() ? '<th>Livello</th>' : ''}<th>Punti ranking</th>${canTours() && !t.seeds ? '<th></th>' : ''}</tr></thead>
+      <thead><tr><th>#</th><th>${isPairs(t) ? 'Coppia' : 'Giocatore'}</th>${ind ? '<th>Sesso</th>' : ''}${canTours() ? '<th>Livello</th>' : ''}<th>Punti ranking</th>${canTours() && !t.seeds ? '<th></th>' : ''}</tr></thead>
       <tbody>${list.map((e, i) => `<tr><td>${i + 1}</td><td class="name">${entryLabel(t, e.id)}${canTours() && !isPairs(t) && (e.guest || !(S().users.find(u => u.id === e.p1) || {}).email) ? ' <span class="chip">senza account</span>' : ''}</td>
-        ${ind ? `<td>${SESSI[entrySex(e)] || '—'}</td>` : ''}${rot && canTours() ? `<td>${Logic.LIVELLI[e.livello] || '—'}</td>` : ''}<td>${pts(e)}</td>
+        ${ind ? `<td>${SESSI[entrySex(e)] || '—'}</td>` : ''}${canTours() ? `<td>${[e.p1, e.p2].filter(Boolean).map(id => levelName(e.p2 ? (S().users.find(u => u.id === id) || {}).livello : e.livello || (S().users.find(u => u.id === id) || {}).livello)).join(' / ')}</td>` : ''}<td>${pts(e)}</td>
         ${canTours() && !t.seeds ? `<td class="right"><button class="link" data-action="entry-edit" data-id="${t.id}" data-entry="${e.id}">modifica</button> <button class="link danger" data-action="entry-remove" data-id="${t.id}" data-entry="${e.id}">rimuovi</button></td>` : ''}</tr>`).join('')}</tbody>
     </table></div>
     <p class="muted small">${t.seeds ? 'Ordine delle teste di serie usato nel sorteggio.' : 'Al sorteggio le teste di serie seguono i punti del ranking (tipologia e disciplina del torneo).'}</p>`;
@@ -1418,6 +1436,7 @@ const App = (() => {
           <p class="muted small">Iscrizione individuale: a ogni turno le coppie cambiano, evitando di ripetere compagni e avversari. Chi è in più riposa, a rotazione.</p>
         </fieldset>
         ${sec(`${icon('users')} Iscrizioni`)}
+        ${levelsBox(t ? t.livelli : [], 'Solo i giocatori di questi livelli possono iscriversi. Nessuna casella = aperto a tutti i livelli.')}
         <div class="row">
           <label>Numero massimo iscritti (0 = nessun limite)<input type="number" min="0" name="maxIscritti" value="${t ? t.maxIscritti || 0 : 0}"></label>
           <label class="check"><input type="checkbox" name="iscrizioniAperte" ${!t || t.iscrizioniAperte ? 'checked' : ''}> Iscrizioni online aperte</label>
@@ -1713,6 +1732,7 @@ const App = (() => {
       <p class="kicker">${pill} ${esc(sfTipo(x))}</p>
       <h3>${sfWhen(x)}</h3>
       <p class="muted small">${icon('map-pin')} ${esc(x.luogo || '—')} · ${Number(x.campi) === 2 ? '2 campi' : '1 campo'} · lanciata da <strong>${esc(sfByName(x))}</strong></p>
+      ${x.livelli && x.livelli.length ? `<p class="small">${icon('stairs')} Livelli: <strong>${esc(levelsText(x.livelli))}</strong></p>` : ''}
       ${x.nota ? `<p class="small">${esc(x.nota)}</p>` : ''}
       ${sfSeats(x)}
       ${me_}${names}${manage}
@@ -1752,6 +1772,7 @@ const App = (() => {
           <p class="muted small">Nel girone unico e nei gironi le coppie sono fisse: ci si candida già in coppia (anche con un compagno non registrato). Nell’americana il compagno cambia a ogni partita.
             Quando la sfida è pronta premi “Crea il torneo della sfida”: avrai la Scheda del torneo, gli iscritti (anche non registrati), il sorteggio delle gare e, nell’americana a tempo, il timer.</p>
         </fieldset>
+        ${levelsBox([], 'Solo i giocatori di questi livelli possono partecipare. Nessuna casella = aperta a tutti i livelli.')}
         <label>Note (facoltative)<textarea name="nota" rows="2" maxlength="300"></textarea></label>
         <p class="form-error" hidden></p>
         <div class="actions"><button class="btn primary">${icon('swords')} Lancia la sfida</button></div>
@@ -1813,7 +1834,7 @@ const App = (() => {
       id: Store.uid('t'), nome: `Sfida ${itDate(x.data)} ${x.ora}${x.luogo ? ' · ' + x.luogo : ''}`, data: x.data, luogo: x.luogo || '',
       categoriaId: 'custom', puntiRows: s.settings.sfidePunti || Logic.SFIDE_PUNTI, coefficiente: 1,
       disciplina: 'doppio', genere: c.vincolo === 'misto' ? 'misto' : 'open', formato: x.formato, maxIscritti: 0, iscrizioniAperte: false,
-      descrizione: x.nota || '', owner: x.by, sfida: x.id, config, entries: []
+      descrizione: x.nota || '', owner: x.by, sfida: x.id, config, entries: [], livelli: x.livelli || []
     });
     if (individual) t.entries = players.map(id => ({ id: Store.uid('e'), p1: id, p2: null, guest: null, livello: null }));
     else {
@@ -2003,6 +2024,7 @@ const App = (() => {
             <div class="row"><label>Nome<input name="nome" required value="${esc(u.nome)}"></label><label>Cognome<input name="cognome" required value="${esc(u.cognome)}"></label></div>
             <div class="row"><label>Telefono<input name="tel" type="tel" value="${esc(u.tel)}"></label>
               <label>Sesso<select name="sesso" required><option value="">—</option>${Object.entries(SESSI).map(([k, l]) => `<option value="${k}" ${u.sesso === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>
+            <label>Livello di gioco${levelSelect('livello', u.livello, true)}</label>
             <div class="actions"><button class="btn primary">Salva</button></div>
           </form>
           <p class="muted small">Codice utente: <code>${esc(u.id)}</code></p>
@@ -2035,7 +2057,8 @@ const App = (() => {
             <label>Password (almeno 6 caratteri)<input type="password" name="password" required minlength="6" autocomplete="new-password"></label>
             <div class="row"><label>Telefono<input type="tel" name="tel" required autocomplete="tel"></label>
               <label>Sesso<select name="sesso" required><option value="">—</option><option value="M">Uomo</option><option value="F">Donna</option></select></label></div>
-            <p class="muted small">Il sesso serve per i tornei maschili, femminili e misti.</p>
+            <label>Il tuo livello di gioco${levelSelect('livello', null, true)}</label>
+            <p class="muted small">Il sesso serve per i tornei maschili, femminili e misti; il livello per tornei e sfide riservati a certi livelli.</p>
             <label class="check"><input type="checkbox" required> Accetto il trattamento dei dati per la gestione di sfide, tornei e corsi.</label>
             <p class="form-error" hidden></p>
             <button class="btn primary big wide">Registrati</button>
@@ -2095,7 +2118,7 @@ const App = (() => {
         <section class="card">
           <h2>${icon('users')} Utenti e giocatori (${users.length})</h2>
           <div class="table-wrap"><table class="standings"><thead><tr><th>Nome</th><th>Account</th><th>Ruolo</th><th></th></tr></thead>
-            <tbody>${users.map(u => `<tr><td class="name">${esc(u.cognome + ' ' + u.nome)}${u.sesso ? ` <span class="muted small">${u.sesso}</span>` : ''}${u.tel ? `<br><span class="muted small">${esc(u.tel)}</span>` : ''}</td>
+            <tbody>${users.map(u => `<tr><td class="name">${esc(u.cognome + ' ' + u.nome)}${u.sesso ? ` <span class="muted small">${u.sesso}</span>` : ''}${u.livello ? ` <span class="chip">${levelName(u.livello)}</span>` : ''}${u.tel ? `<br><span class="muted small">${esc(u.tel)}</span>` : ''}</td>
               <td class="small">${u.email ? esc(u.email) : '<span class="muted">senza account</span>'}</td>
               <td>${u.email ? `<select data-change="user-role" data-id="${u.id}" ${u.id === me().id || Cloud.isMain(u.id) ? 'disabled' : ''}><option value="user">Utente</option><option value="tornei" ${u.role === 'tornei' ? 'selected' : ''}>Gestore tornei</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select>` : '—'}</td>
               <td class="right"><button class="link" data-action="player-edit" data-id="${u.id}">modifica</button>${u.id !== me().id ? ` <button class="link danger" data-action="user-delete" data-id="${u.id}">elimina</button>` : ''}</td></tr>`).join('')}</tbody></table></div>
@@ -2153,6 +2176,8 @@ const App = (() => {
     else html = (VIEWS[page] || viewHome)();
     if (page === 'profilo' && u0 && !u0.pending && Store.ready) setTimeout(() => loadCount(u0.id), 0);
     if (Store.ready || page === 'profilo') html = verifyNotice() + html;
+    // chi non ha ancora indicato il livello (account creati prima dei livelli)
+    if (Store.ready && u0 && !u0.pending && !u0.livello && page !== 'profilo') html = `<div class="notice">${icon('stairs')} <span>Indica il tuo <strong>livello di gioco</strong>: serve per tornei e sfide riservati a certi livelli.</span> <a class="btn small" href="#/profilo">Vai al profilo</a></div>` + html;
     $app.innerHTML = html;
     document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('on', a.dataset.nav === page));
     document.querySelectorAll('[data-admin-only]').forEach(el => { el.hidden = !isAdmin(); });
@@ -2202,6 +2227,8 @@ const App = (() => {
       if (!u) return goProfileForLogin('Accedi o registrati per partecipare alle sfide.');
       if (needVerified() || !x) return;
       if (!u.sesso) return toast('Indica il sesso nel tuo profilo per partecipare.', 'err');
+      const lv = levelError(x.livelli, [u.id]);
+      if (lv) return toast(lv, 'err');
       if (x.modo === 'sesso' && !(Number(u.sesso === 'M' ? x.cercaM : x.cercaF) > 0)) return toast(`Questa sfida non cerca ${u.sesso === 'M' ? 'uomini' : 'donne'}.`, 'err');
       if (sfFull(x)) return toast('Posti esauriti.', 'err');
       if (sfCoppie(x)) {
@@ -2382,7 +2409,7 @@ const App = (() => {
       if (needVerified()) return;
       const t = tourById(d.id);
       if (isPairs(t)) return entryDialog(t, null);
-      const err = genderError(t, [me().id]);
+      const err = genderError(t, [me().id]) || levelError(t.livelli, [me().id]);
       if (err) return toast(err, 'err');
       t.entries.push({ id: Store.uid('e'), p1: me().id, p2: null });
       save();
@@ -2409,7 +2436,7 @@ const App = (() => {
       if (err) return toast(err, 'err');
       if (isPairs(t) && t.entries.some(e => !e.p2)) return toast('Ci sono coppie senza compagno: completale o rimuovile.', 'err');
       const sex = Object.fromEntries(t.entries.map(e => [e.id, entrySex(e)]));
-      const levels = Object.fromEntries(t.entries.map(e => [e.id, e.livello || 3]));
+      const levels = Object.fromEntries(t.entries.map(e => [e.id, e.livello || (S().users.find(u => u.id === e.p1) || {}).livello || 3]));
       if (Logic.isRotazione(t) && t.genere === 'misto') {
         const nM = t.entries.filter(e => sex[e.id] === 'M').length, nF = t.entries.filter(e => sex[e.id] === 'F').length;
         if (nM + nF < t.entries.length) return toast('Torneo misto: indica il sesso di tutti i giocatori.', 'err');
@@ -2565,6 +2592,7 @@ const App = (() => {
             : '<p class="muted small">Giocatore senza account.</p>'}
           <div class="row"><label>Nome<input name="nome" required value="${esc(u.nome)}"></label><label>Cognome<input name="cognome" required value="${esc(u.cognome)}"></label></div>
           <label>Sesso<select name="sesso" required><option value="">—</option>${Object.entries(SESSI).map(([k, l]) => `<option value="${k}" ${u.sesso === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+          <label>Livello di gioco${levelSelect('livello', u.livello, false)}</label>
           <p class="muted small">Le modifiche valgono anche nei tornei e nelle classifiche in cui il giocatore compare.</p>
           <p class="form-error" hidden></p>
           <div class="actions"><button type="button" class="btn" data-action="close-dialog">Annulla</button><button class="btn primary">Salva</button></div>
@@ -2668,7 +2696,7 @@ const App = (() => {
         modo: v.modo === 'indifferente' ? 'indifferente' : 'sesso', cercaM: n('cercaM'), cercaF: n('cercaF'), cercaTot: n('cercaTot'), max: n('max'),
         tipo: v.tipo === 'torneo' ? 'torneo' : 'libero', formato: v.tipo === 'torneo' ? v.formato : '', nota: (v.nota || '').trim(),
         cfg: v.tipo === 'torneo' ? { poolSize: n('poolSize') || 4, qualify: n('qualify') || 2, punti: n('punti') || 11, turni: n('turni') || 5, minuti: n('minuti') || 12, vincolo: v.vincolo || 'equilibrato' } : {},
-        stato: 'aperta', conf: { M: 0, F: 0, tot: 0 }, guests: [], tid: ''
+        stato: 'aperta', conf: { M: 0, F: 0, tot: 0 }, guests: [], tid: '', livelli: readLevels(f)
       };
       if (sfCoppie(x)) {
         const pa = readPartner(v);
@@ -2687,6 +2715,7 @@ const App = (() => {
       const x = sfById(v.id), u = me(), pa = readPartner(v);
       if (!x || !u) return closeDialog();
       if (!pa) return formError(f, 'Indica il compagno/a (per un non registrato: nome, cognome e sesso).');
+      if (pa.uid && levelError(x.livelli, [pa.uid])) return formError(f, levelError(x.livelli, [pa.uid]));
       if (x.modo === 'sesso' && !(Number(partnerSex(pa) === 'M' ? x.cercaM : x.cercaF) > 0)) return formError(f, `Questa sfida non cerca ${partnerSex(pa) === 'M' ? 'uomini' : 'donne'}.`);
       window.Cloud.applySfida(x, u, pa).then(() => { closeDialog(); toast('Candidatura della coppia inviata: la deve confermare chi ha lanciato la sfida.', 'ok'); }).catch(sfErr);
     },
@@ -2714,7 +2743,7 @@ const App = (() => {
       } catch (e) { formError(f, e.message); }
     },
     profile: v => {
-      Object.assign(me(), { nome: v.nome.trim(), cognome: v.cognome.trim(), tel: v.tel.trim(), sesso: v.sesso });
+      Object.assign(me(), { nome: v.nome.trim(), cognome: v.cognome.trim(), tel: v.tel.trim(), sesso: v.sesso, livello: Number(v.livello) || null });
       save();
       toast('Dati salvati.', 'ok');
     },
@@ -2759,7 +2788,7 @@ const App = (() => {
         coefficiente: v.coefficiente === '' ? 1 : Number(v.coefficiente),
         disciplina: t && t.seeds ? t.disciplina : Logic.isIndividual(formato) || formato === 'americana_tempo' ? 'doppio' : v.disciplina,
         genere: t && t.seeds ? t.genere : v.genere, formato, maxIscritti: Number(v.maxIscritti) || 0,
-        iscrizioniAperte: f.elements.iscrizioniAperte.checked, descrizione: v.descrizione.trim()
+        iscrizioniAperte: f.elements.iscrizioniAperte.checked, descrizione: v.descrizione.trim(), livelli: readLevels(f)
       };
       if (t) {
         if (t.seeds && t.formato === 'gironi_ko' && config.qualify !== t.config.qualify && t.bracket) Logic.resetBracket(t);
@@ -2816,6 +2845,9 @@ const App = (() => {
       if (v.p2 && v.p2 === v.p1) return formError(f, 'Il compagno deve essere un’altra persona.');
       const taken = new Set(t.entries.filter(e => e.id !== v.eid).flatMap(Logic.entryPlayers));
       if (taken.has(v.p1) || (v.p2 && taken.has(v.p2))) return formError(f, 'Uno dei giocatori è già iscritto.');
+      const lErr = levelError(t.livelli, [v.p1, v.p2]);
+      if (lErr && !canTours()) return formError(f, lErr);
+      if (lErr && !confirm(lErr + '\nIscrivere comunque?')) return;
       const gErr = genderError(t, [v.p1, v.p2]);
       if (gErr) return formError(f, gErr);
       if (!v.eid && t.maxIscritti && t.entries.length >= t.maxIscritti) return formError(f, 'Numero massimo di iscritti raggiunto.');
@@ -2903,7 +2935,7 @@ const App = (() => {
       if (!nome || !cognome || !v.sesso) return formError(f, 'Compila nome, cognome e sesso.');
       const other = S().users.find(x => x.id !== u.id && !x.email && !u.email && nameKey(x.nome, x.cognome) === nameKey(nome, cognome) && x.sesso === v.sesso);
       if (other && !confirm(`C’è già ${nome} ${cognome} nell’elenco: i due verranno uniti in un solo giocatore. Continuare?`)) return;
-      Object.assign(u, { nome, cognome, sesso: v.sesso });
+      Object.assign(u, { nome, cognome, sesso: v.sesso, livello: Number(v.livello) || null });
       closeDialog();
       save();
       toast('Giocatore aggiornato.', 'ok');
