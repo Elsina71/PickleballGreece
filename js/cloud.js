@@ -7,6 +7,7 @@
 //   users/{uid}          email, telefono, stile grafico (privato: l'interessato e gli admin)
 //   admins/{uid}         amministratori
 //   sfide/{id}           sfide lanciate dagli utenti (pubbliche: data, ora, posti cercati e confermati, formula)
+//   leghe/{id}           leghe: tornei e sfide con classifica propria (admins = admin di lega)
 //   sfideRisp/{sfida_uid} candidature alle sfide (le vedono il candidato, chi ha lanciato la sfida e gli admin)
 //   notifiche/{id}       avvisi per un utente o per "admins"
 //   courses/{id}, enrollments/{corso_utente}   corsi e iscrizioni
@@ -45,9 +46,9 @@ const isMain = id => mainAdminUids.includes(id);
 
 // ---------- dati ricevuti dal database ----------
 
-const raw = { sfide: {}, rispOrg: {}, rispMie: {}, articoli: null, settings: null, players: {}, users: {}, admins: new Set(), tourAdmins: new Set(), bookings: {}, courses: {}, enrollments: {}, tournaments: {}, entries: {}, notifiche: {} };
+const raw = { leghe: {}, sfide: {}, rispOrg: {}, rispMie: {}, articoli: null, settings: null, players: {}, users: {}, admins: new Set(), tourAdmins: new Set(), bookings: {}, courses: {}, enrollments: {}, tournaments: {}, entries: {}, notifiche: {} };
 const loaded = new Set();
-const NEEDED = ['settings', 'players', 'sfide', 'courses', 'enrollments', 'tournaments', 'entries'];
+const NEEDED = ['settings', 'players', 'sfide', 'leghe', 'courses', 'enrollments', 'tournaments', 'entries'];
 
 const refresh = () => window.App && window.App.refresh();
 
@@ -77,6 +78,7 @@ function rebuild() {
     };
   });
   st.bookings = [];
+  st.leghe = Object.entries(raw.leghe).map(([id, x]) => Object.assign({ admins: [], membri: [], stato: 'aperta' }, x.json ? JSON.parse(x.json) : {}, { id, admins: x.admins || [] }));
   st.sfide = Object.entries(raw.sfide).map(([id, x]) => Object.assign({ guests: [], conf: {} }, x, { id }))
     .sort((a, b) => ((a.data || '') + (a.ora || '')).localeCompare((b.data || '') + (b.ora || '')));
   st.risp = Object.entries(Object.assign({}, raw.rispOrg, raw.rispMie)).map(([id, x]) => Object.assign({}, x, { id }));
@@ -125,6 +127,7 @@ listen('entries', collection(db, 'entries'), s => { raw.entries = byId(s); });
 // Prenotazioni: solo da ieri in avanti (quelle passate non servono e non si scaricano).
 const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toLocaleDateString('sv'); })();
 listen('sfide', collection(db, 'sfide'), s => { raw.sfide = byId(s); });
+listen('leghe', collection(db, 'leghe'), s => { raw.leghe = byId(s); });
 
 // Dati privati: l'admin riceve tutti gli utenti e gli amministratori, gli altri solo il proprio profilo.
 let privUnsubs = [];
@@ -174,7 +177,7 @@ let allUsers = false;
 let isTourAdmin = false;
 
 function shapes(st) {
-  const d = { data: {}, players: {}, users: {}, admins: {}, tourAdmins: {}, bookings: {}, courses: {}, enrollments: {}, tournaments: {}, entries: {} };
+  const d = { leghe: {}, data: {}, players: {}, users: {}, admins: {}, tourAdmins: {}, bookings: {}, courses: {}, enrollments: {}, tournaments: {}, entries: {} };
   d.data.settings = { json: JSON.stringify({ settings: st.settings, courts: st.courts, categories: st.categories }) };
   d.data.articoli = { json: JSON.stringify(st.articoli || []) };
   st.users.forEach(u => {
@@ -197,7 +200,7 @@ function shapes(st) {
   st.tournaments.forEach(t => {
     const { entries, ...rest } = t;
     // owner: chi ha lanciato la sfida da cui nasce il torneo (lo gestisce come un gestore tornei)
-    d.tournaments[t.id] = { json: JSON.stringify(rest), open: !!t.iscrizioniAperte && !t.seeds, owner: t.owner || '' };
+    d.tournaments[t.id] = { json: JSON.stringify(rest), open: !!t.iscrizioniAperte && !t.seeds, owner: t.owner || '', lega: t.lega || '' };
     entries.forEach(e => {
       const doc = { tid: t.id, p1: e.p1 || null, p2: e.p2 || null };
       // Giocatore non registrato (inserito dall'organizzatore) e livello di gioco.
@@ -206,6 +209,8 @@ function shapes(st) {
       d.entries[e.id] = doc;
     });
   });
+  // leghe: admins fuori dal JSON (servono alle regole), il resto nel JSON
+  (st.leghe || []).forEach(l => { const { id, admins, ...rest } = l; d.leghe[id] = { admins: admins || [], json: JSON.stringify(rest) }; });
   return d;
 }
 

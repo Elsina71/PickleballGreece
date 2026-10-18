@@ -8,7 +8,8 @@ const App = (() => {
   // Gestore tornei: gestisce i tornei (anche l'admin lo è), senza accesso al resto dell'amministrazione.
   // Chi ha lanciato una sfida a torneo gestisce il torneo che ne nasce (curTour: torneo aperto o su cui si agisce).
   let curTour = null;
-  const canTours = () => isAdmin() || (!!me() && me().role === 'tornei') || (!!curTour && !!me() && curTour.owner === me().id);
+  const canTours = () => isAdmin() || (!!me() && me().role === 'tornei') || (!!curTour && !!me() && (curTour.owner === me().id
+    || (!!curTour.lega && ((S().leghe || []).find(l => l.id === curTour.lega) || { admins: [] }).admins.includes(me().id))));
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const todayKey = () => new Date().toLocaleDateString('sv');
@@ -779,7 +780,7 @@ const App = (() => {
         <div>
           <h1>${esc(t.nome)}</h1>
           <p class="muted">${icon('calendar')} ${fmtDate(t.data, true)}${t.luogo ? ' · ' + icon('map-pin') + ' ' + esc(t.luogo) : ''}</p>
-          <p class="chips">${statusBadge(t)}${t.livelli && t.livelli.length ? `<span class="chip">${icon('stairs')} Livelli: ${esc(levelsText(t.livelli))}</span>` : ''}<span class="chip">${esc(Logic.FORMATS[t.formato])}</span><span class="chip">${DISCIPLINE[t.disciplina]} ${GENERI[t.genere] || ''}</span>
+          <p class="chips">${statusBadge(t)}${t.lega && legaById(t.lega) ? `<a class="chip" href="#/leghe/${t.lega}">${icon('trophy')} ${esc(legaById(t.lega).nome)}</a>` : ''}${t.livelli && t.livelli.length ? `<span class="chip">${icon('stairs')} Livelli: ${esc(levelsText(t.livelli))}</span>` : ''}<span class="chip">${esc(Logic.FORMATS[t.formato])}</span><span class="chip">${DISCIPLINE[t.disciplina]} ${GENERI[t.genere] || ''}</span>
             <span class="chip">${scoring}</span><span class="chip">${icon('list-numbers')} ${esc(pointsLabel(t))}${Logic.givesPoints(S(), t) && Number(t.coefficiente) !== 1 ? ' ×' + t.coefficiente : ''}</span></p>
           ${t.descrizione ? `<p>${esc(t.descrizione)}</p>` : ''}
         </div>
@@ -1361,6 +1362,7 @@ const App = (() => {
           ${drawn ? 'Dopo il sorteggio formula, categoria e tipo di squadre restano bloccati; per cambiarli annulla il sorteggio.' : ''}</p>` : `<h2>Nuovo torneo</h2>`}
         ${sec(`${icon('id')} Dettagli`)}
         <label>Nome<input name="nome" required value="${esc(t ? t.nome : '')}"></label>
+        ${legaSelect(t ? t.lega : ui.newLega, 'Lega (i punti vanno solo nella classifica della lega)')}
         <div class="row">
           <label>Data${dateField('data', t ? t.data : '', { required: true })}</label>
           <label>Luogo<input name="luogo" value="${esc(t ? t.luogo : s.settings.nome)}"></label>
@@ -1370,11 +1372,11 @@ const App = (() => {
           <label>Punti per la classifica sociale<select name="categoriaId">
             <option value="">Nessun punto (non vale per la classifica)</option>
             ${s.categories.map(x => `<option value="${x.id}" ${t && t.categoriaId === x.id ? 'selected' : ''}>Tabella “${esc(x.nome)}”</option>`).join('')}
-            <option value="custom" ${t && t.categoriaId === 'custom' ? 'selected' : ''}>Tabella personalizzata per questo torneo</option></select></label>
+            <option value="custom" ${(t ? t.categoriaId === 'custom' : !!ui.newLega) ? 'selected' : ''}>Tabella personalizzata per questo torneo</option></select></label>
           <label data-show-points>Coefficiente<input type="number" step="0.1" min="0" name="coefficiente" value="${t ? t.coefficiente : 1}"></label>
         </div>
         <label data-show-custom>Tabella punti del torneo (una riga per posizione: <code>posizione=punti</code>, punti di coppia)
-          <textarea name="puntiRows" rows="4" placeholder="1=100&#10;2=80&#10;3=60&#10;5=40&#10;9=20">${t && t.puntiRows ? t.puntiRows.map(([p, v]) => `${p}=${v}`).join('\n') : ''}</textarea></label>
+          <textarea name="puntiRows" rows="4" placeholder="1=100&#10;2=80&#10;3=60&#10;5=40&#10;9=20">${t && t.puntiRows ? t.puntiRows.map(([p, v]) => `${p}=${v}`).join('\n') : !t && ui.newLega ? (S().settings.sfidePunti || Logic.SFIDE_PUNTI).map(([p, v]) => `${p}=${v}`).join('\n') : ''}</textarea></label>
         ${sec(`${icon('tournament')} Formula`)}
         <div class="row">
           <label>Disciplina<select name="disciplina" ${drawn ? 'disabled' : ''}>${opt(DISCIPLINE, t ? t.disciplina : 'doppio')}</select></label>
@@ -1732,6 +1734,7 @@ const App = (() => {
       <p class="kicker">${pill} ${esc(sfTipo(x))}</p>
       <h3>${sfWhen(x)}</h3>
       <p class="muted small">${icon('map-pin')} ${esc(x.luogo || '—')} · ${Number(x.campi) === 2 ? '2 campi' : '1 campo'} · lanciata da <strong>${esc(sfByName(x))}</strong></p>
+      ${x.lega && legaById(x.lega) ? `<p class="small">${icon('trophy')} Lega: <a href="#/leghe/${x.lega}">${esc(legaById(x.lega).nome)}</a></p>` : ''}
       ${x.livelli && x.livelli.length ? `<p class="small">${icon('stairs')} Livelli: <strong>${esc(levelsText(x.livelli))}</strong></p>` : ''}
       ${x.nota ? `<p class="small">${esc(x.nota)}</p>` : ''}
       ${sfSeats(x)}
@@ -1773,6 +1776,7 @@ const App = (() => {
             Quando la sfida è pronta premi “Crea il torneo della sfida”: avrai la Scheda del torneo, gli iscritti (anche non registrati), il sorteggio delle gare e, nell’americana a tempo, il timer.</p>
         </fieldset>
         ${levelsBox([], 'Solo i giocatori di questi livelli possono partecipare. Nessuna casella = aperta a tutti i livelli.')}
+        <div data-sf="torneo" hidden>${legaSelect(ui.sfLega || '', 'Lega (sfida a torneo della lega: partecipano solo i giocatori abilitati)')}</div>
         <label>Note (facoltative)<textarea name="nota" rows="2" maxlength="300"></textarea></label>
         <p class="form-error" hidden></p>
         <div class="actions"><button class="btn primary">${icon('swords')} Lancia la sfida</button></div>
@@ -1834,7 +1838,7 @@ const App = (() => {
       id: Store.uid('t'), nome: `Sfida ${itDate(x.data)} ${x.ora}${x.luogo ? ' · ' + x.luogo : ''}`, data: x.data, luogo: x.luogo || '',
       categoriaId: 'custom', puntiRows: s.settings.sfidePunti || Logic.SFIDE_PUNTI, coefficiente: 1,
       disciplina: 'doppio', genere: c.vincolo === 'misto' ? 'misto' : 'open', formato: x.formato, maxIscritti: 0, iscrizioniAperte: false,
-      descrizione: x.nota || '', owner: x.by, sfida: x.id, config, entries: [], livelli: x.livelli || []
+      descrizione: x.nota || '', owner: x.by, sfida: x.id, config, entries: [], livelli: x.livelli || [], lega: x.lega || ''
     });
     if (individual) t.entries = players.map(id => ({ id: Store.uid('e'), p1: id, p2: null, guest: null, livello: null }));
     else {
@@ -1850,6 +1854,125 @@ const App = (() => {
     }
     s.tournaments.push(t);
     return t;
+  }
+
+  // ====================================================================
+  // LEGHE
+  // Una lega raccoglie tornei e sfide a torneo con una classifica propria (Tornei, Tornei challenge, Generale),
+  // separata dalle altre. La crea l'admin, che sceglie gli admin di lega; admin e admin di lega aggiungono
+  // tornei e sfide, abilitano i giocatori (gli altri vedono ma non partecipano) e chiudono la lega.
+  // ====================================================================
+  const legaById = id => (S().leghe || []).find(l => l.id === id);
+  const isLegaAdmin = l => !!l && !!me() && (isAdmin() || (l.admins || []).includes(me().id));
+  const myLeghe = () => (S().leghe || []).filter(l => l.stato !== 'chiusa' && isLegaAdmin(l));
+  const isMembro = (l, uid) => !!l && (l.membri || []).includes(uid);
+  const registered = u => !!u && u.id.length >= 20;   // account dell'app (gli UID di Firebase sono lunghi)
+  const legaTornei = l => S().tournaments.filter(t => t.lega === l.id);
+  // Messaggio se un giocatore non è abilitato alla lega del torneo o della sfida (null = va bene).
+  function legaError(lid, uids) {
+    const l = lid && legaById(lid);
+    if (!l) return null;
+    if (l.stato === 'chiusa') return `La lega “${l.nome}” è chiusa.`;
+    const bad = uids.filter(Boolean).find(id => !isMembro(l, id));
+    if (!bad) return null;
+    return me() && bad === me().id ? `Questa gara fa parte della lega “${l.nome}”: partecipano solo i giocatori abilitati dall’admin della lega.`
+      : `${userName(bad)} non è abilitato/a alla lega “${l.nome}”.`;
+  }
+  const legaSelect = (cur, label) => {
+    const list = myLeghe();
+    const curL = cur && legaById(cur);
+    if (curL && !list.includes(curL)) list.push(curL);
+    if (!list.length) return '';
+    return `<label>${label || 'Lega'}<select name="lega"><option value="">Nessuna lega</option>${list.map(l => `<option value="${l.id}" ${l.id === cur ? 'selected' : ''}>${esc(l.nome)}</option>`).join('')}</select></label>`;
+  };
+
+  function legaRanking(l, kind) {
+    if (l.stato === 'chiusa' && l.finale && l.finale[kind]) return l.finale[kind];
+    return Logic.ranking(S(), { lega: l.id, kind });
+  }
+
+  function viewLeghe() {
+    const list = (S().leghe || []).slice().sort((a, b) => (a.stato === 'chiusa') - (b.stato === 'chiusa') || (a.nome || '').localeCompare(b.nome || ''));
+    const u = me();
+    return `
+      ${sectionHead(`<span class="h1">${icon('shield')} Leghe</span>`, isAdmin() ? `<button class="btn primary" data-action="lega-new">${icon('plus')} Nuova lega</button>` : '')}
+      <p class="muted">Una lega è un insieme di tornei e sfide con una classifica tutta sua. Partecipano i giocatori abilitati dall’admin della lega; tutti possono seguirla.</p>
+      ${list.length ? `<div class="grid">${list.map(l => {
+        const n = legaTornei(l).length;
+        return `<a class="card tour-card" href="#/leghe/${l.id}"><div class="tour-main"><h3>${esc(l.nome)}</h3>
+          <p class="muted small">${n}${l.previsti ? ` di ${l.previsti}` : ''} ${n === 1 ? 'torneo' : 'tornei'} · ${(l.membri || []).length} giocatori</p>
+          <p class="small">${l.stato === 'chiusa' ? '<span class="badge">Conclusa</span>' : '<span class="badge ok">In corso</span>'}
+            ${u && isMembro(l, u.id) ? '<span class="badge live">Sei abilitato</span>' : ''}${isLegaAdmin(l) && !isAdmin() ? '<span class="badge">Sei admin di lega</span>' : ''}</p></div>${icon('chevron-right')}</a>`;
+      }).join('')}</div>` : empty('Nessuna lega per ora.', 'trophy')}`;
+  }
+
+  function legaTable(l, kind) {
+    const rows = legaRanking(l, kind);
+    if (!rows.length) return empty(l.stato === 'chiusa' ? 'Nessun punto assegnato.' : 'La classifica si riempie quando si concludono i tornei della lega.', 'chart-bar');
+    const closed = l.stato === 'chiusa';
+    return `<div class="table-wrap"><table class="standings"><thead><tr><th>#</th><th>Giocatore</th><th>Punti</th><th>Tornei</th><th>Miglior posizione</th></tr></thead>
+      <tbody>${rows.map((r, i) => `<tr class="${closed && i < 3 ? 'medal m' + (i + 1) : ''}"><td>${i + 1}</td>
+        <td class="name"><button class="link" data-action="player" data-id="${r.id}">${esc(r.nome || userName(r.id))}</button></td><td><strong>${r.total}</strong></td><td>${r.events}</td><td>${r.best ? r.best + '°' : '—'}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+
+  function viewLega(id) {
+    const l = legaById(id);
+    if (!l) return empty('Lega non trovata.', 'alert-circle');
+    const mgr = isLegaAdmin(l), closed = l.stato === 'chiusa', u = me();
+    const tabs = [['classifica', 'Classifica'], ['tornei', 'Tornei e sfide'], ['giocatori', `Giocatori (${(l.membri || []).length})`]].concat(mgr ? [['gestione', 'Gestione']] : []);
+    let tab = (ui.legaTab || {})[id];
+    if (!tabs.some(x => x[0] === tab)) tab = 'classifica';
+    let body = '';
+    if (tab === 'classifica') {
+      const kind = (ui.legaKind || {})[id] || 'generale';
+      const btn = (k, lab) => `<button class="${k === kind ? 'on' : ''}" data-action="lega-kind" data-id="${l.id}" data-k="${k}">${lab}</button>`;
+      body = `<div class="bands" role="group">${btn('generale', 'Generale')}${btn('tornei', 'Tornei')}${btn('challenge', 'Tornei challenge')}</div>
+        ${closed ? `<p class="notice ok">${icon('flag-check')} <span>Lega conclusa${l.chiusaIl ? ' il ' + fmtDate(l.chiusaIl) : ''}: <strong>classifica finale</strong>.</span></p>` : ''}
+        ${legaTable(l, kind)}
+        <p class="muted small">Generale = somma dei punti dei tornei e dei tornei challenge (le sfide a torneo) della lega. Ogni giocatore prende metà dei punti di coppia. I tornei della lega non contano nelle altre classifiche.</p>`;
+    } else if (tab === 'tornei') {
+      const ts = legaTornei(l).sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+      const sf = (S().sfide || []).filter(x => x.lega === l.id && !x.tid && !sfPast(x));
+      const free = S().tournaments.filter(t => !t.lega && !t.closed);
+      body = `${mgr && !closed ? `<div class="actions wrap">
+          <button class="btn primary" data-action="lega-tour" data-id="${l.id}">${icon('plus')} Nuovo torneo della lega</button>
+          <button class="btn" data-action="lega-sfida" data-id="${l.id}">${icon('swords')} Nuova sfida a torneo della lega</button>
+          ${free.length ? `<select data-change="lega-add-tour" data-id="${l.id}" aria-label="Aggiungi un torneo esistente"><option value="">Aggiungi un torneo esistente…</option>${free.map(t => `<option value="${t.id}">${esc(t.nome)} · ${fmtDate(t.data)}</option>`).join('')}</select>` : ''}
+        </div>` : ''}
+        <p class="muted small">${ts.length}${l.previsti ? ` di ${l.previsti} tornei previsti` : ' tornei'} nella lega.</p>
+        ${ts.length ? `<div class="grid">${ts.map(t => tourCard(t) + (mgr && !closed && !t.closed ? `<p class="small"><button class="link danger" data-action="lega-remove-tour" data-id="${t.id}">togli dalla lega</button></p>` : '')).join('')}</div>` : empty('Nessun torneo ancora.', 'trophy')}
+        ${sf.length ? `<h3>Sfide a torneo aperte</h3><div class="grid">${sf.map(sfCard).join('')}</div>` : ''}`;
+    } else if (tab === 'giocatori') {
+      const mem = (l.membri || []).map(uid => S().users.find(x => x.id === uid)).filter(Boolean).sort((a, b) => (a.cognome + a.nome).localeCompare(b.cognome + b.nome));
+      const others = S().users.filter(x => registered(x) && !isMembro(l, x.id)).sort((a, b) => (a.cognome + a.nome).localeCompare(b.cognome + b.nome));
+      body = `${mgr && !closed ? `<div class="actions wrap"><select data-change="lega-add-membro" data-id="${l.id}" aria-label="Abilita un giocatore"><option value="">Abilita un giocatore registrato…</option>
+          ${others.map(x => `<option value="${x.id}">${esc(x.cognome + ' ' + x.nome)}${x.livello ? ' · ' + levelName(x.livello) : ''}</option>`).join('')}</select></div>` : ''}
+        ${u && !mgr ? `<p class="notice">${icon(isMembro(l, u.id) ? 'circle-check' : 'eye')} <span>${isMembro(l, u.id) ? 'Sei abilitato a giocare in questa lega.' : 'Puoi seguire la lega, ma per partecipare devi essere abilitato dall’admin della lega.'}</span></p>` : ''}
+        ${mem.length ? `<ul class="plain">${mem.map(x => `<li>${esc(x.cognome + ' ' + x.nome)} <span class="muted small">${x.sesso || ''}${x.livello ? ' · ' + levelName(x.livello) : ''}</span>
+          ${mgr && !closed ? ` <button class="link danger" data-action="lega-del-membro" data-id="${l.id}" data-uid="${x.id}">togli</button>` : ''}</li>`).join('')}</ul>` : empty('Nessun giocatore abilitato.', 'users')}`;
+    } else if (tab === 'gestione') {
+      const regs = S().users.filter(registered).sort((a, b) => (a.cognome + a.nome).localeCompare(b.cognome + b.nome));
+      body = `<form data-form="lega" class="card scheda"><input type="hidden" name="id" value="${l.id}">
+          <label>Nome della lega<input name="nome" required maxlength="80" value="${esc(l.nome)}"></label>
+          <label>Descrizione<textarea name="descrizione" rows="3">${esc(l.descrizione || '')}</textarea></label>
+          <label>Tornei previsti (0 = non definito)<input type="number" min="0" max="100" name="previsti" value="${l.previsti || 0}"></label>
+          ${isAdmin() ? `<fieldset><legend>Admin di lega</legend><p class="muted small">Gestiscono questa lega: tornei, sfide, giocatori abilitati e chiusura.</p>
+            ${regs.map(x => `<label class="check"><input type="checkbox" name="admins" value="${x.id}" ${(l.admins || []).includes(x.id) ? 'checked' : ''}> ${esc(x.cognome + ' ' + x.nome)}</label>`).join('')}</fieldset>` : ''}
+          <div class="actions"><button class="btn primary">${icon('device-floppy')} Salva</button></div></form>
+        <div class="card"><h3>${closed ? 'Lega conclusa' : 'Chiusura della lega'}</h3>
+          <p class="muted small">${closed ? 'La classifica finale è congelata. Se riapri la lega torna a contare i tornei.' : 'Quando i tornei previsti sono finiti chiudi la lega: la classifica di quel momento diventa la classifica finale.'}</p>
+          <div class="actions">${closed ? `<button class="btn" data-action="lega-riapri" data-id="${l.id}">${icon('lock-open')} Riapri la lega</button>`
+            : `<button class="btn primary" data-action="lega-chiudi" data-id="${l.id}">${icon('flag-check')} Chiudi la lega con la classifica finale</button>`}
+          ${isAdmin() ? `<button class="btn danger" data-action="lega-elimina" data-id="${l.id}">${icon('trash')} Elimina la lega</button>` : ''}</div></div>`;
+    }
+    return `
+      <p><a href="#/leghe">${icon('arrow-left')} Leghe</a></p>
+      <h1>${esc(l.nome)}</h1>
+      <p class="chips">${closed ? '<span class="badge">Conclusa</span>' : '<span class="badge ok">In corso</span>'}<span class="chip">${legaTornei(l).length}${l.previsti ? '/' + l.previsti : ''} tornei</span>
+        <span class="chip">Admin di lega: ${(l.admins || []).length ? esc((l.admins || []).map(userName).join(', ')) : '—'}</span></p>
+      ${l.descrizione ? `<p>${esc(l.descrizione)}</p>` : ''}
+      <nav class="tabs">${tabs.map(([k, lab]) => `<button class="${k === tab ? 'on' : ''} ${k === 'gestione' ? 'tab-admin' : ''}" data-action="lega-tab" data-id="${l.id}" data-tab="${k}">${lab}</button>`).join('')}</nav>
+      <div class="tab-body">${body}</div>`;
   }
 
   // ---------- classifiche ----------
@@ -2145,7 +2268,7 @@ const App = (() => {
 
   // ---------- rendering ----------
 
-  const VIEWS = { '': viewHome, sfide: viewSfide, tornei: viewTournaments, classifiche: viewRanking, corsi: viewCourses, profilo: viewProfile, admin: viewAdmin };
+  const VIEWS = { '': viewHome, sfide: viewSfide, leghe: viewLeghe, tornei: viewTournaments, classifiche: viewRanking, corsi: viewCourses, profilo: viewProfile, admin: viewAdmin };
 
   let themeFor = null;
   const started = Date.now();
@@ -2173,6 +2296,7 @@ const App = (() => {
     let html;
     if (!Store.ready && page !== 'profilo') html = loadingView();
     else if (page === 'tornei' && parts[1]) html = viewTournament(parts[1]);
+    else if (page === 'leghe' && parts[1]) html = viewLega(parts[1]);
     else html = (VIEWS[page] || viewHome)();
     if (page === 'profilo' && u0 && !u0.pending && Store.ready) setTimeout(() => loadCount(u0.id), 0);
     if (Store.ready || page === 'profilo') html = verifyNotice() + html;
@@ -2222,12 +2346,43 @@ const App = (() => {
 
   const sfById = id => (S().sfide || []).find(x => x.id === id);
   const actions = {
+    'lega-new': () => openDialog(`<form data-form="lega-new"><h2>Nuova lega</h2>
+        <label>Nome della lega<input name="nome" required maxlength="80" placeholder="Lega Amici"></label>
+        <label>Descrizione<textarea name="descrizione" rows="3"></textarea></label>
+        <label>Tornei previsti (0 = non definito)<input type="number" min="0" max="100" name="previsti" value="0"></label>
+        <p class="muted small">Dopo la creazione scegli gli admin di lega e i giocatori abilitati.</p>
+        <p class="form-error" hidden></p>
+        <div class="actions"><button type="button" class="btn" data-action="close-dialog">Annulla</button><button class="btn primary">Crea</button></div></form>`),
+    'lega-tab': d => { (ui.legaTab || (ui.legaTab = {}))[d.id] = d.tab; render(); },
+    'lega-kind': d => { (ui.legaKind || (ui.legaKind = {}))[d.id] = d.k; render(); },
+    'lega-tour': d => { ui.newLega = d.id; openDialog(tourFormHtml(null, false)); syncTourForm(); },
+    'lega-sfida': d => { ui.sfLega = d.id; ui.sfOpen = true; location.hash = '#/sfide'; setTimeout(() => { const f = document.querySelector('form.sf-form'); if (f) { f.elements.tipo.value = 'torneo'; syncSfForm(); f.scrollIntoView(); } }, 50); },
+    'lega-remove-tour': d => { const t = tourById(d.id); if (!t || !confirm(`Togliere “${t.nome}” dalla lega?`)) return; t.lega = ''; save(); },
+    'lega-del-membro': d => { const l = legaById(d.id); if (!l || !confirm(`Togliere ${userName(d.uid)} dai giocatori della lega?`)) return; l.membri = l.membri.filter(x => x !== d.uid); save(); },
+    'lega-chiudi': d => {
+      const l = legaById(d.id);
+      if (!l) return;
+      const open = legaTornei(l).filter(t => !t.closed).length;
+      if (!confirm(`Chiudere la lega “${l.nome}” con la classifica finale?${open ? `\nAttenzione: ${open} ${open === 1 ? 'torneo non è concluso e non conterà' : 'tornei non sono conclusi e non conteranno'}.` : ''}`)) return;
+      const snap = k => Logic.ranking(S(), { lega: l.id, kind: k }).map(r => Object.assign({}, r, { nome: userName(r.id) }));
+      l.finale = { generale: snap('generale'), tornei: snap('tornei'), challenge: snap('challenge') };
+      l.stato = 'chiusa'; l.chiusaIl = todayKey();
+      save(); toast('Lega chiusa: classifica finale salvata.', 'ok');
+    },
+    'lega-riapri': d => { const l = legaById(d.id); if (!l || !confirm('Riaprire la lega? La classifica tornerà a contare i tornei.')) return; l.stato = 'aperta'; l.finale = null; save(); },
+    'lega-elimina': d => {
+      const l = legaById(d.id);
+      if (!l || !confirm(`Eliminare la lega “${l.nome}”? I tornei restano, ma escono dalla lega (e tornano nelle classifiche normali).`)) return;
+      S().tournaments.forEach(t => { if (t.lega === l.id) t.lega = ''; });
+      S().leghe = S().leghe.filter(x => x.id !== l.id);
+      location.hash = '#/leghe'; save();
+    },
     'sf-candida': d => {
       const u = me(), x = sfById(d.id);
       if (!u) return goProfileForLogin('Accedi o registrati per partecipare alle sfide.');
       if (needVerified() || !x) return;
       if (!u.sesso) return toast('Indica il sesso nel tuo profilo per partecipare.', 'err');
-      const lv = levelError(x.livelli, [u.id]);
+      const lv = levelError(x.livelli, [u.id]) || legaError(x.lega, [u.id]);
       if (lv) return toast(lv, 'err');
       if (x.modo === 'sesso' && !(Number(u.sesso === 'M' ? x.cercaM : x.cercaF) > 0)) return toast(`Questa sfida non cerca ${u.sesso === 'M' ? 'uomini' : 'donne'}.`, 'err');
       if (sfFull(x)) return toast('Posti esauriti.', 'err');
@@ -2401,7 +2556,7 @@ const App = (() => {
 
     'tour-tab': d => { ui.tab[d.id] = d.tab; render(); },
     'am-sort': d => { (ui.amSort || (ui.amSort = {}))[d.id] = d.sort; render(); },
-    'tour-new': () => tourForm(null),
+    'tour-new': () => { ui.newLega = null; tourForm(null); },
     'tour-edit': d => tourForm(tourById(d.id)),
     'scheda-reset': d => { const f = $app.querySelector('form.tour-form'); if (f) delete f.dataset.dirty; render(); },
     'tour-toggle-reg': d => { const t = tourById(d.id); t.iscrizioniAperte = !t.iscrizioniAperte; save(); },
@@ -2409,7 +2564,7 @@ const App = (() => {
       if (needVerified()) return;
       const t = tourById(d.id);
       if (isPairs(t)) return entryDialog(t, null);
-      const err = genderError(t, [me().id]) || levelError(t.livelli, [me().id]);
+      const err = genderError(t, [me().id]) || levelError(t.livelli, [me().id]) || legaError(t.lega, [me().id]);
       if (err) return toast(err, 'err');
       t.entries.push({ id: Store.uid('e'), p1: me().id, p2: null });
       save();
@@ -2639,6 +2794,8 @@ const App = (() => {
   };
 
   const changes = {
+    'lega-add-tour': el => { const t = tourById(el.value), l = legaById(el.dataset.id); if (t && l) { t.lega = l.id; save(); toast(`“${t.nome}” aggiunto alla lega.`, 'ok'); } },
+    'lega-add-membro': el => { const l = legaById(el.dataset.id); if (l && el.value && !l.membri.includes(el.value)) { l.membri = l.membri.concat([el.value]); save(); toast(`${userName(el.value)} abilitato/a alla lega.`, 'ok'); } },
     'sf-form': () => syncSfForm(),
     'partner-kind': el => { const g = el.form.querySelector('.partner-guest'); if (g) g.hidden = el.value !== '__guest'; },
     'entry-kind': el => { const g = el.form.querySelector('.guest-fields'); if (g) g.hidden = el.value !== '__guest'; },
@@ -2686,6 +2843,19 @@ const App = (() => {
     .filter(r => r.length >= 2 && r[0] > 0 && !isNaN(r[1])).map(r => [r[0], r[1]]).sort((a, b) => a[0] - b[0]);
 
   const forms = {
+    'lega-new': (v, f) => {
+      if (!v.nome.trim()) return formError(f, 'Scrivi il nome della lega.');
+      const l = { id: Store.uid('l'), nome: v.nome.trim(), descrizione: (v.descrizione || '').trim(), previsti: Number(v.previsti) || 0, admins: [], membri: [], stato: 'aperta' };
+      (S().leghe || (S().leghe = [])).push(l);
+      closeDialog(); location.hash = '#/leghe/' + l.id; (ui.legaTab || (ui.legaTab = {}))[l.id] = 'gestione'; save();
+    },
+    lega: (v, f) => {
+      const l = legaById(v.id);
+      if (!l || !isLegaAdmin(l)) return;
+      Object.assign(l, { nome: v.nome.trim() || l.nome, descrizione: (v.descrizione || '').trim(), previsti: Number(v.previsti) || 0 });
+      if (isAdmin()) l.admins = [...f.querySelectorAll('input[name=admins]:checked')].map(el => el.value);
+      save(); toast('Lega salvata.', 'ok');
+    },
     sfida: (v, f) => {
       const u = me();
       if (!u) return goProfileForLogin('Accedi o registrati per lanciare una sfida.');
@@ -2696,7 +2866,7 @@ const App = (() => {
         modo: v.modo === 'indifferente' ? 'indifferente' : 'sesso', cercaM: n('cercaM'), cercaF: n('cercaF'), cercaTot: n('cercaTot'), max: n('max'),
         tipo: v.tipo === 'torneo' ? 'torneo' : 'libero', formato: v.tipo === 'torneo' ? v.formato : '', nota: (v.nota || '').trim(),
         cfg: v.tipo === 'torneo' ? { poolSize: n('poolSize') || 4, qualify: n('qualify') || 2, punti: n('punti') || 11, turni: n('turni') || 5, minuti: n('minuti') || 12, vincolo: v.vincolo || 'equilibrato' } : {},
-        stato: 'aperta', conf: { M: 0, F: 0, tot: 0 }, guests: [], tid: '', livelli: readLevels(f)
+        stato: 'aperta', conf: { M: 0, F: 0, tot: 0 }, guests: [], tid: '', livelli: readLevels(f), lega: v.tipo === 'torneo' ? v.lega || '' : ''
       };
       if (sfCoppie(x)) {
         const pa = readPartner(v);
@@ -2788,7 +2958,8 @@ const App = (() => {
         coefficiente: v.coefficiente === '' ? 1 : Number(v.coefficiente),
         disciplina: t && t.seeds ? t.disciplina : Logic.isIndividual(formato) || formato === 'americana_tempo' ? 'doppio' : v.disciplina,
         genere: t && t.seeds ? t.genere : v.genere, formato, maxIscritti: Number(v.maxIscritti) || 0,
-        iscrizioniAperte: f.elements.iscrizioniAperte.checked, descrizione: v.descrizione.trim(), livelli: readLevels(f)
+        iscrizioniAperte: f.elements.iscrizioniAperte.checked, descrizione: v.descrizione.trim(), livelli: readLevels(f),
+        lega: 'lega' in v ? v.lega : (t ? t.lega || '' : '')
       };
       if (t) {
         if (t.seeds && t.formato === 'gironi_ko' && config.qualify !== t.config.qualify && t.bracket) Logic.resetBracket(t);
@@ -2845,6 +3016,10 @@ const App = (() => {
       if (v.p2 && v.p2 === v.p1) return formError(f, 'Il compagno deve essere un’altra persona.');
       const taken = new Set(t.entries.filter(e => e.id !== v.eid).flatMap(Logic.entryPlayers));
       if (taken.has(v.p1) || (v.p2 && taken.has(v.p2))) return formError(f, 'Uno dei giocatori è già iscritto.');
+      const lgErr = legaError(t.lega, [v.p1, v.p2].filter(id => id && registered(S().users.find(u => u.id === id))));
+      if (lgErr && !canTours()) return formError(f, lgErr);
+      if (lgErr && !confirm(lgErr + '\nAbilitarlo/a alla lega e iscriverlo/a?')) return;
+      if (lgErr) { const lg = legaById(t.lega); [v.p1, v.p2].filter(Boolean).forEach(id => { if (registered(S().users.find(u => u.id === id)) && !lg.membri.includes(id)) lg.membri.push(id); }); }
       const lErr = levelError(t.livelli, [v.p1, v.p2]);
       if (lErr && !canTours()) return formError(f, lErr);
       if (lErr && !confirm(lErr + '\nIscrivere comunque?')) return;
@@ -2958,7 +3133,8 @@ const App = (() => {
   const TOUR_FORMS = new Set(['tour', 'entry-bulk', 'result', 'final-pairs']);
   // Sfide: i controlli (accesso, chi organizza) sono nelle azioni e nelle regole del database.
   const SFIDE = new Set(['sf-candida', 'sf-ritira', 'sf-risp', 'sf-guest', 'sf-guest-del', 'sf-chiudi', 'sf-riapri', 'sf-elimina', 'sf-torneo', 'sf-visto']);
-  const SFIDE_FORMS = new Set(['sfida', 'sf-guest', 'sf-coppia']);
+  const SFIDE_FORMS = new Set(['sfida', 'sf-guest', 'sf-coppia', 'lega']);
+  ['lega-tab', 'lega-kind', 'lega-tour', 'lega-sfida', 'lega-remove-tour', 'lega-del-membro', 'lega-chiudi', 'lega-riapri'].forEach(a => SFIDE.add(a));
 
   document.addEventListener('click', e => {
     if (e.target.classList && e.target.classList.contains('date-native')) { try { e.target.showPicker(); } catch (err) {} return; }
@@ -2987,7 +3163,9 @@ const App = (() => {
     if (!forms[name]) return;
     e.preventDefault();
     if (TOUR_FORMS.has(name)) { curTour = null; const id = (f.elements.tid && f.elements.tid.value) || (name === 'tour' && f.elements.id && f.elements.id.value); if (id) tourById(id); }
-    if (!PUBLIC_FORMS.has(name) && !isAdmin() && !(TOUR_FORMS.has(name) && canTours()) && !SFIDE_FORMS.has(name)) return;
+    // un admin di lega crea i tornei della sua lega
+    const legaTour = name === 'tour' && f.elements.lega && myLeghe().some(l => l.id === f.elements.lega.value);
+    if (!PUBLIC_FORMS.has(name) && !isAdmin() && !(TOUR_FORMS.has(name) && (canTours() || legaTour)) && !SFIDE_FORMS.has(name)) return;
     const v = Object.fromEntries(new FormData(f));
     // Date scritte gg/mm/aaaa -> AAAA-MM-GG.
     for (const el of f.querySelectorAll('input[data-date]')) {

@@ -67,11 +67,24 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Leghe: le crea l'admin, che sceglie gli admin di lega; l'admin di lega modifica la sua lega
+    // (giocatori abilitati, tornei, chiusura) ma non l'elenco degli admin di lega.
+    function legaAdmin(lid) {
+      return signedIn() && lid is string && lid != ''
+        && request.auth.uid in get(/databases/$(database)/documents/leghe/$(lid)).data.admins;
+    }
+    match /leghe/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+      allow update: if legaAdmin(id) && data().admins == resource.data.admins;
+    }
+
     // Sfide: le lancia un utente registrato (by = chi la lancia); la modifica e la cancella lui o un admin.
     match /sfide/{id} {
       allow read: if true;
       allow create: if (verified() || isAdmin()) && data().by == request.auth.uid
-        && data().data is string && data().ora is string;
+        && data().data is string && data().ora is string
+        && (!('lega' in data()) || data().lega == '' || isAdmin() || legaAdmin(data().lega));
       allow update: if signedIn() && (resource.data.by == request.auth.uid || isAdmin())
         && data().by == resource.data.by;
       allow delete: if signedIn() && (resource.data.by == request.auth.uid || isAdmin());
@@ -125,8 +138,15 @@ service cloud.firestore {
       allow create: if (verified() || isAdmin()) && data().owner == request.auth.uid;
       allow update: if signedIn() && resource.data.owner == request.auth.uid && data().owner == request.auth.uid;
       allow delete: if signedIn() && resource.data.owner == request.auth.uid;
+      // admin di lega: tornei della sua lega
+      allow create: if legaAdmin(data().lega);
+      allow update: if legaAdmin(resource.data.lega) && (data().lega == resource.data.lega || legaAdmin(data().lega) || data().lega == '');
+      allow delete: if legaAdmin(resource.data.lega);
     }
-    function tourOwner(tid) { return signedIn() && getAfter(/databases/$(database)/documents/tournaments/$(tid)).data.owner == request.auth.uid; }
+    function tourOwner(tid) {
+      let t = getAfter(/databases/$(database)/documents/tournaments/$(tid)).data;
+      return signedIn() && (t.owner == request.auth.uid || legaAdmin(t.lega));
+    }
 
     match /entries/{id} {
       allow read: if true;
@@ -134,7 +154,8 @@ service cloud.firestore {
       allow create, update: if tourOwner(data().tid);
       // (anche le iscrizioni rimaste di un torneo già eliminato)
       allow delete: if signedIn() && (!exists(/databases/$(database)/documents/tournaments/$(resource.data.tid))
-        || get(/databases/$(database)/documents/tournaments/$(resource.data.tid)).data.owner == request.auth.uid);
+        || get(/databases/$(database)/documents/tournaments/$(resource.data.tid)).data.owner == request.auth.uid
+        || legaAdmin(get(/databases/$(database)/documents/tournaments/$(resource.data.tid)).data.lega));
       allow create: if verified()
         && data().keys().hasOnly(['tid', 'p1', 'p2', 'at'])
         && data().p1 == request.auth.uid && data().p2 != request.auth.uid

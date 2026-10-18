@@ -20,7 +20,7 @@ const Store = (() => {
   }
 
   function empty() {
-    return { version: 1, settings: defaultSettings(), users: [], courts: [], bookings: [], courses: [], categories: [], tournaments: [], notifiche: [], articoli: [], sfide: [], risp: [] };
+    return { version: 1, settings: defaultSettings(), users: [], courts: [], bookings: [], courses: [], categories: [], tournaments: [], notifiche: [], articoli: [], sfide: [], risp: [], leghe: [] };
   }
 
   function isValid(s) {

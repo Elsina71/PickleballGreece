@@ -1105,9 +1105,12 @@ const Logic = (() => {
     const rows = {};
     const cat = filter.cat || '';
     const general = cat.startsWith('generale_');
+    // Leghe: i tornei di una lega contano solo nella classifica della lega (filter.lega; kind: tornei / challenge / generale).
+    const inLega = t => (filter.kind === 'tornei' ? !t.sfida : filter.kind === 'challenge' ? !!t.sfida : true);
     state.tournaments
       .filter(t => t.closed && givesPoints(state, t) && (!filter.categoriaId || t.categoriaId === filter.categoriaId)
-        && (cat === 'sfide' ? !!t.sfida : !cat || (!t.sfida && (general || rankCat(t) === cat))))
+        && (filter.lega ? t.lega === filter.lega && inLega(t)
+          : !t.lega && (cat === 'sfide' ? !!t.sfida : !cat || (!t.sfida && (general || rankCat(t) === cat)))))
       .forEach(t => {
         const pp = playerPlaces(t);
         if (!pp) return;
