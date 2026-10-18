@@ -1205,5 +1205,16 @@ I18n.add('ru', {
  "Aggiungi al calendario": "Добавить в календарь",
  "Con i promemoria il giorno prima e un’ora prima.": "С напоминаниями за день и за час.",
  "Calendario del telefono": "Календарь телефона",
- "Google Calendar": "Google Календарь"
+ "Google Calendar": "Google Календарь",
+ "Utenti e giocatori": "Пользователи и игроки",
+ "{0} registrati · {1} senza account": "{0} зарегистрированы · {1} без аккаунта",
+ "Cerca": "Поиск",
+ "Nome, email o telefono": "Имя, email или телефон",
+ "Mostra": "Показать",
+ "Solo registrati": "Только зарегистрированные",
+ "Solo senza account": "Только без аккаунта",
+ "Email e telefono": "Email и телефон",
+ "Nessun utente trovato.": "Пользователи не найдены.",
+ "Aggiungi giocatore senza account": "Добавить игрока без аккаунта",
+ "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Роли: Admin управляет всем; Менеджер турниров создаёт и ведёт только турниры. Пароль не виден: через «Изменить» можно отправить пользователю письмо для смены пароля."
 });

@@ -734,3 +734,5 @@ label, legend { font-size: .92rem; }
 .mainnav a { font-size: .98rem; }
 .match-label { font-size: .72rem; }
 @media (max-width: 860px) { .mainnav a { font-size: .62rem; } }
+.users-tools { align-items: flex-end; }
+.users-table td.nowrap { white-space: nowrap; }

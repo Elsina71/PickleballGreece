@@ -2340,6 +2340,42 @@ const App = (() => {
 
   // ---------- amministrazione ----------
 
+  // ---------- utenti (admin): elenco con ricerca, filtro, modifica ed eliminazione ----------
+  function usersCard(users) {
+    const reg = users.filter(u => u.email).length;
+    return `<section class="card users-card" id="utenti">
+      <h2>${icon('users')} ${T("Utenti e giocatori")} <span class="muted small">${T("{0} registrati · {1} senza account", [reg, users.length - reg])}</span></h2>
+      <div class="row users-tools">
+        <label>${T("Cerca")}<input type="search" data-user-filter placeholder="${T("Nome, email o telefono")}"></label>
+        <label>${T("Mostra")}<select data-user-kind><option value="reg">${T("Solo registrati")}</option><option value="all">${T("Tutti")}</option><option value="guest">${T("Solo senza account")}</option></select></label>
+      </div>
+      <div class="table-wrap"><table class="standings users-table"><thead><tr><th>${T("Nome")}</th><th>${T("Email e telefono")}</th><th>${T("Ruolo")}</th><th></th></tr></thead>
+        <tbody>${users.map(u => `<tr data-reg="${u.email ? 1 : 0}" data-q="${esc([u.nome, u.cognome, u.email, u.tel].join(' ').toLowerCase())}" ${u.email ? '' : 'hidden'}>
+          <td class="name">${esc(u.cognome + ' ' + u.nome)}${u.sesso ? ` <span class="muted small">${u.sesso}</span>` : ''}${u.livello ? ` <span class="chip">${levelName(u.livello)}</span>` : ''}</td>
+          <td class="small">${u.email ? esc(u.email) : '<span class="muted">' + T("senza account") + '</span>'}${u.tel ? `<br>${icon('phone')} <a href="tel:${esc(u.tel)}">${esc(u.tel)}</a>` : ''}</td>
+          <td>${u.email ? `<select data-change="user-role" data-id="${u.id}" ${u.id === me().id || Cloud.isMain(u.id) ? 'disabled' : ''}><option value="user">${T("Utente")}</option><option value="tornei" ${u.role === 'tornei' ? 'selected' : ''}>${T("Gestore tornei")}</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>${T("Admin")}</option></select>` : ''}</td>
+          <td class="right nowrap"><button class="btn small" data-action="player-edit" data-id="${u.id}">${icon('edit')} ${T("Modifica")}</button>${u.id !== me().id ? ` <button class="btn small danger" data-action="user-delete" data-id="${u.id}">${icon('trash')} ${T("Elimina")}</button>` : ''}</td></tr>`).join('')}</tbody></table></div>
+      <p class="muted small" data-user-none hidden>${T("Nessun utente trovato.")}</p>
+      <form data-form="player-add" class="inline-form">
+        <input name="nome" placeholder="${T("Nome")}" required><input name="cognome" placeholder="${T("Cognome")}" required>
+        <select name="sesso" required><option value="">${T("Sesso")}</option><option value="M">${T("Uomo")}</option><option value="F">${T("Donna")}</option></select>
+        <button class="btn">${icon('user-plus')} ${T("Aggiungi giocatore senza account")}</button>
+      </form>
+      <p class="muted small">${T("Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.")}</p>
+    </section>`;
+  }
+  function filterUsers(box) {
+    const q = (box.querySelector('[data-user-filter]').value || '').trim().toLowerCase(), kind = box.querySelector('[data-user-kind]').value;
+    let n = 0;
+    box.querySelectorAll('tbody tr').forEach(tr => {
+      const ok = (kind === 'all' || (kind === 'reg') === (tr.dataset.reg === '1')) && (!q || tr.dataset.q.includes(q));
+      tr.hidden = !ok; if (ok) n++;
+    });
+    box.querySelector('[data-user-none]').hidden = n > 0;
+  }
+  document.addEventListener('input', e => { if (e.target.matches && e.target.matches('[data-user-filter]')) filterUsers(e.target.closest('.users-card')); });
+  document.addEventListener('change', e => { if (e.target.matches && e.target.matches('[data-user-kind]')) filterUsers(e.target.closest('.users-card')); });
+
   // ---------- le gare per lo scoresheet (account dei campi e organizzatori) ----------
   function viewCampo(tid) {
     const sc = scorerNow();
@@ -2384,6 +2420,7 @@ const App = (() => {
     const users = s.users.slice().sort((a, b) => (a.cognome + a.nome).localeCompare(b.cognome + b.nome));
     return `
       <h1>${T("Amministrazione")}</h1>
+      ${usersCard(users)}
       ${scorersCard()}
       <div class="grid two">
         <section class="card">
@@ -2428,20 +2465,6 @@ const App = (() => {
           ${users.filter(u => u.email).length ? `<div class="table-wrap"><table class="standings"><thead><tr><th>${T("Giocatore")}</th><th>${T("Sfide giocate")}</th><th>${T("Stelle")}</th></tr></thead>
             <tbody>${users.filter(u => u.email).map(u => { const n = playedSfide(u.id); const st = Premi.stars(s, n);
               return `<tr><td class="name">${esc(u.cognome + ' ' + u.nome)}</td><td>${n}</td><td>${st.stelle ? Premi.starIcons(st.stelle) : '—'}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="muted">' + T("Nessun utente registrato.") + '</p>'}
-        </section>
-        <section class="card">
-          <h2>${T("{0} Utenti e giocatori ({1})", [icon('users'), users.length])}</h2>
-          <div class="table-wrap"><table class="standings"><thead><tr><th>${T("Nome")}</th><th>${T("Account")}</th><th>${T("Ruolo")}</th><th></th></tr></thead>
-            <tbody>${users.map(u => `<tr><td class="name">${esc(u.cognome + ' ' + u.nome)}${u.sesso ? ` <span class="muted small">${u.sesso}</span>` : ''}${u.livello ? ` <span class="chip">${levelName(u.livello)}</span>` : ''}${u.tel ? `<br><span class="muted small">${esc(u.tel)}</span>` : ''}</td>
-              <td class="small">${u.email ? esc(u.email) : '<span class="muted">' + T("senza account") + '</span>'}</td>
-              <td>${u.email ? `<select data-change="user-role" data-id="${u.id}" ${u.id === me().id || Cloud.isMain(u.id) ? 'disabled' : ''}><option value="user">${T("Utente")}</option><option value="tornei" ${u.role === 'tornei' ? 'selected' : ''}>${T("Gestore tornei")}</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>${T("Admin")}</option></select>` : '—'}</td>
-              <td class="right"><button class="link" data-action="player-edit" data-id="${u.id}">${T("modifica")}</button>${u.id !== me().id ? ` <button class="link danger" data-action="user-delete" data-id="${u.id}">${T("elimina")}</button>` : ''}</td></tr>`).join('')}</tbody></table></div>
-          <form data-form="player-add" class="inline-form">
-            <input name="nome" placeholder="${T("Nome")}" required><input name="cognome" placeholder="${T("Cognome")}" required>
-            <select name="sesso" required><option value="">${T("Sesso")}</option><option value="M">${T("Uomo")}</option><option value="F">${T("Donna")}</option></select>
-            <button class="btn">${T("{0} Aggiungi giocatore", [icon('user-plus')])}</button>
-          </form>
-          <p class="muted small">${T("I giocatori senza account possono essere inseriti nei tornei dall’organizzazione.\n            Ruoli:")} <strong>${T("Admin")}</strong> ${T("gestisce tutto;")} <strong>${T("Gestore tornei")}</strong> ${T("crea e gestisce solo i tornei (iscritti, calendario, risultati, tempo di gara) e non vede l’amministrazione.")}</p>
         </section>
         <section class="card">
           <h2>${T("{0} Dati", [icon('database')])}</h2>
@@ -3039,6 +3062,7 @@ const App = (() => {
               <button type="button" class="btn small" data-action="user-reset-pw" data-id="${u.id}">${T("{0} Invia email per cambiare la password", [icon('mail')])}</button></div>`
             : '<p class="muted small">' + T("Giocatore senza account.") + '</p>'}
           <div class="row"><label>${T("Nome")}<input name="nome" required value="${esc(u.nome)}"></label><label>${T("Cognome")}<input name="cognome" required value="${esc(u.cognome)}"></label></div>
+          ${u.email ? `<label>${T("Telefono")}<input name="tel" type="tel" maxlength="30" value="${esc(u.tel || '')}"></label>` : ''}
           <label>${T("Sesso")}<select name="sesso" required><option value="">—</option>${Object.entries(SESSI).map(([k, l]) => `<option value="${k}" ${u.sesso === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
           <label>${T("Livello di gioco{0}", [levelSelect('livello', u.livello, false)])}</label>
           <p class="muted small">${T("Le modifiche valgono anche nei tornei e nelle classifiche in cui il giocatore compare.")}</p>
@@ -3445,6 +3469,7 @@ const App = (() => {
       if (!nome || !cognome || !v.sesso) return formError(f, T("Compila nome, cognome e sesso."));
       const other = S().users.find(x => x.id !== u.id && !x.email && !u.email && nameKey(x.nome, x.cognome) === nameKey(nome, cognome) && x.sesso === v.sesso);
       if (other && !confirm(`${T("C’è già {0} {1} nell’elenco: i due verranno uniti in un solo giocatore. Continuare?", [nome, cognome])}`)) return;
+      if (u.email && v.tel != null) u.tel = v.tel.trim().slice(0, 30);
       Object.assign(u, { nome, cognome, sesso: v.sesso, livello: Number(v.livello) || null });
       closeDialog();
       save();

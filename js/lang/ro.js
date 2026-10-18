@@ -1205,5 +1205,16 @@ I18n.add('ro', {
  "Aggiungi al calendario": "Adaugă în calendar",
  "Con i promemoria il giorno prima e un’ora prima.": "Cu mementouri cu o zi înainte și cu o oră înainte.",
  "Calendario del telefono": "Calendarul telefonului",
- "Google Calendar": "Google Calendar"
+ "Google Calendar": "Google Calendar",
+ "Utenti e giocatori": "Utilizatori și jucători",
+ "{0} registrati · {1} senza account": "{0} înregistrați · {1} fără cont",
+ "Cerca": "Caută",
+ "Nome, email o telefono": "Nume, email sau telefon",
+ "Mostra": "Afișează",
+ "Solo registrati": "Doar înregistrați",
+ "Solo senza account": "Doar fără cont",
+ "Email e telefono": "Email și telefon",
+ "Nessun utente trovato.": "Niciun utilizator găsit.",
+ "Aggiungi giocatore senza account": "Adaugă jucător fără cont",
+ "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Roluri: Adminul gestionează totul; Managerul de turnee creează și gestionează doar turnee. Parola nu se vede: cu „Modifică” poți trimite utilizatorului emailul pentru a o schimba."
 });

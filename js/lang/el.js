@@ -1205,5 +1205,16 @@ I18n.add('el', {
  "Aggiungi al calendario": "Προσθήκη στο ημερολόγιο",
  "Con i promemoria il giorno prima e un’ora prima.": "Με υπενθυμίσεις την προηγούμενη μέρα και μία ώρα πριν.",
  "Calendario del telefono": "Ημερολόγιο κινητού",
- "Google Calendar": "Google Calendar"
+ "Google Calendar": "Google Calendar",
+ "Utenti e giocatori": "Χρήστες και παίκτες",
+ "{0} registrati · {1} senza account": "{0} εγγεγραμμένοι · {1} χωρίς λογαριασμό",
+ "Cerca": "Αναζήτηση",
+ "Nome, email o telefono": "Όνομα, email ή τηλέφωνο",
+ "Mostra": "Εμφάνιση",
+ "Solo registrati": "Μόνο εγγεγραμμένοι",
+ "Solo senza account": "Μόνο χωρίς λογαριασμό",
+ "Email e telefono": "Email και τηλέφωνο",
+ "Nessun utente trovato.": "Δεν βρέθηκαν χρήστες.",
+ "Aggiungi giocatore senza account": "Προσθήκη παίκτη χωρίς λογαριασμό",
+ "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Ρόλοι: ο Admin διαχειρίζεται τα πάντα· ο Διαχειριστής τουρνουά δημιουργεί και διαχειρίζεται μόνο τουρνουά. Ο κωδικός δεν εμφανίζεται: με «Επεξεργασία» μπορείς να στείλεις στον χρήστη email για να τον αλλάξει."
 });

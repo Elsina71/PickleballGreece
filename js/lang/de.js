@@ -1205,5 +1205,16 @@ I18n.add('de', {
  "Aggiungi al calendario": "Zum Kalender hinzufügen",
  "Con i promemoria il giorno prima e un’ora prima.": "Mit Erinnerungen am Vortag und eine Stunde vorher.",
  "Calendario del telefono": "Handy-Kalender",
- "Google Calendar": "Google Kalender"
+ "Google Calendar": "Google Kalender",
+ "Utenti e giocatori": "Nutzer und Spieler",
+ "{0} registrati · {1} senza account": "{0} registriert · {1} ohne Konto",
+ "Cerca": "Suchen",
+ "Nome, email o telefono": "Name, E-Mail oder Telefon",
+ "Mostra": "Anzeigen",
+ "Solo registrati": "Nur registrierte",
+ "Solo senza account": "Nur ohne Konto",
+ "Email e telefono": "E-Mail und Telefon",
+ "Nessun utente trovato.": "Keine Nutzer gefunden.",
+ "Aggiungi giocatore senza account": "Spieler ohne Konto hinzufügen",
+ "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Rollen: Admin verwaltet alles; Turnierleiter erstellt und verwaltet nur Turniere. Das Passwort ist nie sichtbar: Mit „Bearbeiten“ kannst du dem Nutzer die E-Mail zum Ändern schicken."
 });
