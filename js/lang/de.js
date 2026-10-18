@@ -1199,5 +1199,6 @@ I18n.add('de', {
  "nessun cambio campo": "kein Seitenwechsel",
  "Si cambia lato a {0} punti.": "Seitenwechsel bei {0} Punkten.",
  "Cambio campo durante il game": "Seitenwechsel während des Games",
- "In quali game": "In welchen Games"
+ "In quali game": "In welchen Games",
+ "{0} La tua prossima sfida": "{0} Deine nächste Challenge"
 });

@@ -1199,5 +1199,6 @@ I18n.add('el', {
  "nessun cambio campo": "χωρίς αλλαγή γηπέδου",
  "Si cambia lato a {0} punti.": "Αλλαγή γηπέδου στους {0} πόντους.",
  "Cambio campo durante il game": "Αλλαγή γηπέδου κατά το game",
- "In quali game": "Σε ποια game"
+ "In quali game": "Σε ποια game",
+ "{0} La tua prossima sfida": "{0} Η επόμενη πρόκλησή σου"
 });

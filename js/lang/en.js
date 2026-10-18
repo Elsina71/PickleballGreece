@@ -1199,5 +1199,6 @@ I18n.add('en', {
  "nessun cambio campo": "no change of ends",
  "Si cambia lato a {0} punti.": "Change ends at {0} points.",
  "Cambio campo durante il game": "Change ends during the game",
- "In quali game": "In which games"
+ "In quali game": "In which games",
+ "{0} La tua prossima sfida": "{0} Your next challenge"
 });

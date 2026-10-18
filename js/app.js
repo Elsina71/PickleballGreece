@@ -1795,13 +1795,23 @@ const App = (() => {
   }
 
   // Blocco della home: sfide aperte a cui ci si può candidare.
+  // La prossima sfida in calendario: lanciata da te o con la tua partecipazione confermata.
+  function sfNext() {
+    if (!me()) return null;
+    return (S().sfide || []).find(x => !sfPast(x) && (sfMine(x) || (sfMyRisp(x) && sfMyRisp(x).stato === 'confermata'))) || null;
+  }
+  function nextBlock() {
+    const x = sfNext();
+    return x ? `<section class="sf-next">${sectionHead(T("{0} La tua prossima sfida", [icon('flame')]))}<div class="grid">${sfCard(x)}</div></section>` : '';
+  }
+
   function sfideHomeBlock() {
     // prima le proprie (lanciate o con la propria candidatura), poi le altre aperte con posti liberi
     const mia = x => sfMine(x) || (sfMyRisp(x) && ['attesa', 'confermata'].includes(sfMyRisp(x).stato));
     const all = (S().sfide || []).filter(x => !sfPast(x) && x.stato !== 'annullata');
-    const mine = all.filter(mia), others = all.filter(x => !mia(x) && x.stato === 'aperta' && !sfFull(x) && !sfMyRisp(x)).slice(0, 4);
+    const nx = sfNext(), mine = all.filter(x => mia(x) && x !== nx), others = all.filter(x => !mia(x) && x.stato === 'aperta' && !sfFull(x) && !sfMyRisp(x)).slice(0, 4);
     const list = mine.concat(others);
-    return `<section>${sectionHead(T("Sfide aperte"), '<a href="#/sfide">' + T("Tutte") + '</a>')}
+    return `${nextBlock()}<section>${sectionHead(T("Sfide aperte"), '<a href="#/sfide">' + T("Tutte") + '</a>')}
       ${list.length ? `<div class="grid">${list.map(sfCard).join('')}</div>` : empty(T("Nessuna sfida aperta al momento: lanciane una tu!"), 'swords')}</section>`;
   }
 
@@ -1908,6 +1918,7 @@ const App = (() => {
     return `
       ${sfideAlerts()}
       ${sectionHead(`<span class="h1">${T("{0} Sfide", [icon('swords')])}</span>`)}
+      ${nextBlock()}
       <p class="muted">${T("Lancia una sfida e trova i giocatori che ti mancano, oppure partecipa a quelle degli altri. Chi lancia la sfida conferma i partecipanti.")}</p>
       ${u ? (u.pending ? '' : sfForm()) : `<div class="notice">${icon('info-circle')} <span>${T("Per lanciare una sfida o partecipare")} <a href="#/profilo">${T("accedi o registrati")}</a>.</span></div>`}
       ${u ? sec(T("Le mie sfide"), mine, T("Non hai sfide in programma.")) : ''}

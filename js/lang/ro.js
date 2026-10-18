@@ -1199,5 +1199,6 @@ I18n.add('ro', {
  "nessun cambio campo": "fără schimbare de teren",
  "Si cambia lato a {0} punti.": "Schimbare de teren la {0} puncte.",
  "Cambio campo durante il game": "Schimbare de teren în timpul game-ului",
- "In quali game": "În ce game-uri"
+ "In quali game": "În ce game-uri",
+ "{0} La tua prossima sfida": "{0} Următoarea ta provocare"
 });

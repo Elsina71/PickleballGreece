@@ -721,3 +721,4 @@ fieldset.levels p { flex-basis: 100%; margin: 4px 0 0; }
 @media (max-width: 560px) { .sb-score { font-size: 3.4rem; } .sb-call strong { font-size: 1.9rem; } .sb-half { padding: 8px; } }
 .shirt { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(127,127,127,.6); margin-right: 6px; vertical-align: -2px; }
 .cc-box input:disabled, .cc-box select:disabled { opacity: .45; }
+.sf-next .sf-card { border: 2px solid var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 20%, transparent); }

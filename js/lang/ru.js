@@ -1199,5 +1199,6 @@ I18n.add('ru', {
  "nessun cambio campo": "без смены сторон",
  "Si cambia lato a {0} punti.": "Смена сторон при {0} очках.",
  "Cambio campo durante il game": "Смена сторон во время гейма",
- "In quali game": "В каких геймах"
+ "In quali game": "В каких геймах",
+ "{0} La tua prossima sfida": "{0} Ваш следующий вызов"
 });
