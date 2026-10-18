@@ -280,8 +280,11 @@ function createSfida(id, data) { return setDoc(sfidaRef(id), Object.assign({}, d
 function updateSfida(id, patch) { return updateDoc(sfidaRef(id), patch); }
 function deleteSfida(id) { return deleteDoc(sfidaRef(id)); }
 // Candidatura: id = sfida_utente; org = chi ha lanciato la sfida (serve alle regole di lettura).
-function applySfida(sfida, me) {
-  return setDoc(doc(db, 'sfideRisp', sfida.id + '_' + user.uid), { sid: sfida.id, uid: user.uid, org: sfida.by, nome: `${me.nome} ${me.cognome}`, sesso: me.sesso || '', stato: 'attesa', visto: false, at: Date.now() });
+// partner (sfide a coppie fisse): { uid } se registrato, altrimenti { nome, cognome, sesso }; con il nome da mostrare.
+function applySfida(sfida, me, partner) {
+  const d = { sid: sfida.id, uid: user.uid, org: sfida.by, nome: `${me.nome} ${me.cognome}`, sesso: me.sesso || '', stato: 'attesa', visto: false, at: Date.now() };
+  if (partner) d.partner = partner;
+  return setDoc(doc(db, 'sfideRisp', sfida.id + '_' + user.uid), d);
 }
 function updateRisp(id, patch) { return updateDoc(doc(db, 'sfideRisp', id), patch); }
 function deleteRisp(id) { return deleteDoc(doc(db, 'sfideRisp', id)); }

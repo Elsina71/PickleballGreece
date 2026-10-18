@@ -733,7 +733,8 @@ const App = (() => {
     const u = me();
     const tabs = tabsFor(t);
     let tab = ui.tab[t.id];
-    if (!tabs.some(x => x[0] === tab)) tab = tabs[tabs.length > 1 ? 1 : 0][0];
+    // senza sorteggio si parte dagli iscritti, poi dalla prima vista del torneo (mai dalla Scheda)
+    if (!tabs.some(x => x[0] === tab)) tab = !t.seeds || tabs.length < 2 || tabs[1][0] === 'scheda' ? tabs[0][0] : tabs[1][0];
     const myEntry = u && t.entries.find(e => e.p1 === u.id || e.p2 === u.id);
     const full = t.maxIscritti && t.entries.length >= t.maxIscritti;
     const c = t.config;
@@ -1602,6 +1603,25 @@ const App = (() => {
     americana: 'Americana (compagno diverso a ogni partita)',
     americana_tempo: 'Americana a tempo (compagno diverso, gare a tempo)'
   };
+  // Formule a coppie fisse: ci si candida in coppia (compagno registrato o no).
+  const sfCoppie = x => x.tipo === 'torneo' && ['girone_unico', 'gironi_ko'].includes(x.formato);
+  const partnerName = pa => (!pa ? '' : pa.uid ? userName(pa.uid) : `${pa.nome} ${pa.cognome} (non registrato)`);
+  const partnerSex = pa => (!pa ? '' : pa.uid ? (S().users.find(u => u.id === pa.uid) || {}).sesso || '' : pa.sesso || '');
+  // Scelta del compagno: giocatore dell'elenco oppure nuovo giocatore non registrato.
+  function partnerFields(exclude, label) {
+    const opts = S().users.filter(u => !exclude.includes(u.id)).sort((a, b) => (a.cognome + a.nome).localeCompare(b.cognome + b.nome))
+      .map(u => `<option value="${u.id}">${esc(u.cognome + ' ' + u.nome)}</option>`).join('');
+    return `<label>${label}<select name="pUid" data-change="partner-kind"><option value="">—</option><option value="__guest">➕ Non registrato all’app</option>${opts}</select></label>
+      <div class="partner-guest" hidden><div class="row"><label>Nome<input name="pNome" maxlength="60"></label><label>Cognome<input name="pCognome" maxlength="60"></label></div>
+        <label>Sesso<select name="pSesso"><option value="">—</option>${Object.entries(SESSI).map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label></div>`;
+  }
+  function readPartner(v) {
+    if (v.pUid === '__guest') {
+      const g = { nome: (v.pNome || '').trim(), cognome: (v.pCognome || '').trim(), sesso: v.pSesso || '' };
+      return g.nome && g.cognome && g.sesso ? g : null;
+    }
+    return v.pUid ? { uid: v.pUid } : null;
+  }
   const sfPast = x => isPast(x.data, x.ora || '23:59');
   const sfMine = x => !!me() && x.by === me().id;
   const sfRisp = x => (S().risp || []).filter(r => r.sid === x.id);
@@ -1627,7 +1647,7 @@ const App = (() => {
 
   // Conteggi confermati (candidature confermate + giocatori aggiunti dall'organizzatore), salvati nella sfida.
   function sfCount(x) {
-    const ok = sfRisp(x).filter(r => r.stato === 'confermata').map(r => r.sesso).concat((x.guests || []).map(g => g.sesso));
+    const ok = sfRisp(x).filter(r => r.stato === 'confermata').flatMap(r => [r.sesso].concat(r.partner ? [partnerSex(r.partner)] : [])).concat((x.guests || []).map(g => g.sesso));
     return { M: ok.filter(g => g === 'M').length, F: ok.filter(g => g === 'F').length, tot: ok.length };
   }
   const sfErr = e => toast(e && e.code === 'permission-denied' ? 'Operazione non consentita.' : 'Errore di collegamento al database' + (e && e.code ? ` (${e.code})` : '') + '.', 'err');
@@ -1671,14 +1691,14 @@ const App = (() => {
     } else if (!mine && x.stato === 'aperta' && !past) {
       me_ = !u ? '<p><a class="btn small" href="#/profilo">Accedi per partecipare</a></p>'
         : sfFull(x) ? '<p class="muted small">Posti esauriti.</p>'
-        : `<p><button class="btn primary small" data-action="sf-candida" data-id="${x.id}">${icon('hand-finger')} Partecipa</button></p>`;
+        : `<p><button class="btn primary small" data-action="sf-candida" data-id="${x.id}">${icon('hand-finger')} ${sfCoppie(x) ? 'Partecipa con il tuo compagno/a' : 'Partecipa'}</button></p>`;
     }
     const names = sfSeesNames(x) ? `<div class="sf-people">
         <p class="small"><strong>Partecipanti confermati</strong></p>
-        <ul class="plain small"><li>${esc(sfByName(x))} <span class="muted">· organizzatore</span></li>
-          ${conf.map(r => `<li>${esc(r.nome)} <span class="muted">${r.sesso}</span>${canManage && !x.tid ? ` <button class="link danger" data-action="sf-risp" data-id="${r.id}" data-v="rifiutata">togli</button>` : ''}</li>`).join('')}
+        <ul class="plain small"><li>${esc(sfByName(x))}${x.partner ? ` + ${esc(partnerName(x.partner))}` : ''} <span class="muted">· organizzatore</span></li>
+          ${conf.map(r => `<li>${esc(r.nome)} <span class="muted">${r.sesso}</span>${r.partner ? ` + ${esc(partnerName(r.partner))} <span class="muted">${partnerSex(r.partner)}</span>` : ''}${canManage && !x.tid ? ` <button class="link danger" data-action="sf-risp" data-id="${r.id}" data-v="rifiutata">togli</button>` : ''}</li>`).join('')}
           ${(x.guests || []).map((g, i) => `<li>${esc(g.nome + ' ' + g.cognome)} <span class="muted">${g.sesso} · non registrato</span>${canManage && !x.tid ? ` <button class="link danger" data-action="sf-guest-del" data-id="${x.id}" data-i="${i}">togli</button>` : ''}</li>`).join('')}</ul>
-        ${pend.length ? `<p class="small"><strong>Candidature da valutare</strong></p><ul class="plain small">${pend.map(r => `<li>${esc(r.nome)} <span class="muted">${r.sesso}</span>
+        ${pend.length ? `<p class="small"><strong>Candidature da valutare</strong></p><ul class="plain small">${pend.map(r => `<li>${esc(r.nome)} <span class="muted">${r.sesso}</span>${r.partner ? ` + ${esc(partnerName(r.partner))} <span class="muted">${partnerSex(r.partner)}</span>` : ''}
           <button class="btn small primary" data-action="sf-risp" data-id="${r.id}" data-v="confermata">Accetta</button>
           <button class="btn small" data-action="sf-risp" data-id="${r.id}" data-v="rifiutata">Rifiuta</button></li>`).join('')}</ul>` : ''}
       </div>` : '';
@@ -1727,8 +1747,9 @@ const App = (() => {
             <label data-sf-f="americana,americana_tempo">Turni<input type="number" min="1" max="20" name="turni" value="5"></label>
             <label data-sf-f="americana_tempo">Minuti per gara<input type="number" min="3" max="60" name="minuti" value="12"></label>
           </div>
+          <div data-sf-f="girone_unico,gironi_ko">${partnerFields([me() ? me().id : ''], 'Il tuo compagno/a (le coppie restano fisse per tutto il torneo)')}</div>
           <label data-sf-f="americana,americana_tempo">Uomini e donne<select name="vincolo">${Object.entries(Logic.VINCOLI).map(([k, l]) => `<option value="${k}" ${k === 'equilibrato' ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-          <p class="muted small">Nei gironi le coppie si formano a sorte quando crei il torneo (puoi cambiarle dagli Iscritti). Nell’americana il compagno cambia a ogni partita.
+          <p class="muted small">Nel girone unico e nei gironi le coppie sono fisse: ci si candida già in coppia (anche con un compagno non registrato). Nell’americana il compagno cambia a ogni partita.
             Quando la sfida è pronta premi “Crea il torneo della sfida”: avrai la Scheda del torneo, gli iscritti (anche non registrati), il sorteggio delle gare e, nell’americana a tempo, il timer.</p>
         </fieldset>
         <label>Note (facoltative)<textarea name="nota" rows="2" maxlength="300"></textarea></label>
@@ -1795,7 +1816,17 @@ const App = (() => {
       descrizione: x.nota || '', owner: x.by, sfida: x.id, config, entries: []
     });
     if (individual) t.entries = players.map(id => ({ id: Store.uid('e'), p1: id, p2: null, guest: null, livello: null }));
-    else t.entries = sfPairs(players, sexOf, c.vincolo !== 'libero').map(([a, b]) => ({ id: Store.uid('e'), p1: a, p2: b, guest: null, livello: null }));
+    else {
+      // coppie fisse: organizzatore + compagno, poi ogni coppia confermata; chi è rimasto senza compagno si abbina a sorte
+      const used = new Set(), pairs = [];
+      const pid = pa => (!pa ? null : pa.uid ? pa.uid : playerFor(pa).id);
+      const add = (a, b) => { if (!a || used.has(a) || (b && used.has(b))) return; used.add(a); if (b) used.add(b); pairs.push([a, b]); };
+      add(x.by, pid(x.partner));
+      sfRisp(x).filter(r => r.stato === 'confermata').forEach(r => add(r.uid, pid(r.partner)));
+      const full = pairs.filter(p => p[1]);
+      const rest = pairs.filter(p => !p[1]).map(p => p[0]).concat(players.filter(id => !used.has(id)));
+      t.entries = full.concat(sfPairs(rest, sexOf, true)).map(([a, b]) => ({ id: Store.uid('e'), p1: a, p2: b, guest: null, livello: null }));
+    }
     s.tournaments.push(t);
     return t;
   }
@@ -2173,6 +2204,15 @@ const App = (() => {
       if (!u.sesso) return toast('Indica il sesso nel tuo profilo per partecipare.', 'err');
       if (x.modo === 'sesso' && !(Number(u.sesso === 'M' ? x.cercaM : x.cercaF) > 0)) return toast(`Questa sfida non cerca ${u.sesso === 'M' ? 'uomini' : 'donne'}.`, 'err');
       if (sfFull(x)) return toast('Posti esauriti.', 'err');
+      if (sfCoppie(x)) {
+        if (sfConf(x).tot + 2 > sfMax(x)) return toast('Non ci sono più posti per una coppia.', 'err');
+        return openDialog(`<form data-form="sf-coppia"><input type="hidden" name="id" value="${x.id}">
+          <h2>Partecipa in coppia</h2>
+          <p class="muted small">In questa sfida le coppie sono fisse per tutto il torneo: indica il tuo compagno/a. Chi ha lanciato la sfida conferma la coppia.</p>
+          ${partnerFields([u.id, x.by], 'Compagno/a')}
+          <p class="form-error" hidden></p>
+          <div class="actions"><button type="button" class="btn" data-action="close-dialog">Annulla</button><button class="btn primary">Invia la candidatura</button></div></form>`);
+      }
       window.Cloud.applySfida(x, u).then(() => toast('Candidatura inviata: la deve confermare chi ha lanciato la sfida.', 'ok')).catch(sfErr);
     },
     'sf-ritira': d => {
@@ -2187,10 +2227,10 @@ const App = (() => {
     'sf-risp': d => {
       const r = (S().risp || []).find(y => y.id === d.id), x = r && sfById(r.sid);
       if (!r || !x) return;
-      if (d.v === 'confermata' && sfFull(x)) return toast(`Hai già confermato il numero massimo di persone (${sfMax(x)}).`, 'err');
+      if (d.v === 'confermata' && sfConf(x).tot + (r.partner ? 2 : 1) > sfMax(x)) return toast(`Non ci sono abbastanza posti: massimo ${sfMax(x)} persone.`, 'err');
       if (d.v === 'rifiutata' && r.stato === 'confermata' && !confirm(`Togliere ${r.nome} dalla sfida?`)) return;
       const next = sfRisp(x).map(y => (y.id === r.id ? Object.assign({}, y, { stato: d.v }) : y));
-      const ok = next.filter(y => y.stato === 'confermata').map(y => y.sesso).concat((x.guests || []).map(g => g.sesso));
+      const ok = next.filter(y => y.stato === 'confermata').flatMap(y => [y.sesso].concat(y.partner ? [partnerSex(y.partner)] : [])).concat((x.guests || []).map(g => g.sesso));
       window.Cloud.updateRisp(r.id, { stato: d.v, visto: false, at: Date.now() })
         .then(() => window.Cloud.updateSfida(x.id, { conf: { M: ok.filter(g => g === 'M').length, F: ok.filter(g => g === 'F').length, tot: ok.length } }))
         .then(() => toast(d.v === 'confermata' ? `${r.nome} confermato/a.` : `${r.nome} non confermato/a.`, 'ok')).catch(sfErr);
@@ -2572,6 +2612,7 @@ const App = (() => {
 
   const changes = {
     'sf-form': () => syncSfForm(),
+    'partner-kind': el => { const g = el.form.querySelector('.partner-guest'); if (g) g.hidden = el.value !== '__guest'; },
     'entry-kind': el => { const g = el.form.querySelector('.guest-fields'); if (g) g.hidden = el.value !== '__guest'; },
     'book-date': el => { if (el.value) { ui.date = el.value; render(); } },
     'date-native': el => { const t = el.closest('.date-field').querySelector('input[data-date]'); if (t && el.value) t.value = itDate(el.value); },
@@ -2629,6 +2670,11 @@ const App = (() => {
         cfg: v.tipo === 'torneo' ? { poolSize: n('poolSize') || 4, qualify: n('qualify') || 2, punti: n('punti') || 11, turni: n('turni') || 5, minuti: n('minuti') || 12, vincolo: v.vincolo || 'equilibrato' } : {},
         stato: 'aperta', conf: { M: 0, F: 0, tot: 0 }, guests: [], tid: ''
       };
+      if (sfCoppie(x)) {
+        const pa = readPartner(v);
+        if (!pa) return formError(f, 'Indica il tuo compagno/a (per un non registrato: nome, cognome e sesso).');
+        x.partner = pa;
+      }
       if (!x.data || !x.ora) return formError(f, 'Indica data e ora.');
       if (isPast(x.data, x.ora)) return formError(f, 'La data e l’ora sono già passate.');
       const sought = x.modo === 'sesso' ? x.cercaM + x.cercaF : x.cercaTot;
@@ -2636,6 +2682,13 @@ const App = (() => {
       if (!x.max) x.max = sought;
       if (x.max < sought) return formError(f, `Il numero massimo di persone non può essere minore di quelle cercate (${sought}).`);
       window.Cloud.createSfida(Store.uid('s'), x).then(() => { ui.sfOpen = false; toast('Sfida lanciata!', 'ok'); }).catch(sfErr);
+    },
+    'sf-coppia': (v, f) => {
+      const x = sfById(v.id), u = me(), pa = readPartner(v);
+      if (!x || !u) return closeDialog();
+      if (!pa) return formError(f, 'Indica il compagno/a (per un non registrato: nome, cognome e sesso).');
+      if (x.modo === 'sesso' && !(Number(partnerSex(pa) === 'M' ? x.cercaM : x.cercaF) > 0)) return formError(f, `Questa sfida non cerca ${partnerSex(pa) === 'M' ? 'uomini' : 'donne'}.`);
+      window.Cloud.applySfida(x, u, pa).then(() => { closeDialog(); toast('Candidatura della coppia inviata: la deve confermare chi ha lanciato la sfida.', 'ok'); }).catch(sfErr);
     },
     'sf-guest': (v, f) => {
       const x = sfById(v.id);
@@ -2873,7 +2926,7 @@ const App = (() => {
   const TOUR_FORMS = new Set(['tour', 'entry-bulk', 'result', 'final-pairs']);
   // Sfide: i controlli (accesso, chi organizza) sono nelle azioni e nelle regole del database.
   const SFIDE = new Set(['sf-candida', 'sf-ritira', 'sf-risp', 'sf-guest', 'sf-guest-del', 'sf-chiudi', 'sf-riapri', 'sf-elimina', 'sf-torneo', 'sf-visto']);
-  const SFIDE_FORMS = new Set(['sfida', 'sf-guest']);
+  const SFIDE_FORMS = new Set(['sfida', 'sf-guest', 'sf-coppia']);
 
   document.addEventListener('click', e => {
     if (e.target.classList && e.target.classList.contains('date-native')) { try { e.target.showPicker(); } catch (err) {} return; }
