@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it" data-theme="kitchen">
+<html lang="it" data-theme="protour">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/temi.css">
+  <script src="js/i18n.js"></script>
   <script src="js/temi.js"></script>
   <script>
     // Stile grafico scelto su questo dispositivo (applicato subito, prima del caricamento dell'app).
@@ -25,21 +26,22 @@
   <header class="topbar">
     <a class="brand" href="#/">
       <img class="logo" src="img/logo.png" alt="Pickleball Tribe" width="50" height="50">
-      <span class="brand-text"><strong id="clubName">Pickleball Greece</strong><small>sfide · tornei · classifiche</small></span>
+      <span class="brand-text"><strong id="clubName">Pickleball Greece</strong><small data-t>sfide · tornei · classifiche</small></span>
     </a>
     <a class="hdr-badges" id="hdrBadges" href="#/profilo" title="I miei premi" hidden></a>
-    <nav class="mainnav" aria-label="Menu principale">
-      <a href="#/" data-nav=""><i class="ti ti-home" aria-hidden="true"></i><span>Home</span></a>
-      <a href="#/sfide" data-nav="sfide"><i class="ti ti-swords" aria-hidden="true"></i><span>Sfide</span></a>
-      <a href="#/leghe" data-nav="leghe"><i class="ti ti-shield" aria-hidden="true"></i><span>Leghe</span></a>
-      <a href="#/tornei" data-nav="tornei"><i class="ti ti-trophy" aria-hidden="true"></i><span>Tornei</span></a>
-      <a href="#/classifiche" data-nav="classifiche"><i class="ti ti-chart-bar" aria-hidden="true"></i><span>Classifiche</span></a>
-      <a href="#/corsi" data-nav="corsi"><i class="ti ti-school" aria-hidden="true"></i><span>Corsi</span></a>
-      <a href="#/admin" data-nav="admin" data-admin-only hidden><i class="ti ti-settings" aria-hidden="true"></i><span>Admin</span></a>
+    <nav class="mainnav" aria-label="Menu principale" data-t-aria>
+      <a href="#/" data-nav=""><i class="ti ti-home" aria-hidden="true"></i><span data-t>Home</span></a>
+      <a href="#/sfide" data-nav="sfide"><i class="ti ti-swords" aria-hidden="true"></i><span data-t>Sfide</span></a>
+      <a href="#/leghe" data-nav="leghe"><i class="ti ti-shield" aria-hidden="true"></i><span data-t>Leghe</span></a>
+      <a href="#/tornei" data-nav="tornei"><i class="ti ti-trophy" aria-hidden="true"></i><span data-t>Tornei</span></a>
+      <a href="#/classifiche" data-nav="classifiche"><i class="ti ti-chart-bar" aria-hidden="true"></i><span data-t>Classifiche</span></a>
+      <a href="#/corsi" data-nav="corsi"><i class="ti ti-school" aria-hidden="true"></i><span data-t>Corsi</span></a>
+      <a href="#/admin" data-nav="admin" data-admin-only hidden><i class="ti ti-settings" aria-hidden="true"></i><span data-t>Admin</span></a>
     </nav>
     <div class="top-actions">
-      <button type="button" class="icon-btn" data-action="theme" aria-label="Stile grafico"><i class="ti ti-palette" aria-hidden="true"></i></button>
-      <a class="who" id="who" href="#/profilo" aria-label="Profilo"></a>
+      <button type="button" class="icon-btn" data-action="lang" aria-label="Lingua" data-t-aria><i class="ti ti-world" aria-hidden="true"></i></button>
+      <button type="button" class="icon-btn" data-action="theme" aria-label="Stile grafico" data-t-aria><i class="ti ti-palette" aria-hidden="true"></i></button>
+      <a class="who" id="who" href="#/profilo" aria-label="Profilo" data-t-aria></a>
     </div>
   </header>
 
@@ -47,6 +49,7 @@
 
   <dialog id="dialog" class="dialog"></dialog>
 
+  <script>I18n.page();</script>
   <script src="js/logic.js"></script>
   <script src="js/store.js"></script>
   <script src="js/premi.js"></script>

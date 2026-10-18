@@ -237,23 +237,23 @@ function push(st) {
 // ---------- accesso ----------
 
 const AUTH_ERRORS = {
-  'auth/invalid-credential': 'Email o password non corretti.',
-  'auth/wrong-password': 'Email o password non corretti.',
-  'auth/user-not-found': 'Email o password non corretti.',
-  'auth/invalid-email': 'Email non valida.',
-  'auth/email-already-in-use': 'Esiste già un account con questa email.',
-  'auth/weak-password': 'La password deve avere almeno 6 caratteri.',
-  'auth/too-many-requests': 'Troppi tentativi: riprova tra qualche minuto.',
-  'auth/network-request-failed': 'Connessione assente: riprova.'
+  'auth/invalid-credential': T("Email o password non corretti."),
+  'auth/wrong-password': T("Email o password non corretti."),
+  'auth/user-not-found': T("Email o password non corretti."),
+  'auth/invalid-email': T("Email non valida."),
+  'auth/email-already-in-use': T("Esiste già un account con questa email."),
+  'auth/weak-password': T("La password deve avere almeno 6 caratteri."),
+  'auth/too-many-requests': T("Troppi tentativi: riprova tra qualche minuto."),
+  'auth/network-request-failed': T("Connessione assente: riprova.")
 };
-const authError = e => new Error(AUTH_ERRORS[e.code] || 'Operazione non riuscita: ' + (e.code || e.message));
+const authError = e => new Error(AUTH_ERRORS[e.code] || T("Operazione non riuscita: ") + (e.code || e.message));
 
 async function login(email, password) {
   try { await signInWithEmailAndPassword(auth, email.trim(), password); } catch (e) { throw authError(e); }
 }
 
 async function register(v) {
-  if (!['M', 'F'].includes(v.sesso)) throw new Error('Indica il sesso.');
+  if (!['M', 'F'].includes(v.sesso)) throw new Error(T("Indica il sesso."));
   let cred;
   try { cred = await createUserWithEmailAndPassword(auth, v.email.trim(), v.password); } catch (e) { throw authError(e); }
   const id = cred.user.uid;

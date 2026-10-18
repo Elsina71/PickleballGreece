@@ -7,13 +7,13 @@ const Logic = (() => {
   const round2 = x => Math.round(x * 100) / 100;
 
   const FORMATS = {
-    gironi_ko: 'Gironi + eliminazione diretta',
-    girone_unico: 'Girone unico (tutti contro tutti)',
-    eliminazione: 'Eliminazione diretta',
-    doppia: 'Doppia eliminazione',
-    americana: "All'americana (compagni a rotazione)",
-    americana_tempo: 'Americana a tempo (gare a tempo, vince chi fa più punti)',
-    fantasma: 'Torneo fantasma (compagno sorteggiato a ogni gara)'
+    gironi_ko: T("Gironi + eliminazione diretta"),
+    girone_unico: T("Girone unico (tutti contro tutti)"),
+    eliminazione: T("Eliminazione diretta"),
+    doppia: T("Doppia eliminazione"),
+    americana: T("All'americana (compagni a rotazione)"),
+    americana_tempo: T("Americana a tempo (gare a tempo, vince chi fa più punti)"),
+    fantasma: T("Torneo fantasma (compagno sorteggiato a ogni gara)")
   };
   // Formule a iscrizione individuale, giocate in doppio con compagni che cambiano.
   const INDIVIDUAL = ['americana', 'fantasma'];
@@ -23,16 +23,16 @@ const Logic = (() => {
   // Americana a tempo con compagno diverso a ogni turno (classifica individuale per punti fatti).
   const isRotazione = t => t.formato === 'americana_tempo' && t.config.squadre === 'rotazione';
   const TEMPO_SQUADRE = {
-    rotazione: 'Compagno diverso a ogni turno (classifica individuale)',
-    iscrizione: 'Coppie fisse iscritte (o composte dall’organizzatore)',
-    sorteggio: 'Coppie fisse sorteggiate a inizio torneo'
+    rotazione: T("Compagno diverso a ogni turno (classifica individuale)"),
+    iscrizione: T("Coppie fisse iscritte (o composte dall’organizzatore)"),
+    sorteggio: T("Coppie fisse sorteggiate a inizio torneo")
   };
   // Livello di gioco dei giocatori (scelto alla registrazione) e degli iscritti.
-  const LIVELLI = { 1: 'Principiante', 2: 'Intermedio', 3: 'Intermedio avanzato', 4: 'Avanzato', 5: 'Pro' };
-  const TEMPO_CRITERI = { quoziente: 'Quoziente punti (fatti / subiti)', punti: 'Punti fatti' };
+  const LIVELLI = { 1: T("Principiante"), 2: T("Intermedio"), 3: T("Intermedio avanzato"), 4: T("Avanzato"), 5: T("Pro") };
+  const TEMPO_CRITERI = { quoziente: T("Quoziente punti (fatti / subiti)"), punti: T("Punti fatti") };
   const FINALISTS = [4, 8, 16, 32];
   const POINTS = [9, 11, 15, 21];
-  const POOL_TYPES = { rr: 'Tutti contro tutti', fivb: 'FIVB (vincenti / perdenti)' };
+  const POOL_TYPES = { rr: T("Tutti contro tutti"), fivb: T("FIVB (vincenti / perdenti)") };
 
   const hasPools = f => f === 'gironi_ko' || f === 'girone_unico';
   const hasBracket = f => f === 'gironi_ko' || f === 'eliminazione' || f === 'doppia';
@@ -75,15 +75,15 @@ const Logic = (() => {
   function validateResult(sets, forfeit, cfg) {
     if (forfeit) return null;
     const need = setsToWin(cfg);
-    if (!sets.length) return 'Inserisci il punteggio.';
+    if (!sets.length) return T("Inserisci il punteggio.");
     let wa = 0, wb = 0;
     for (let i = 0; i < sets.length; i++) {
-      if (wa === need || wb === need) return 'Troppi set: la partita era già decisa.';
+      if (wa === need || wb === need) return T("Troppi set: la partita era già decisa.");
       const [a, b] = sets[i], target = setTarget(cfg, i);
-      if (!isCompleteSet(a, b, target)) return `Set ${i + 1} non valido: si gioca a ${target} con 2 punti di scarto.`;
+      if (!isCompleteSet(a, b, target)) return `${T("Set {0} non valido: si gioca a {1} con 2 punti di scarto.", [i + 1, target])}`;
       if (a > b) wa++; else wb++;
     }
-    if (wa !== need && wb !== need) return 'Partita incompleta: manca un set.';
+    if (wa !== need && wb !== need) return T("Partita incompleta: manca un set.");
     return null;
   }
 
@@ -200,31 +200,31 @@ const Logic = (() => {
     switch (t.formato) {
       case 'gironi_ko': {
         const P = Math.ceil(n / c.poolSize);
-        if (n < 3) return 'Servono almeno 3 iscritti.';
-        if (Math.floor(n / P) < 2) return 'Gironi troppo piccoli: aumenta le squadre per girone.';
-        if (Math.floor(n / P) < c.qualify) return 'Qualificate per girone più numerose delle squadre del girone più piccolo.';
-        if (c.qualify * P < 2) return 'Servono almeno 2 qualificate in totale.';
+        if (n < 3) return T("Servono almeno 3 iscritti.");
+        if (Math.floor(n / P) < 2) return T("Gironi troppo piccoli: aumenta le squadre per girone.");
+        if (Math.floor(n / P) < c.qualify) return T("Qualificate per girone più numerose delle squadre del girone più piccolo.");
+        if (c.qualify * P < 2) return T("Servono almeno 2 qualificate in totale.");
         return null;
       }
-      case 'girone_unico': return n < 3 ? 'Servono almeno 3 iscritti.' : null;
-      case 'doppia': return n < 4 ? 'Servono almeno 4 iscritti.' : null;
-      case 'americana': return n < 4 ? 'Servono almeno 4 giocatori.' : null;
+      case 'girone_unico': return n < 3 ? T("Servono almeno 3 iscritti.") : null;
+      case 'doppia': return n < 4 ? T("Servono almeno 4 iscritti.") : null;
+      case 'americana': return n < 4 ? T("Servono almeno 4 giocatori.") : null;
       case 'americana_tempo': {
         if (c.squadre === 'rotazione') return rotazioneCheck(t, n);
         const teams = c.squadre === 'sorteggio' ? Math.floor(n / 2) : n;
-        if (c.squadre === 'sorteggio' && n % 2) return 'Con le squadre sorteggiate serve un numero pari di iscritti.';
-        if (teams < 2) return 'Servono almeno 2 squadre.';
-        return Number(c.maxPartite) >= 1 ? null : 'Indica il numero massimo di partite per squadra.';
+        if (c.squadre === 'sorteggio' && n % 2) return T("Con le squadre sorteggiate serve un numero pari di iscritti.");
+        if (teams < 2) return T("Servono almeno 2 squadre.");
+        return Number(c.maxPartite) >= 1 ? null : T("Indica il numero massimo di partite per squadra.");
       }
       case 'fantasma': {
-        if (n < 4) return 'Servono almeno 4 giocatori.';
-        if (Number(c.poolPlayers) < 4) return 'Servono almeno 4 giocatori per girone.';
-        if (Number(c.finalisti) > n) return `I finalisti (${c.finalisti}) sono più degli iscritti (${n}).`;
+        if (n < 4) return T("Servono almeno 4 giocatori.");
+        if (Number(c.poolPlayers) < 4) return T("Servono almeno 4 giocatori per girone.");
+        if (Number(c.finalisti) > n) return `${T("I finalisti ({0}) sono più degli iscritti ({1}).", [c.finalisti, n])}`;
         const P = Math.ceil(n / c.poolPlayers);
-        if (Math.floor(n / P) < 4) return 'Gironi troppo piccoli: servono almeno 4 giocatori per girone.';
+        if (Math.floor(n / P) < 4) return T("Gironi troppo piccoli: servono almeno 4 giocatori per girone.");
         return null;
       }
-      default: return n < 2 ? 'Servono almeno 2 iscritti.' : null;
+      default: return n < 2 ? T("Servono almeno 2 iscritti.") : null;
     }
   }
 
@@ -301,8 +301,8 @@ const Logic = (() => {
     const m3 = decide(t, `P${pi}-M3`, m1.winner, m2.winner);
     const m4 = decide(t, `P${pi}-M4`, m1.loser, m2.loser);
     [m1, m2, m3, m4].forEach((m, i) => { m.round = i < 2 ? 1 : 2; });
-    m1.label = '1ª-4ª'; m2.label = '2ª-3ª'; m3.label = 'Vincenti'; m4.label = 'Perdenti';
-    m3.from = ['Vincente', m1.key, m2.key]; m4.from = ['Perdente', m1.key, m2.key];
+    m1.label = '1ª-4ª'; m2.label = '2ª-3ª'; m3.label = T("Vincenti"); m4.label = T("Perdenti");
+    m3.from = [T("Vincente"), m1.key, m2.key]; m4.from = [T("Perdente"), m1.key, m2.key];
     return [m1, m2, m3, m4];
   }
 
@@ -446,11 +446,11 @@ const Logic = (() => {
 
   function roundName(r, rounds) {
     const left = rounds - r;
-    if (left === 1) return 'Finale';
-    if (left === 2) return 'Semifinali';
-    if (left === 3) return 'Quarti di finale';
-    if (left === 4) return 'Ottavi di finale';
-    return `Turno ${r + 1}`;
+    if (left === 1) return T("Finale");
+    if (left === 2) return T("Semifinali");
+    if (left === 3) return T("Quarti di finale");
+    if (left === 4) return T("Ottavi di finale");
+    return `${T("Turno {0}", [r + 1])}`;
   }
 
   // ---------- coppie a rotazione (americana e torneo fantasma) ----------
@@ -462,9 +462,9 @@ const Logic = (() => {
   const mixedOf = t => t.genere === 'misto' || (t.config && t.config.vincolo === 'misto');
   // Abbinamenti uomini/donne nelle formule a rotazione (americana, fantasma, americana a tempo).
   const VINCOLI = {
-    misto: 'Sempre coppie miste (uomo + donna)',
-    equilibrato: 'Mai 2 uomini contro 2 donne (al massimo 2 uomini contro una coppia mista)',
-    libero: 'Nessun vincolo (anche 2 uomini contro una coppia mista o di sole donne)'
+    misto: T("Sempre coppie miste (uomo + donna)"),
+    equilibrato: T("Mai 2 uomini contro 2 donne (al massimo 2 uomini contro una coppia mista)"),
+    libero: T("Nessun vincolo (anche 2 uomini contro una coppia mista o di sole donne)")
   };
   const isMale = (t, id) => (t.sex || {})[id] === 'M';
 
@@ -579,7 +579,7 @@ const Logic = (() => {
   // Classifica individuale dell'americana: per punti fatti oppure per set vinti (scelta nella scheda del torneo,
   // che decide anche il vincitore finale). sortBy permette di vederla ordinata nell'altro modo.
   // "vittorie" (vecchi tornei) vale come set vinti.
-  const AMERICANA_CRITERI = { punti: 'Punti fatti', set: 'Set vinti' };
+  const AMERICANA_CRITERI = { punti: T("Punti fatti"), set: T("Set vinti") };
   const byPunti = (x, y) => y.pw - x.pw || y.sw - x.sw || (y.pw - y.pl) - (x.pw - x.pl);
   const bySet = (x, y) => y.sw - x.sw || (y.sw - y.sl) - (x.sw - x.sl) || y.pw - x.pw || (y.pw - y.pl) - (x.pw - x.pl);
   const americanaCrit = t => (t.config.criterio === 'punti' ? 'punti' : 'set');
@@ -718,9 +718,9 @@ const Logic = (() => {
 
   function rotazioneCheck(t, n) {
     const c = t.config;
-    if (!(Number(c.turni) >= 1)) return 'Indica il numero dei turni.';
-    if (!(Number(c.campi) >= 1)) return 'Indica il numero dei campi disponibili.';
-    return n < 4 ? 'Servono almeno 4 giocatori.' : null;
+    if (!(Number(c.turni) >= 1)) return T("Indica il numero dei turni.");
+    if (!(Number(c.campi) >= 1)) return T("Indica il numero dei campi disponibili.");
+    return n < 4 ? T("Servono almeno 4 giocatori.") : null;
   }
 
   // Abbinamento dei compagni del turno senza ripetere chi ha già giocato insieme (se possibile).
@@ -891,7 +891,7 @@ const Logic = (() => {
   // Classifica individuale: solo punti fatti. A pari punti stessa posizione.
   // Classifica individuale: punti fatti oppure partite vinte (scelta nella scheda, decide il vincitore finale);
   // sortBy la mostra ordinata nell'altro modo. A parità piena stessa posizione.
-  const ROT_CRITERI = { punti: 'Punti fatti', vittorie: 'Partite vinte' };
+  const ROT_CRITERI = { punti: T("Punti fatti"), vittorie: T("Partite vinte") };
   const rotCrit = t => (t.config.criterioRot === 'vittorie' ? 'vittorie' : 'punti');
   function rotazioneStandings(t, sortBy) {
     const rows = (t.tempo.players || []).map(id => ({ id, played: 0, w: 0, d: 0, l: 0, pf: 0 }));
@@ -1031,8 +1031,8 @@ const Logic = (() => {
 
   function status(t) {
     if (t.closed) return 'concluso';
-    if (t.seeds) return 'in corso';
-    return t.iscrizioniAperte ? 'iscrizioni aperte' : 'in preparazione';
+    if (t.seeds) return T("in corso");
+    return t.iscrizioniAperte ? T("iscrizioni aperte") : T("in preparazione");
   }
 
   // ---------- punti e ranking ----------
@@ -1082,10 +1082,10 @@ const Logic = (() => {
   // Categorie del ranking interno. Ogni torneo appartiene a una sola categoria (disciplina + genere);
   // le classifiche generali (maschile/femminile) sommano tutti i tornei, Open compresi.
   const RANK_CATS = {
-    sfide: 'Sfide',
-    generale_m: 'Generale maschile', generale_f: 'Generale femminile',
-    sm: 'Singolare maschile', sf: 'Singolare femminile',
-    dm: 'Doppio maschile', df: 'Doppio femminile', dx: 'Doppio misto', open: 'Open'
+    sfide: T("Sfide"),
+    generale_m: T("Generale maschile"), generale_f: T("Generale femminile"),
+    sm: T("Singolare maschile"), sf: T("Singolare femminile"),
+    dm: T("Doppio maschile"), df: T("Doppio femminile"), dx: T("Doppio misto"), open: T("Open")
   };
 
   // Tabella punti predefinita dei tornei nati dalle sfide (punti di coppia: ogni giocatore ne prende metà).

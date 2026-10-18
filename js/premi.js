@@ -6,7 +6,7 @@ const Premi = (() => {
     trofei: [100, 250, 500, 1000, 2000],
     racchette: [5, 10, 25, 50]
   };
-  const LIVELLI = ['Bronzo', 'Argento', 'Oro', 'Platino', 'Diamante'];
+  const LIVELLI = [T("Bronzo"), T("Argento"), T("Oro"), T("Platino"), T("Diamante")];
   // Ogni 10 unità si passa alla successiva: 10 stelle = 1 cometa, 10 comete = 1 pianeta…
   const UNITS = [
     { n: 10000, icon: '🌌', one: 'galassia', many: 'galassie' },
@@ -39,7 +39,7 @@ const Premi = (() => {
   }
 
   const starIcons = k => parts(k).map(({ u, q }) => `<span class="star-unit" title="${q} ${q === 1 ? u.one : u.many}">${u.icon.repeat(Math.min(q, 9))}</span>`).join('');
-  const starLabel = k => (k ? parts(k).map(({ u, q }) => `${q} ${q === 1 ? u.one : u.many}`).join(' e ') : 'nessuna stella');
+  const starLabel = k => (k ? parts(k).map(({ u, q }) => `${q} ${q === 1 ? u.one : u.many}`).join(' e ') : T("nessuna stella"));
 
   // Livello raggiunto (0 = nessuno) rispetto a un elenco di soglie, e soglia successiva.
   function level(value, thresholds) {
@@ -56,10 +56,10 @@ const Premi = (() => {
     const m = Logic.medals(state, uid), tr = trophy(state, totalPoints || 0), ra = racket(state, m.tornei);
     const out = [];
     if (m.oro) out.push(`<span class="pb" title="${m.oro} ${m.oro === 1 ? 'vittoria' : 'vittorie'}">🥇${m.oro > 1 ? '×' + m.oro : ''}</span>`);
-    if (m.argento) out.push(`<span class="pb" title="${m.argento} secondi posti">🥈${m.argento > 1 ? '×' + m.argento : ''}</span>`);
-    if (m.bronzo) out.push(`<span class="pb" title="${m.bronzo} terzi posti">🥉${m.bronzo > 1 ? '×' + m.bronzo : ''}</span>`);
-    if (tr.livello) out.push(`<span class="pb lv${tr.livello}" title="Trofeo ${tr.nome}">🏆</span>`);
-    if (ra.livello) out.push(`<span class="pb lv${ra.livello}" title="Racchetta ${ra.nome}: ${m.tornei} tornei">🏓</span>`);
+    if (m.argento) out.push(`<span class="pb" title="${T("{0} secondi posti", [m.argento])}">🥈${m.argento > 1 ? '×' + m.argento : ''}</span>`);
+    if (m.bronzo) out.push(`<span class="pb" title="${T("{0} terzi posti", [m.bronzo])}">🥉${m.bronzo > 1 ? '×' + m.bronzo : ''}</span>`);
+    if (tr.livello) out.push(`<span class="pb lv${tr.livello}" title="${T("Trofeo {0}", [tr.nome])}">🏆</span>`);
+    if (ra.livello) out.push(`<span class="pb lv${ra.livello}" title="${T("Racchetta {0}: {1} tornei", [ra.nome, m.tornei])}">🏓</span>`);
     return out.join('');
   }
 

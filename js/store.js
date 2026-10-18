@@ -5,7 +5,7 @@ const Store = (() => {
   }
 
   function defaultSettings() {
-    return { nome: 'Pickleball Greece', maxGiorno: 2, maxOre: 2, giorniAnticipo: 7, avviso: '', premi: null, sfidePunti: null };
+    return { nome: T("Pickleball Greece"), maxGiorno: 2, maxOre: 2, giorniAnticipo: 7, avviso: '', premi: null, sfidePunti: null };
   }
 
   // Campo: nome, visibile (prenotabile) e orari di apertura per giorno della settimana (1 = lunedì … 7 = domenica).
@@ -16,7 +16,7 @@ const Store = (() => {
   function normCourt(c) {
     const orari = defaultOrari();
     Object.keys(c.orari || {}).forEach(d => { orari[d] = Object.assign(orari[d], c.orari[d]); });
-    return { id: c.id, nome: c.nome || 'Campo', visibile: c.visibile !== false, orari };
+    return { id: c.id, nome: c.nome || T("Campo"), visibile: c.visibile !== false, orari };
   }
 
   function empty() {
@@ -64,7 +64,7 @@ const Store = (() => {
   }
 
   const cloud = () => {
-    if (!window.Cloud) throw new Error('Connessione al database non disponibile. Controlla la rete e ricarica la pagina.');
+    if (!window.Cloud) throw new Error(T("Connessione al database non disponibile. Controlla la rete e ricarica la pagina."));
     return window.Cloud;
   };
 
