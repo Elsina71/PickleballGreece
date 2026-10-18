@@ -6,14 +6,15 @@
 //   players/{id}         nome, cognome, sesso (pubblico; ognuno modifica il proprio)
 //   users/{uid}          email, telefono, stile grafico (privato: l'interessato e gli admin)
 //   admins/{uid}         amministratori
-//   bookings/{data_campo_ora}  un documento per ogni mezz'ora prenotata (gid = prenotazione di appartenenza)
-//   notifiche/{id}       avvisi di prenotazioni modificate o cancellate (destinatario: utente o "admins")
+//   sfide/{id}           sfide lanciate dagli utenti (pubbliche: data, ora, posti cercati e confermati, formula)
+//   sfideRisp/{sfida_uid} candidature alle sfide (le vedono il candidato, chi ha lanciato la sfida e gli admin)
+//   notifiche/{id}       avvisi per un utente o per "admins"
 //   courses/{id}, enrollments/{corso_utente}   corsi e iscrizioni
 //   tournaments/{id}, entries/{id}             tornei e iscrizioni ai tornei
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager, connectFirestoreEmulator,
-  doc, collection, onSnapshot, setDoc, deleteDoc, getDoc, addDoc, query, where, getCountFromServer
+  doc, collection, onSnapshot, setDoc, deleteDoc, getDoc, addDoc, query, where, updateDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import {
   getAuth, connectAuthEmulator, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
@@ -44,9 +45,9 @@ const isMain = id => mainAdminUids.includes(id);
 
 // ---------- dati ricevuti dal database ----------
 
-const raw = { articoli: null, settings: null, players: {}, users: {}, admins: new Set(), tourAdmins: new Set(), bookings: {}, courses: {}, enrollments: {}, tournaments: {}, entries: {}, notifiche: {} };
+const raw = { sfide: {}, rispOrg: {}, rispMie: {}, articoli: null, settings: null, players: {}, users: {}, admins: new Set(), tourAdmins: new Set(), bookings: {}, courses: {}, enrollments: {}, tournaments: {}, entries: {}, notifiche: {} };
 const loaded = new Set();
-const NEEDED = ['settings', 'players', 'bookings', 'courses', 'enrollments', 'tournaments', 'entries'];
+const NEEDED = ['settings', 'players', 'sfide', 'courses', 'enrollments', 'tournaments', 'entries'];
 
 const refresh = () => window.App && window.App.refresh();
 
@@ -75,7 +76,10 @@ function rebuild() {
         : raw.tourAdmins.has(id) || (user && id === user.uid && isTourAdmin) ? 'tornei' : 'user'
     };
   });
-  st.bookings = groupBookings(raw.bookings);
+  st.bookings = [];
+  st.sfide = Object.entries(raw.sfide).map(([id, x]) => Object.assign({ guests: [], conf: {} }, x, { id }))
+    .sort((a, b) => ((a.data || '') + (a.ora || '')).localeCompare((b.data || '') + (b.ora || '')));
+  st.risp = Object.entries(Object.assign({}, raw.rispOrg, raw.rispMie)).map(([id, x]) => Object.assign({}, x, { id }));
   st.notifiche = Object.entries(raw.notifiche).map(([id, n]) => Object.assign({ id }, n)).sort((a, b) => (b.at || 0) - (a.at || 0));
   const enr = Object.values(raw.enrollments).sort((a, b) => (a.at || 0) - (b.at || 0));
   st.courses = Object.entries(raw.courses).map(([id, c]) => Object.assign(JSON.parse(c.json), { id, iscritti: enr.filter(e => e.courseId === id).map(e => e.userId) }));
@@ -120,7 +124,7 @@ listen('tournaments', collection(db, 'tournaments'), s => { raw.tournaments = by
 listen('entries', collection(db, 'entries'), s => { raw.entries = byId(s); });
 // Prenotazioni: solo da ieri in avanti (quelle passate non servono e non si scaricano).
 const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toLocaleDateString('sv'); })();
-listen('bookings', query(collection(db, 'bookings'), where('date', '>=', yesterday)), s => { raw.bookings = byId(s); });
+listen('sfide', collection(db, 'sfide'), s => { raw.sfide = byId(s); });
 
 // Dati privati: l'admin riceve tutti gli utenti e gli amministratori, gli altri solo il proprio profilo.
 let privUnsubs = [];
@@ -133,6 +137,7 @@ onAuthStateChanged(auth, async u => {
   raw.admins = new Set();
   raw.tourAdmins = new Set();
   raw.notifiche = {};
+  raw.rispOrg = {}; raw.rispMie = {};
   allUsers = false;
   isTourAdmin = false;
   if (u) {
@@ -145,10 +150,14 @@ onAuthStateChanged(auth, async u => {
       privUnsubs.push(listen('admins', collection(db, 'admins'), s => { raw.admins = new Set(s.docs.map(d => d.id)); }));
       privUnsubs.push(listen('tourAdmins', collection(db, 'tourAdmins'), s => { raw.tourAdmins = new Set(s.docs.map(d => d.id)); }));
       privUnsubs.push(listen('notifiche', query(collection(db, 'notifiche'), where('to', 'in', [u.uid, 'admins'])), s => { raw.notifiche = byId(s); }));
+      privUnsubs.push(listen('risp', collection(db, 'sfideRisp'), s => { raw.rispOrg = byId(s); }));
     } else {
       try { isTourAdmin = (await getDoc(doc(db, 'tourAdmins', u.uid))).exists(); } catch (e) { isTourAdmin = false; }
       privUnsubs.push(listen('users', doc(db, 'users', u.uid), s => { raw.users = s.exists() ? { [u.uid]: s.data() } : {}; }));
       privUnsubs.push(listen('notifiche', query(collection(db, 'notifiche'), where('to', '==', u.uid)), s => { raw.notifiche = byId(s); }));
+      // candidature: le proprie e quelle alle sfide lanciate da questo utente
+      privUnsubs.push(listen('rispMie', query(collection(db, 'sfideRisp'), where('uid', '==', u.uid)), s => { raw.rispMie = byId(s); }));
+      privUnsubs.push(listen('rispOrg', query(collection(db, 'sfideRisp'), where('org', '==', u.uid)), s => { raw.rispOrg = byId(s); }));
     }
   }
   rebuild();
@@ -186,7 +195,8 @@ function shapes(st) {
   });
   st.tournaments.forEach(t => {
     const { entries, ...rest } = t;
-    d.tournaments[t.id] = { json: JSON.stringify(rest), open: !!t.iscrizioniAperte && !t.seeds };
+    // owner: chi ha lanciato la sfida da cui nasce il torneo (lo gestisce come un gestore tornei)
+    d.tournaments[t.id] = { json: JSON.stringify(rest), open: !!t.iscrizioniAperte && !t.seeds, owner: t.owner || '' };
     entries.forEach(e => {
       const doc = { tid: t.id, p1: e.p1 || null, p2: e.p2 || null };
       // Giocatore non registrato (inserito dall'organizzatore) e livello di gioco.
@@ -263,12 +273,19 @@ async function checkVerified() {
 
 // Numero di prenotazioni di un utente (tutte, anche future): si conta solo il primo slot di ciascuna.
 // Costa una sola lettura ogni 1000 prenotazioni.
-async function countBookings(uid) {
-  const snap = await getCountFromServer(query(collection(db, 'bookings'), where('userId', '==', uid), where('first', '==', true)));
-  return snap.data().count;
+// ---------- sfide ----------
+// Scritture dirette (non passano dal confronto dello stato): sfide e candidature.
+const sfidaRef = id => doc(db, 'sfide', id);
+function createSfida(id, data) { return setDoc(sfidaRef(id), Object.assign({}, data, { by: user.uid, at: Date.now() })); }
+function updateSfida(id, patch) { return updateDoc(sfidaRef(id), patch); }
+function deleteSfida(id) { return deleteDoc(sfidaRef(id)); }
+// Candidatura: id = sfida_utente; org = chi ha lanciato la sfida (serve alle regole di lettura).
+function applySfida(sfida, me) {
+  return setDoc(doc(db, 'sfideRisp', sfida.id + '_' + user.uid), { sid: sfida.id, uid: user.uid, org: sfida.by, nome: `${me.nome} ${me.cognome}`, sesso: me.sesso || '', stato: 'attesa', visto: false, at: Date.now() });
 }
+function updateRisp(id, patch) { return updateDoc(doc(db, 'sfideRisp', id), patch); }
+function deleteRisp(id) { return deleteDoc(doc(db, 'sfideRisp', id)); }
 
-// Avviso (prenotazione modificata o cancellata) per un utente o per tutti gli amministratori ("admins").
 function notify(to, text) {
   if (!user || !to) return;
   addDoc(collection(db, 'notifiche'), { to, text: text.slice(0, 400), at: Date.now(), by: user.uid }).catch(onError);
@@ -298,7 +315,7 @@ window.Cloud = {
   push,
   notify,
   dismiss,
-  countBookings,
+  createSfida, updateSfida, deleteSfida, applySfida, updateRisp, deleteRisp,
   login,
   register,
   logout: () => signOut(auth),

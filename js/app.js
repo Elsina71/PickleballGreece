@@ -6,7 +6,9 @@ const App = (() => {
   const me = () => Store.current();
   const isAdmin = () => { const u = me(); return !!u && u.role === 'admin'; };
   // Gestore tornei: gestisce i tornei (anche l'admin lo è), senza accesso al resto dell'amministrazione.
-  const canTours = () => isAdmin() || (!!me() && me().role === 'tornei');
+  // Chi ha lanciato una sfida a torneo gestisce il torneo che ne nasce (curTour: torneo aperto o su cui si agisce).
+  let curTour = null;
+  const canTours = () => isAdmin() || (!!me() && me().role === 'tornei') || (!!curTour && !!me() && curTour.owner === me().id);
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const todayKey = () => new Date().toLocaleDateString('sv');
@@ -40,7 +42,7 @@ const App = (() => {
   // Iscrizione a coppie fisse (doppio classico); americana e fantasma sono individuali.
   const isPairs = t => t.disciplina === 'doppio' && !Logic.individualEntry(t);
 
-  const ui = { sel: null, date: todayKey(), tab: {}, rank: { cat: 'generale_m', categoriaId: '' }, counts: {}, admMonth: null, admDay: null, admAll: false, authTab: 'login' };
+  const ui = { sel: null, date: todayKey(), tab: {}, rank: { cat: 'sfide', categoriaId: '' }, counts: {}, admMonth: null, admDay: null, admAll: false, authTab: 'login' };
 
   function userName(id) {
     const u = S().users.find(x => x.id === id);
@@ -201,16 +203,16 @@ const App = (() => {
     const s = S(), u = me();
     const next = s.tournaments.filter(t => !t.closed).sort((a, b) => (a.data || '').localeCompare(b.data || '')).slice(0, 4);
     const promo = s.courses.filter(c => c.promo && (c.fine || c.inizio) >= todayKey());
-    const mine = u ? myBookings(u).slice(0, 3) : [];
     return `
       ${noticesBlock()}
+      ${sfideAlerts()}
       <section class="hero">
         <div>
           <p class="kicker">${u ? `Ciao ${esc(u.nome)}!` : 'Benvenuto'}</p>
           <h1>${esc(s.settings.nome)}</h1>
-          <p>Prenota un campo, iscriviti a tornei e corsi, segui classifiche e risultati.</p>
+          <p>Lancia una sfida o rispondi a quelle degli altri, gioca i tornei, segui classifiche e risultati.</p>
           <div class="actions">
-            <a class="btn primary big" href="#/prenota">${icon('calendar-plus')} Prenota un campo</a>
+            <a class="btn primary big" href="#/sfide">${icon('swords')} Sfide</a>
             <a class="btn big" href="#/tornei">${icon('trophy')} Tornei</a>
           </div>
         </div>
@@ -218,8 +220,7 @@ const App = (() => {
       </section>
       ${s.settings.avviso ? `<div class="notice">${icon('speakerphone')} <span>${esc(s.settings.avviso)}</span></div>` : ''}
       ${editorialBlock()}
-      ${u ? `<section>${sectionHead('Le tue prossime prenotazioni', '<a href="#/profilo">Tutte</a>')}
-        ${mine.length ? `<div class="list">${mine.map(bookingItem).join('')}</div>` : empty('Nessuna prenotazione in programma.', 'calendar')}</section>` : ''}
+      ${sfideHomeBlock()}
       <section>${sectionHead('Tornei in programma', '<a href="#/tornei">Tutti</a>')}
         ${next.length ? `<div class="grid">${next.map(tourCard).join('')}</div>` : empty('Nessun torneo in programma.', 'trophy')}</section>
       <section>${sectionHead('Corsi e lezioni in evidenza', '<a href="#/corsi">Tutti</a>')}
@@ -633,6 +634,7 @@ const App = (() => {
   // ---------- tornei ----------
 
   function viewTournaments() {
+    curTour = null;
     const list = S().tournaments.slice().sort((a, b) => (a.data || '').localeCompare(b.data || ''));
     const open = list.filter(t => !t.closed), done = list.filter(t => t.closed).reverse();
     return `
@@ -726,6 +728,7 @@ const App = (() => {
 
   function viewTournament(id) {
     const t = S().tournaments.find(x => x.id === id);
+    curTour = t || null;
     if (!t) return empty('Torneo non trovato.', 'alert-circle');
     const u = me();
     const tabs = tabsFor(t);
@@ -1394,6 +1397,7 @@ const App = (() => {
             Il torneo termina quando le squadre hanno giocato le partite previste; l’organizzatore può anche interromperlo prima.
             Con squadre sorteggiate, nei tornei misti si formano quando possibile coppie uomo+donna.</p>
         </fieldset>
+        <label data-show="americana,americana_tempo,fantasma">Uomini e donne negli abbinamenti (tornei open)<select name="vincolo">${opt(Logic.VINCOLI, c.vincolo || 'equilibrato')}</select></label>
         <fieldset data-show="fantasma"><legend>Torneo fantasma</legend>
           <div class="row">
             <label>Giocatori per girone<input type="number" min="4" max="32" name="poolPlayers" value="${c.poolPlayers}"></label>
@@ -1584,6 +1588,218 @@ const App = (() => {
     return out;
   }
 
+  // ====================================================================
+  // SFIDE
+  // Un utente registrato lancia una sfida (data, ora, luogo, 1 o 2 campi, posti cercati per sesso o indifferenti,
+  // massimo di persone) come gioco libero o come torneo. Gli altri si candidano; chi l'ha lanciata (o un admin)
+  // conferma o rifiuta e può chiudere la sfida: chi non è stato confermato riceve un avviso.
+  // I nomi dei partecipanti li vedono solo chi ha lanciato la sfida e gli admin; gli altri vedono i posti confermati.
+  // Le sfide a torneo diventano un torneo vero e proprio (sezione Tornei), gestito da chi le ha lanciate.
+  // ====================================================================
+  const SF_FORMATI = {
+    girone_unico: 'Girone unico (tutti contro tutti)',
+    gironi_ko: 'Gironi + eliminazione diretta',
+    americana: 'Americana (compagno diverso a ogni partita)',
+    americana_tempo: 'Americana a tempo (compagno diverso, gare a tempo)'
+  };
+  const sfPast = x => isPast(x.data, x.ora || '23:59');
+  const sfMine = x => !!me() && x.by === me().id;
+  const sfRisp = x => (S().risp || []).filter(r => r.sid === x.id);
+  const sfMyRisp = x => !!me() && (S().risp || []).find(r => r.sid === x.id && r.uid === me().id);
+  const sfSeesNames = x => isAdmin() || sfMine(x);
+  const sfMax = x => Number(x.max) || (x.modo === 'sesso' ? (Number(x.cercaM) || 0) + (Number(x.cercaF) || 0) : Number(x.cercaTot) || 0);
+  const sfConf = x => ({ M: (x.conf && x.conf.M) || 0, F: (x.conf && x.conf.F) || 0, tot: (x.conf && x.conf.tot) || 0 });
+  const sfFull = x => sfConf(x).tot >= sfMax(x);
+  const sfByName = x => x.byName || userName(x.by);
+  const sfWhen = x => `${fmtDate(x.data, true)} · ore ${esc(x.ora || '')}`;
+  const sfTipo = x => (x.tipo === 'torneo' ? `Torneo · ${SF_FORMATI[x.formato] || ''}` : 'Gioco libero');
+  const SF_STATI = { attesa: ['Da confermare', 'warn'], confermata: ['Confermata', 'ok'], rifiutata: ['Non confermata', ''], non_confermata: ['Non confermata', ''], ritirata: ['Ritirata', ''] };
+  const sfStatoBadge = r => (r ? `<span class="badge ${SF_STATI[r.stato][1]}">${SF_STATI[r.stato][0]}</span>` : '');
+
+  // Posti cercati e confermati (lo vedono tutti, senza nomi).
+  function sfSeats(x) {
+    const c = sfConf(x);
+    const parts = x.modo === 'sesso'
+      ? [`uomini <strong>${c.M}</strong>/${Number(x.cercaM) || 0}`, `donne <strong>${c.F}</strong>/${Number(x.cercaF) || 0}`]
+      : [`persone <strong>${c.tot}</strong>/${Number(x.cercaTot) || 0}`];
+    return `<p class="sf-seats">${icon('users')} Confermati: ${parts.join(' · ')} <span class="muted small">(massimo ${sfMax(x)})</span></p>`;
+  }
+
+  // Conteggi confermati (candidature confermate + giocatori aggiunti dall'organizzatore), salvati nella sfida.
+  function sfCount(x) {
+    const ok = sfRisp(x).filter(r => r.stato === 'confermata').map(r => r.sesso).concat((x.guests || []).map(g => g.sesso));
+    return { M: ok.filter(g => g === 'M').length, F: ok.filter(g => g === 'F').length, tot: ok.length };
+  }
+  const sfErr = e => toast(e && e.code === 'permission-denied' ? 'Operazione non consentita.' : 'Errore di collegamento al database' + (e && e.code ? ` (${e.code})` : '') + '.', 'err');
+
+  // Avvisi (home e pagina Sfide).
+  function sfideAlerts() {
+    const u = me();
+    if (!u || u.pending) return '';
+    const out = [];
+    const mine = (S().sfide || []).filter(x => sfMine(x) && !sfPast(x));
+    const pend = mine.reduce((n, x) => n + sfRisp(x).filter(r => r.stato === 'attesa').length, 0);
+    if (pend) out.push(`<div class="notice">${icon('swords')} <span>Hai <strong>${pend}</strong> ${pend === 1 ? 'candidatura' : 'candidature'} da valutare per le tue sfide.</span> <a class="btn small" href="#/sfide">Vai alle sfide</a></div>`);
+    (S().risp || []).filter(r => r.uid === u.id && !r.visto && ['non_confermata', 'rifiutata', 'confermata'].includes(r.stato)).forEach(r => {
+      const x = (S().sfide || []).find(y => y.id === r.sid);
+      if (!x) return;
+      const ok = r.stato === 'confermata';
+      out.push(`<div class="notice ${ok ? 'ok' : 'warn-box'}" role="alert">${icon(ok ? 'circle-check' : 'alert-triangle')}
+        <span>${ok ? `La tua partecipazione alla sfida di <strong>${esc(sfByName(x))}</strong> del ${sfWhen(x)} è <strong>confermata</strong>.`
+          : `<strong>Registrazione alla sfida non confermata o non più posti disponibili</strong> — sfida di ${esc(sfByName(x))} del ${sfWhen(x)}.`}</span>
+        <button class="btn small" data-action="sf-visto" data-id="${r.id}">OK</button></div>`);
+    });
+    return out.join('');
+  }
+
+  // Blocco della home: sfide aperte a cui ci si può candidare.
+  function sfideHomeBlock() {
+    const list = (S().sfide || []).filter(x => x.stato === 'aperta' && !sfPast(x) && !sfFull(x) && !sfMine(x) && !sfMyRisp(x)).slice(0, 4);
+    return `<section>${sectionHead('Sfide aperte', '<a href="#/sfide">Tutte</a>')}
+      ${list.length ? `<div class="grid">${list.map(sfCard).join('')}</div>` : empty('Nessuna sfida aperta al momento: lanciane una tu!', 'swords')}</section>`;
+  }
+
+  function sfCard(x) {
+    const u = me(), mine = sfMine(x), my = sfMyRisp(x), past = sfPast(x);
+    const risp = sfRisp(x), conf = risp.filter(r => r.stato === 'confermata'), pend = risp.filter(r => r.stato === 'attesa');
+    const t = x.tid && S().tournaments.find(y => y.id === x.tid);
+    const canManage = mine || isAdmin();
+    const pill = x.stato === 'chiusa' ? '<span class="badge">Chiusa</span>' : past ? '<span class="badge">Passata</span>' : sfFull(x) ? '<span class="badge live">Completa</span>' : '<span class="badge ok">Aperta</span>';
+    let me_ = '';
+    if (my) {
+      me_ = `<p>${sfStatoBadge(my)} ${['attesa', 'confermata'].includes(my.stato) && !past ? `<button class="btn small danger" data-action="sf-ritira" data-id="${my.id}">Ritira la candidatura</button>` : ''}</p>`;
+    } else if (!mine && x.stato === 'aperta' && !past) {
+      me_ = !u ? '<p><a class="btn small" href="#/profilo">Accedi per partecipare</a></p>'
+        : sfFull(x) ? '<p class="muted small">Posti esauriti.</p>'
+        : `<p><button class="btn primary small" data-action="sf-candida" data-id="${x.id}">${icon('hand-finger')} Partecipa</button></p>`;
+    }
+    const names = sfSeesNames(x) ? `<div class="sf-people">
+        <p class="small"><strong>Partecipanti confermati</strong></p>
+        <ul class="plain small"><li>${esc(sfByName(x))} <span class="muted">· organizzatore</span></li>
+          ${conf.map(r => `<li>${esc(r.nome)} <span class="muted">${r.sesso}</span>${canManage && !x.tid ? ` <button class="link danger" data-action="sf-risp" data-id="${r.id}" data-v="rifiutata">togli</button>` : ''}</li>`).join('')}
+          ${(x.guests || []).map((g, i) => `<li>${esc(g.nome + ' ' + g.cognome)} <span class="muted">${g.sesso} · non registrato</span>${canManage && !x.tid ? ` <button class="link danger" data-action="sf-guest-del" data-id="${x.id}" data-i="${i}">togli</button>` : ''}</li>`).join('')}</ul>
+        ${pend.length ? `<p class="small"><strong>Candidature da valutare</strong></p><ul class="plain small">${pend.map(r => `<li>${esc(r.nome)} <span class="muted">${r.sesso}</span>
+          <button class="btn small primary" data-action="sf-risp" data-id="${r.id}" data-v="confermata">Accetta</button>
+          <button class="btn small" data-action="sf-risp" data-id="${r.id}" data-v="rifiutata">Rifiuta</button></li>`).join('')}</ul>` : ''}
+      </div>` : '';
+    const manage = canManage ? `<div class="actions wrap">
+        ${x.stato === 'aperta' && !x.tid ? `<button class="btn small" data-action="sf-guest" data-id="${x.id}">${icon('user-plus')} Aggiungi un non registrato</button>
+          <button class="btn small primary" data-action="sf-chiudi" data-id="${x.id}">${icon('lock')} Chiudi la sfida</button>` : ''}
+        ${x.stato === 'chiusa' && !x.tid ? `<button class="btn small" data-action="sf-riapri" data-id="${x.id}">${icon('lock-open')} Riapri</button>` : ''}
+        ${x.tipo === 'torneo' ? (t ? `<a class="btn small primary" href="#/tornei/${t.id}">${icon('trophy')} Vai al torneo</a>`
+          : `<button class="btn small primary" data-action="sf-torneo" data-id="${x.id}">${icon('tournament')} Crea il torneo della sfida</button>`) : ''}
+        <button class="btn small danger" data-action="sf-elimina" data-id="${x.id}">${icon('trash')} Elimina</button></div>` : (t ? `<p><a class="btn small" href="#/tornei/${t.id}">${icon('trophy')} Vai al torneo</a></p>` : '');
+    return `<article class="card sf-card ${mine ? 'mine' : ''}">
+      <p class="kicker">${pill} ${esc(sfTipo(x))}</p>
+      <h3>${sfWhen(x)}</h3>
+      <p class="muted small">${icon('map-pin')} ${esc(x.luogo || '—')} · ${Number(x.campi) === 2 ? '2 campi' : '1 campo'} · lanciata da <strong>${esc(sfByName(x))}</strong></p>
+      ${x.nota ? `<p class="small">${esc(x.nota)}</p>` : ''}
+      ${sfSeats(x)}
+      ${me_}${names}${manage}
+    </article>`;
+  }
+
+  function sfForm() {
+    const f = ui.sfForm || {};
+    const pts = [9, 11, 15, 21].map(p => `<option ${p === 11 ? 'selected' : ''}>${p}</option>`).join('');
+    return `<details class="card sf-new" ${ui.sfOpen ? 'open' : ''}><summary>${icon('plus')} <strong>Lancia una sfida</strong></summary>
+      <form data-form="sfida" class="sf-form">
+        <div class="row">
+          <label>Data${dateField('data', f.data || todayKey(), { required: true, min: todayKey() })}</label>
+          <label>Ora<input type="time" name="ora" required value="${f.ora || '18:00'}"></label>
+          <label>Campi<select name="campi"><option value="1">1 campo</option><option value="2">2 campi</option></select></label>
+        </div>
+        <label>Luogo<input name="luogo" maxlength="80" placeholder="Centro sportivo / indirizzo"></label>
+        <label>Chi cerchi<select name="modo" data-change="sf-form"><option value="sesso">Uomini e donne (numero per sesso)</option><option value="indifferente">Indifferente</option></select></label>
+        <div class="row">
+          <label data-sf="sesso">Uomini cercati<input type="number" min="0" max="40" name="cercaM" value="2"></label>
+          <label data-sf="sesso">Donne cercate<input type="number" min="0" max="40" name="cercaF" value="2"></label>
+          <label data-sf="indifferente" hidden>Persone cercate<input type="number" min="1" max="80" name="cercaTot" value="3"></label>
+          <label>Numero massimo di persone<input type="number" min="1" max="80" name="max" value="4"></label>
+        </div>
+        <label>Tipo di sfida<select name="tipo" data-change="sf-form"><option value="libero">Gioco libero</option><option value="torneo">Torneo</option></select></label>
+        <fieldset data-sf="torneo" hidden><legend>Torneo</legend>
+          <label>Formula<select name="formato" data-change="sf-form">${Object.entries(SF_FORMATI).map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
+          <div class="row">
+            <label data-sf-f="gironi_ko">Squadre per girone<input type="number" min="2" max="8" name="poolSize" value="4"></label>
+            <label data-sf-f="gironi_ko">Squadre che passano per girone<input type="number" min="1" max="4" name="qualify" value="2"></label>
+            <label data-sf-f="girone_unico,gironi_ko,americana">Punti per set<select name="punti">${pts}</select></label>
+            <label data-sf-f="americana,americana_tempo">Turni<input type="number" min="1" max="20" name="turni" value="5"></label>
+            <label data-sf-f="americana_tempo">Minuti per gara<input type="number" min="3" max="60" name="minuti" value="12"></label>
+          </div>
+          <label data-sf-f="americana,americana_tempo">Uomini e donne<select name="vincolo">${Object.entries(Logic.VINCOLI).map(([k, l]) => `<option value="${k}" ${k === 'equilibrato' ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+          <p class="muted small">Nei gironi le coppie si formano a sorte quando crei il torneo (puoi cambiarle dagli Iscritti). Nell’americana il compagno cambia a ogni partita.
+            Quando la sfida è pronta premi “Crea il torneo della sfida”: avrai la Scheda del torneo, gli iscritti (anche non registrati), il sorteggio delle gare e, nell’americana a tempo, il timer.</p>
+        </fieldset>
+        <label>Note (facoltative)<textarea name="nota" rows="2" maxlength="300"></textarea></label>
+        <p class="form-error" hidden></p>
+        <div class="actions"><button class="btn primary">${icon('swords')} Lancia la sfida</button></div>
+      </form></details>`;
+  }
+
+  function syncSfForm() {
+    const f = document.querySelector('form.sf-form');
+    if (!f) return;
+    const modo = f.elements.modo.value, tipo = f.elements.tipo.value, fmt = f.elements.formato.value;
+    f.querySelectorAll('[data-sf]').forEach(el => { el.hidden = el.dataset.sf === 'torneo' ? tipo !== 'torneo' : el.dataset.sf !== modo; });
+    f.querySelectorAll('[data-sf-f]').forEach(el => { el.hidden = !el.dataset.sfF.split(',').includes(fmt); });
+  }
+
+  function viewSfide() {
+    const u = me(), all = (S().sfide || []).filter(x => !sfPast(x) || (x.by === (u && u.id)) || isAdmin()).filter(x => x.data >= addDays(todayKey(), -7));
+    const mine = all.filter(sfMine), joined = all.filter(x => !sfMine(x) && sfMyRisp(x)), others = all.filter(x => !sfMine(x) && !sfMyRisp(x) && !sfPast(x));
+    const sec = (title, list, none) => `<section>${sectionHead(`${title} (${list.length})`)}${list.length ? `<div class="grid">${list.map(sfCard).join('')}</div>` : empty(none, 'swords')}</section>`;
+    setTimeout(syncSfForm, 0);
+    return `
+      ${sfideAlerts()}
+      ${sectionHead(`<span class="h1">${icon('swords')} Sfide</span>`)}
+      <p class="muted">Lancia una sfida e trova i giocatori che ti mancano, oppure partecipa a quelle degli altri. Chi lancia la sfida conferma i partecipanti.</p>
+      ${u ? (u.pending ? '' : sfForm()) : `<div class="notice">${icon('info-circle')} <span>Per lanciare una sfida o partecipare <a href="#/profilo">accedi o registrati</a>.</span></div>`}
+      ${u ? sec('Le mie sfide', mine, 'Non hai sfide in programma.') : ''}
+      ${u ? sec('Sfide a cui partecipo', joined, 'Nessuna candidatura.') : ''}
+      ${sec(isAdmin() ? 'Altre sfide' : 'Sfide aperte', others, 'Nessuna sfida aperta al momento.')}`;
+  }
+
+  // Coppie per i gironi: a sorte, quando possibile uomo + donna.
+  function sfPairs(ids, sexOf, misto) {
+    const sh = a => a.map(v => [Math.random(), v]).sort((p, q) => p[0] - q[0]).map(p => p[1]);
+    let pairs = [];
+    if (misto) {
+      const M = sh(ids.filter(id => sexOf(id) === 'M')), F = sh(ids.filter(id => sexOf(id) !== 'M'));
+      while (M.length && F.length) pairs.push([M.pop(), F.pop()]);
+      const rest = M.concat(F);
+      while (rest.length) pairs.push([rest.pop(), rest.pop() || null]);
+    } else {
+      const l = sh(ids.slice());
+      while (l.length) pairs.push([l.pop(), l.pop() || null]);
+    }
+    return pairs;
+  }
+
+  // Crea il torneo della sfida: partecipanti confermati + organizzatore + non registrati.
+  function sfCreaTorneo(x) {
+    const s = S(), c = x.cfg || {};
+    const ids = [x.by].concat(sfRisp(x).filter(r => r.stato === 'confermata').map(r => r.uid));
+    (x.guests || []).forEach(g => ids.push(playerFor(g).id));
+    const players = [...new Set(ids)].filter(id => s.users.some(u => u.id === id));
+    const sexOf = id => (s.users.find(u => u.id === id) || {}).sesso;
+    const individual = x.formato === 'americana' || x.formato === 'americana_tempo';
+    const config = Object.assign(Logic.defaultConfig(), {
+      sets: 1, punti: Number(c.punti) || 11, puntiDecisivo: Number(c.punti) || 11, poolSize: Number(c.poolSize) || 4, qualify: Number(c.qualify) || 2,
+      turni: Number(c.turni) || 5, campi: Number(x.campi) || 1, minuti: Number(c.minuti) || 12, vincolo: c.vincolo || 'equilibrato', squadre: 'rotazione', criterio: 'punti'
+    });
+    const t = Logic.normalize({
+      id: Store.uid('t'), nome: `Sfida ${itDate(x.data)} ${x.ora}${x.luogo ? ' · ' + x.luogo : ''}`, data: x.data, luogo: x.luogo || '',
+      categoriaId: 'custom', puntiRows: s.settings.sfidePunti || Logic.SFIDE_PUNTI, coefficiente: 1,
+      disciplina: 'doppio', genere: c.vincolo === 'misto' ? 'misto' : 'open', formato: x.formato, maxIscritti: 0, iscrizioniAperte: false,
+      descrizione: x.nota || '', owner: x.by, sfida: x.id, config, entries: []
+    });
+    if (individual) t.entries = players.map(id => ({ id: Store.uid('e'), p1: id, p2: null, guest: null, livello: null }));
+    else t.entries = sfPairs(players, sexOf, c.vincolo !== 'libero').map(([a, b]) => ({ id: Store.uid('e'), p1: a, p2: b, guest: null, livello: null }));
+    s.tournaments.push(t);
+    return t;
+  }
+
   // ---------- classifiche ----------
 
   function viewRanking() {
@@ -1616,24 +1832,22 @@ const App = (() => {
     return r ? r.total : 0;
   }
 
-  // Prenotazioni giocate (concluse e non cancellate): conteggio dal database meno quelle non ancora finite.
-  async function playedBookings(uid) {
-    const total = await window.Cloud.countBookings(uid);
-    const pending = S().bookings.filter(b => b.userId === uid && !isPast(b.date, b.to)).length;
-    const n = Math.max(0, total - pending);
-    ui.counts[uid] = n;
-    return n;
+  // Sfide giocate (già passate): lanciate dal giocatore o con la sua candidatura confermata.
+  // Le candidature altrui le vede solo l'admin; per gli altri contano le sfide lanciate.
+  function playedSfide(uid) {
+    const s = S();
+    return (s.sfide || []).filter(x => sfPast(x) && (x.by === uid || (s.risp || []).some(r => r.sid === x.id && r.uid === uid && r.stato === 'confermata'))).length;
   }
 
   // Riquadro premi di un giocatore: stelle (fedeltà), medaglie, trofeo, racchetta.
   function premiBlock(uid, own) {
     const s = S(), m = Logic.medals(s, uid), pts = generalPoints(uid);
     const tr = Premi.trophy(s, pts), ra = Premi.racket(s, m.tornei);
-    const n = ui.counts[uid];
-    const st = n == null ? null : Premi.stars(s, n);
+    const n = playedSfide(uid);
+    const st = Premi.stars(s, n);
     return `<div class="premi" data-premi="${uid}">
       <div class="premio fedelta"><div class="big-icons">${st ? (st.stelle ? Premi.starIcons(st.stelle) : '☆') : '…'}</div>
-        <div><strong>Fedeltà</strong><br><span class="small">${st ? `${Premi.starLabel(st.stelle)} · ${n} prenotazioni giocate<br><span class="muted">${own ? 'Te ne mancano' : 'Ne mancano'} ${st.mancano} per la prossima stella</span>` : 'calcolo in corso…'}</span></div></div>
+        <div><strong>Fedeltà</strong><br><span class="small">${st ? `${Premi.starLabel(st.stelle)} · ${n} ${n === 1 ? 'sfida giocata' : 'sfide giocate'}<br><span class="muted">${own ? 'Te ne mancano' : 'Ne mancano'} ${st.mancano} per la prossima stella</span>` : 'calcolo in corso…'}</span></div></div>
       <div class="premio"><div class="big-icons medals">${m.oro || m.argento || m.bronzo ? `<span>🥇${m.oro}</span><span>🥈${m.argento}</span><span>🥉${m.bronzo}</span>` : '🎖️'}</div>
         <div><strong>Medagliere</strong><br><span class="small">${m.oro + m.argento + m.bronzo ? `${m.oro} ori, ${m.argento} argenti, ${m.bronzo} bronzi` : 'nessun podio per ora'}</span></div></div>
       <div class="premio"><div class="big-icons lv${tr.livello}">🏆</div>
@@ -1645,7 +1859,7 @@ const App = (() => {
 
   function headerBadges(uid) {
     const s = S(), m = Logic.medals(s, uid), tr = Premi.trophy(s, generalPoints(uid)), ra = Premi.racket(s, m.tornei);
-    const n = ui.counts[uid], st = n == null ? null : Premi.stars(s, n);
+    const n = playedSfide(uid), st = Premi.stars(s, n);
     const parts = [];
     parts.push(`<span class="hb-group" title="Fedeltà: ${st ? Premi.starLabel(st.stelle) : '…'}">${st && st.stelle ? Premi.starIcons(st.stelle) : '<span class="hb-empty">☆</span>'}</span>`);
     if (m.oro + m.argento + m.bronzo) parts.push(`<span class="hb-group" title="Medagliere">${m.oro ? `🥇<b>${m.oro}</b>` : ''}${m.argento ? `🥈<b>${m.argento}</b>` : ''}${m.bronzo ? `🥉<b>${m.bronzo}</b>` : ''}</span>`);
@@ -1654,16 +1868,8 @@ const App = (() => {
     return parts.join('<span class="hb-sep"></span>');
   }
 
-  // Carica il conteggio delle prenotazioni e aggiorna il riquadro premi quando arriva.
-  function loadCount(uid) {
-    if (ui.counts[uid] != null || !window.Cloud) return;
-    playedBookings(uid).then(() => {
-      const el = document.querySelector(`[data-premi="${uid}"]`);
-      if (el) el.outerHTML = premiBlock(uid, me() && me().id === uid);
-      const hb = document.getElementById('hdrBadges');
-      if (hb && me() && me().id === uid) hb.innerHTML = headerBadges(uid);
-    }).catch(err => console.error(err));
-  }
+  // Le sfide giocate si contano dai dati già caricati: niente da caricare.
+  function loadCount() {}
 
   function playerDialog(id) {
     const u = S().users.find(x => x.id === id);
@@ -1736,7 +1942,6 @@ const App = (() => {
     const u = me();
     if (!u) return viewAuth();
     const s = S();
-    const bookings = myBookings(u);
     const courses = s.courses.filter(c => c.iscritti.includes(u.id));
     const tours = s.tournaments.filter(t => t.entries.some(e => e.p1 === u.id || e.p2 === u.id));
     return `
@@ -1748,8 +1953,10 @@ const App = (() => {
       </section>
       <div class="grid two">
         <section class="card">
-          <h2>${icon('calendar-event')} Le mie prenotazioni</h2>
-          ${bookings.length ? `<div class="list">${bookings.map(bookingItem).join('')}</div>` : '<p class="muted">Nessuna prenotazione in programma. <a href="#/prenota">Prenota ora</a></p>'}
+          <h2>${icon('swords')} Le mie sfide</h2>
+          ${(() => { const l = (s.sfide || []).filter(x => !sfPast(x) && (x.by === u.id || sfMyRisp(x))); return l.length
+            ? `<ul class="plain">${l.map(x => `<li><a href="#/sfide">${fmtDate(x.data)} · ${esc(x.ora)}</a> ${x.by === u.id ? '<span class="badge">organizzata da te</span>' : sfStatoBadge(sfMyRisp(x))}</li>`).join('')}</ul>`
+            : '<p class="muted">Nessuna sfida in programma. <a href="#/sfide">Vai alle sfide</a></p>'; })()}
         </section>
         <section class="card">
           <h2>${icon('school')} I miei corsi</h2>
@@ -1798,7 +2005,7 @@ const App = (() => {
             <div class="row"><label>Telefono<input type="tel" name="tel" required autocomplete="tel"></label>
               <label>Sesso<select name="sesso" required><option value="">—</option><option value="M">Uomo</option><option value="F">Donna</option></select></label></div>
             <p class="muted small">Il sesso serve per i tornei maschili, femminili e misti.</p>
-            <label class="check"><input type="checkbox" required> Accetto il trattamento dei dati per la gestione di prenotazioni, tornei e corsi.</label>
+            <label class="check"><input type="checkbox" required> Accetto il trattamento dei dati per la gestione di sfide, tornei e corsi.</label>
             <p class="form-error" hidden></p>
             <button class="btn primary big wide">Registrati</button>
           </form>`}
@@ -1816,8 +2023,6 @@ const App = (() => {
     const users = s.users.slice().sort((a, b) => (a.cognome + a.nome).localeCompare(b.cognome + b.nome));
     return `
       <h1>Amministrazione</h1>
-      <a class="card adm-link" href="#/prenotazioni">${icon('calendar-search')}<div><strong>Prenotazioni</strong><br>
-        <span class="muted small">Calendario con i giorni prenotati, elenco del giorno ed elenco completo di tutte le prenotazioni.</span></div>${icon('chevron-right')}</a>
       <div class="grid two">
         <section class="card">
           <h2>${icon('news')} Spazio editoriale della home</h2>
@@ -1825,24 +2030,12 @@ const App = (() => {
           ${[...Array(ARTICOLI).keys()].map(articleForm).join('')}
         </section>
         <section class="card">
-          <h2>${icon('building')} Circolo e prenotazioni</h2>
+          <h2>${icon('users-group')} Gruppo</h2>
           <form data-form="settings">
-            <label>Nome del circolo<input name="nome" value="${esc(st.nome)}"></label>
-            <div class="row">
-              <label>Durata massima di una prenotazione<select name="maxOre">${[1, 1.5, 2, 2.5, 3, 4].map(h => `<option value="${h}" ${h == st.maxOre ? 'selected' : ''}>${String(h).replace('.', ',')} ${h === 1 ? 'ora' : 'ore'}</option>`).join('')}</select></label>
-              <label>Max prenotazioni/giorno<input type="number" min="1" name="maxGiorno" value="${st.maxGiorno}"></label>
-              <label>Giorni di anticipo<input type="number" min="1" name="giorniAnticipo" value="${st.giorniAnticipo}"></label>
-            </div>
+            <label>Nome del gruppo<input name="nome" value="${esc(st.nome)}"></label>
             <label>Avviso in home<textarea name="avviso" rows="2">${esc(st.avviso)}</textarea></label>
             <div class="actions"><button class="btn primary">Salva</button></div>
           </form>
-        </section>
-        <section class="card">
-          <h2>${icon('layout-grid')} Campi</h2>
-          <p class="muted small">Per ogni campo: nome, visibilità (i campi nascosti non sono prenotabili) e orari di apertura giorno per giorno. Si prenota a mezz’ore.</p>
-          ${s.courts.map(courtForm).join('')}
-          <div class="actions"><button class="btn" data-action="court-add">${icon('plus')} Aggiungi campo</button></div>
-          <p class="muted small">Per bloccare degli slot (manutenzione, lezioni, eventi) vai su Prenota, seleziona gli slot e scrivi il motivo nel riepilogo.</p>
         </section>
         <section class="card">
           <h2>${icon('list-numbers')} Tipologie di torneo e punti</h2>
@@ -1856,18 +2049,17 @@ const App = (() => {
         <section class="card">
           <h2>${icon('award')} Premi fedeltà e performance</h2>
           ${(() => { const c = Premi.cfg(s); return `<form data-form="premi">
-            <label>Stelle fedeltà: prenotazioni giocate per ogni stella (separate da virgola)<input name="stelle" value="${c.stelle.join(', ')}" placeholder="5, 10, 20, 35, 50"></label>
-            <label>Dopo l’ultima soglia: una stella ogni … prenotazioni<input type="number" min="1" name="passoStelle" value="${c.passoStelle}"></label>
+            <label>Stelle fedeltà: sfide giocate per ogni stella (separate da virgola)<input name="stelle" value="${c.stelle.join(', ')}" placeholder="5, 10, 20, 35, 50"></label>
+            <label>Dopo l’ultima soglia: una stella ogni … sfide<input type="number" min="1" name="passoStelle" value="${c.passoStelle}"></label>
             <p class="muted small">10 stelle = ☄️ una cometa, 10 comete = 🪐 un pianeta, 10 pianeti = ☀️ un sole, 10 soli = 🌌 una galassia.</p>
             <label>Trofei (Bronzo, Argento, Oro, Platino, Diamante): punti in classifica generale<input name="trofei" value="${c.trofei.join(', ')}"></label>
             <label>Racchette (stessi livelli): tornei giocati<input name="racchette" value="${c.racchette.join(', ')}"></label>
             <p class="muted small">Le medaglie 🥇🥈🥉 si assegnano da sole a ogni podio nei tornei conclusi.</p>
             <div class="actions"><button class="btn primary">Salva premi</button></div></form>`; })()}
           <h3>Fedeltà dei giocatori</h3>
-          ${users.filter(u => u.email).length ? `<div class="table-wrap"><table class="standings"><thead><tr><th>Giocatore</th><th>Prenotazioni giocate</th><th>Stelle</th></tr></thead>
-            <tbody>${users.filter(u => u.email).map(u => { const n = ui.counts[u.id]; const st = n == null ? null : Premi.stars(s, n);
-              return `<tr><td class="name">${esc(u.cognome + ' ' + u.nome)}</td><td>${n == null ? '—' : n}</td><td>${st ? (st.stelle ? Premi.starIcons(st.stelle) : '—') : ''}</td></tr>`; }).join('')}</tbody></table></div>
-            <div class="actions"><button class="btn" data-action="count-all">${icon('refresh')} Calcola le prenotazioni di tutti</button></div>` : '<p class="muted">Nessun utente registrato.</p>'}
+          ${users.filter(u => u.email).length ? `<div class="table-wrap"><table class="standings"><thead><tr><th>Giocatore</th><th>Sfide giocate</th><th>Stelle</th></tr></thead>
+            <tbody>${users.filter(u => u.email).map(u => { const n = playedSfide(u.id); const st = Premi.stars(s, n);
+              return `<tr><td class="name">${esc(u.cognome + ' ' + u.nome)}</td><td>${n}</td><td>${st.stelle ? Premi.starIcons(st.stelle) : '—'}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="muted">Nessun utente registrato.</p>'}
         </section>
         <section class="card">
           <h2>${icon('users')} Utenti e giocatori (${users.length})</h2>
@@ -1899,7 +2091,7 @@ const App = (() => {
 
   // ---------- rendering ----------
 
-  const VIEWS = { '': viewHome, prenota: viewBook, prenotazioni: viewAdminBookings, tornei: viewTournaments, classifiche: viewRanking, corsi: viewCourses, profilo: viewProfile, admin: viewAdmin };
+  const VIEWS = { '': viewHome, sfide: viewSfide, tornei: viewTournaments, classifiche: viewRanking, corsi: viewCourses, profilo: viewProfile, admin: viewAdmin };
 
   let themeFor = null;
   const started = Date.now();
@@ -1939,7 +2131,6 @@ const App = (() => {
     hb.hidden = !u || !Store.ready || u.pending;
     if (!hb.hidden) {
       hb.innerHTML = headerBadges(u.id);
-      if (ui.counts[u.id] == null) setTimeout(() => loadCount(u.id), 0);
     }
     const who = document.getElementById('who');
     who.innerHTML = u ? `<span class="avatar">${esc((u.nome[0] || '') + (u.cognome[0] || ''))}</span><span class="lbl">${esc(u.nome)}</span>` : `${icon('login-2')}<span class="lbl">Accedi</span>`;
@@ -1969,11 +2160,83 @@ const App = (() => {
     location.hash = '#/profilo';
   }
 
-  function tourById(id) { return S().tournaments.find(t => t.id === id); }
+  function tourById(id) { const t = S().tournaments.find(x => x.id === id); if (t) curTour = t; return t; }
 
   // ---------- azioni ----------
 
+  const sfById = id => (S().sfide || []).find(x => x.id === id);
   const actions = {
+    'sf-candida': d => {
+      const u = me(), x = sfById(d.id);
+      if (!u) return goProfileForLogin('Accedi o registrati per partecipare alle sfide.');
+      if (needVerified() || !x) return;
+      if (!u.sesso) return toast('Indica il sesso nel tuo profilo per partecipare.', 'err');
+      if (x.modo === 'sesso' && !(Number(u.sesso === 'M' ? x.cercaM : x.cercaF) > 0)) return toast(`Questa sfida non cerca ${u.sesso === 'M' ? 'uomini' : 'donne'}.`, 'err');
+      if (sfFull(x)) return toast('Posti esauriti.', 'err');
+      window.Cloud.applySfida(x, u).then(() => toast('Candidatura inviata: la deve confermare chi ha lanciato la sfida.', 'ok')).catch(sfErr);
+    },
+    'sf-ritira': d => {
+      if (!confirm('Ritirare la candidatura?')) return;
+      const r = (S().risp || []).find(y => y.id === d.id), x = r && sfById(r.sid);
+      window.Cloud.updateRisp(d.id, { stato: 'ritirata', at: Date.now() }).then(() => {
+        // se era confermata, chi ha lanciato la sfida aggiorna i posti al prossimo cambio; l'admin o l'organizzatore lo fa subito
+        if (x && (sfMine(x) || isAdmin())) window.Cloud.updateSfida(x.id, { conf: sfCount(x) });
+        toast('Candidatura ritirata.', 'ok');
+      }).catch(sfErr);
+    },
+    'sf-risp': d => {
+      const r = (S().risp || []).find(y => y.id === d.id), x = r && sfById(r.sid);
+      if (!r || !x) return;
+      if (d.v === 'confermata' && sfFull(x)) return toast(`Hai già confermato il numero massimo di persone (${sfMax(x)}).`, 'err');
+      if (d.v === 'rifiutata' && r.stato === 'confermata' && !confirm(`Togliere ${r.nome} dalla sfida?`)) return;
+      const next = sfRisp(x).map(y => (y.id === r.id ? Object.assign({}, y, { stato: d.v }) : y));
+      const ok = next.filter(y => y.stato === 'confermata').map(y => y.sesso).concat((x.guests || []).map(g => g.sesso));
+      window.Cloud.updateRisp(r.id, { stato: d.v, visto: false, at: Date.now() })
+        .then(() => window.Cloud.updateSfida(x.id, { conf: { M: ok.filter(g => g === 'M').length, F: ok.filter(g => g === 'F').length, tot: ok.length } }))
+        .then(() => toast(d.v === 'confermata' ? `${r.nome} confermato/a.` : `${r.nome} non confermato/a.`, 'ok')).catch(sfErr);
+    },
+    'sf-guest': d => {
+      openDialog(`<form data-form="sf-guest"><input type="hidden" name="id" value="${d.id}">
+        <h2>Aggiungi un giocatore non registrato</h2>
+        <div class="row"><label>Nome<input name="nome" required maxlength="60"></label><label>Cognome<input name="cognome" required maxlength="60"></label></div>
+        <label>Sesso<select name="sesso" required><option value="">—</option>${Object.entries(SESSI).map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
+        <p class="form-error" hidden></p>
+        <div class="actions"><button type="button" class="btn" data-action="close-dialog">Annulla</button><button class="btn primary">Aggiungi</button></div></form>`);
+    },
+    'sf-guest-del': d => {
+      const x = sfById(d.id);
+      if (!x || !confirm('Togliere questo giocatore dalla sfida?')) return;
+      const guests = (x.guests || []).filter((_, i) => i !== Number(d.i));
+      window.Cloud.updateSfida(x.id, { guests, conf: sfCount(Object.assign({}, x, { guests })) }).catch(sfErr);
+    },
+    'sf-chiudi': d => {
+      const x = sfById(d.id);
+      if (!x) return;
+      const pend = sfRisp(x).filter(r => r.stato === 'attesa');
+      if (!confirm(`Chiudere la sfida?${pend.length ? `\n${pend.length} ${pend.length === 1 ? 'candidatura in attesa riceverà' : 'candidature in attesa riceveranno'} l’avviso “Registrazione alla sfida non confermata o non più posti disponibili”.` : ''}`)) return;
+      Promise.all(pend.map(r => window.Cloud.updateRisp(r.id, { stato: 'non_confermata', visto: false, at: Date.now() })))
+        .then(() => window.Cloud.updateSfida(x.id, { stato: 'chiusa' })).then(() => toast('Sfida chiusa.', 'ok')).catch(sfErr);
+    },
+    'sf-riapri': d => { window.Cloud.updateSfida(d.id, { stato: 'aperta' }).then(() => toast('Sfida riaperta.', 'ok')).catch(sfErr); },
+    'sf-elimina': d => {
+      const x = sfById(d.id);
+      if (!x || !confirm('Eliminare la sfida? Le candidature verranno cancellate (il torneo, se creato, resta nella sezione Tornei).')) return;
+      Promise.all(sfRisp(x).map(r => window.Cloud.deleteRisp(r.id))).then(() => window.Cloud.deleteSfida(x.id)).then(() => toast('Sfida eliminata.', 'ok')).catch(sfErr);
+    },
+    'sf-torneo': d => {
+      const x = sfById(d.id);
+      if (!x) return;
+      if (x.tid && S().tournaments.some(t => t.id === x.tid)) { location.hash = '#/tornei/' + x.tid; return; }
+      const n = 1 + sfRisp(x).filter(r => r.stato === 'confermata').length + (x.guests || []).length;
+      if (!confirm(`Creare il torneo della sfida con ${n} giocatori (tu compreso)? Potrai ancora aggiungere o togliere iscritti prima del sorteggio.`)) return;
+      const t = sfCreaTorneo(x);
+      ui.tab[t.id] = 'iscritti';
+      save();
+      window.Cloud.updateSfida(x.id, { tid: t.id }).catch(sfErr);
+      location.hash = '#/tornei/' + t.id;
+      toast('Torneo creato: controlla gli iscritti, poi chiudi la lista e genera le gare.', 'ok');
+    },
+    'sf-visto': d => { window.Cloud.updateRisp(d.id, { visto: true }).catch(sfErr); },
     'tour-pdf': d => tourPdf(tourById(d.id)),
     'timer-start': d => {
       unlockAudio();
@@ -2204,11 +2467,6 @@ const App = (() => {
     },
     player: d => playerDialog(d.id),
     'rank-cat': d => { ui.rank.cat = d.cat; render(); },
-    'count-all': async () => {
-      const ids = S().users.filter(u => u.email).map(u => u.id);
-      toast('Calcolo in corso…');
-      try { await Promise.all(ids.map(playedBookings)); render(); toast('Prenotazioni aggiornate.', 'ok'); } catch (e) { cloudError(e); }
-    },
 
     'course-new': () => courseForm(null),
     'course-edit': d => courseForm(S().courses.find(c => c.id === d.id)),
@@ -2313,6 +2571,7 @@ const App = (() => {
   };
 
   const changes = {
+    'sf-form': () => syncSfForm(),
     'entry-kind': el => { const g = el.form.querySelector('.guest-fields'); if (g) g.hidden = el.value !== '__guest'; },
     'book-date': el => { if (el.value) { ui.date = el.value; render(); } },
     'date-native': el => { const t = el.closest('.date-field').querySelector('input[data-date]'); if (t && el.value) t.value = itDate(el.value); },
@@ -2358,6 +2617,35 @@ const App = (() => {
     .filter(r => r.length >= 2 && r[0] > 0 && !isNaN(r[1])).map(r => [r[0], r[1]]).sort((a, b) => a[0] - b[0]);
 
   const forms = {
+    sfida: (v, f) => {
+      const u = me();
+      if (!u) return goProfileForLogin('Accedi o registrati per lanciare una sfida.');
+      if (needVerified()) return;
+      const n = k => Math.max(0, Math.round(Number(v[k]) || 0));
+      const x = {
+        byName: `${u.nome} ${u.cognome}`.trim(), data: v.data, ora: v.ora, luogo: (v.luogo || '').trim(), campi: Number(v.campi) === 2 ? 2 : 1,
+        modo: v.modo === 'indifferente' ? 'indifferente' : 'sesso', cercaM: n('cercaM'), cercaF: n('cercaF'), cercaTot: n('cercaTot'), max: n('max'),
+        tipo: v.tipo === 'torneo' ? 'torneo' : 'libero', formato: v.tipo === 'torneo' ? v.formato : '', nota: (v.nota || '').trim(),
+        cfg: v.tipo === 'torneo' ? { poolSize: n('poolSize') || 4, qualify: n('qualify') || 2, punti: n('punti') || 11, turni: n('turni') || 5, minuti: n('minuti') || 12, vincolo: v.vincolo || 'equilibrato' } : {},
+        stato: 'aperta', conf: { M: 0, F: 0, tot: 0 }, guests: [], tid: ''
+      };
+      if (!x.data || !x.ora) return formError(f, 'Indica data e ora.');
+      if (isPast(x.data, x.ora)) return formError(f, 'La data e l’ora sono già passate.');
+      const sought = x.modo === 'sesso' ? x.cercaM + x.cercaF : x.cercaTot;
+      if (sought < 1) return formError(f, 'Indica quante persone cerchi.');
+      if (!x.max) x.max = sought;
+      if (x.max < sought) return formError(f, `Il numero massimo di persone non può essere minore di quelle cercate (${sought}).`);
+      window.Cloud.createSfida(Store.uid('s'), x).then(() => { ui.sfOpen = false; toast('Sfida lanciata!', 'ok'); }).catch(sfErr);
+    },
+    'sf-guest': (v, f) => {
+      const x = sfById(v.id);
+      if (!x) return closeDialog();
+      if (sfFull(x)) return formError(f, `Hai già raggiunto il numero massimo di persone (${sfMax(x)}).`);
+      const g = { nome: v.nome.trim(), cognome: v.cognome.trim(), sesso: v.sesso };
+      if (!g.nome || !g.cognome || !g.sesso) return formError(f, 'Compila nome, cognome e sesso.');
+      const guests = (x.guests || []).concat([g]);
+      window.Cloud.updateSfida(x.id, { guests, conf: sfCount(Object.assign({}, x, { guests })) }).then(() => { closeDialog(); toast('Giocatore aggiunto.', 'ok'); }).catch(sfErr);
+    },
     login: async (v, f) => {
       try {
         await Store.login(v.email, v.password);
@@ -2409,7 +2697,7 @@ const App = (() => {
         turni: Number(formato === 'americana_tempo' ? v.tTurni : v.turni) || 1, campi: Number(formato === 'americana_tempo' ? v.tCampi : v.campi) || 0,
         poolPlayers: Number(v.poolPlayers) || 8, poolTurni: Number(v.poolTurni) || 1, finalisti: Number(v.finalisti) || 8,
         squadre: t && t.seeds ? t.config.squadre : f.elements.squadre.value, minuti: Number(v.minuti) || 15, maxPartite: Number(v.maxPartite) || 1,
-        criterioTempo: v.criterioTempo, criterioRot: v.criterioRot || 'punti'
+        criterioTempo: v.criterioTempo, criterioRot: v.criterioRot || 'punti', vincolo: v.vincolo || (t ? t.config.vincolo : 'equilibrato') || 'equilibrato'
       };
       const puntiRows = parseRows(v.puntiRows || '');
       if (v.categoriaId === 'custom' && !puntiRows.length) return formError(f, 'Inserisci la tabella punti del torneo (es. 1=100).');
@@ -2539,7 +2827,7 @@ const App = (() => {
       save();
     },
     settings: v => {
-      Object.assign(S().settings, { nome: v.nome.trim() || 'Pickleball Club', maxOre: Number(v.maxOre) || 2, maxGiorno: Number(v.maxGiorno) || 1, giorniAnticipo: Number(v.giorniAnticipo) || 1, avviso: v.avviso.trim() });
+      Object.assign(S().settings, { nome: v.nome.trim() || 'Pickleball Club', avviso: v.avviso.trim() });
       save();
       toast('Impostazioni salvate.', 'ok');
     },
@@ -2583,6 +2871,9 @@ const App = (() => {
     'tour-redraw', 'tour-bracket', 'tour-close', 'tour-reopen', 'tour-delete', 'fantasma-next', 'fantasma-undo', 'final-pairs', 'result', 'result-clear',
     'timer-start', 'timer-pause', 'timer-resume', 'timer-reset']);
   const TOUR_FORMS = new Set(['tour', 'entry-bulk', 'result', 'final-pairs']);
+  // Sfide: i controlli (accesso, chi organizza) sono nelle azioni e nelle regole del database.
+  const SFIDE = new Set(['sf-candida', 'sf-ritira', 'sf-risp', 'sf-guest', 'sf-guest-del', 'sf-chiudi', 'sf-riapri', 'sf-elimina', 'sf-torneo', 'sf-visto']);
+  const SFIDE_FORMS = new Set(['sfida', 'sf-guest']);
 
   document.addEventListener('click', e => {
     if (e.target.classList && e.target.classList.contains('date-native')) { try { e.target.showPicker(); } catch (err) {} return; }
@@ -2590,7 +2881,8 @@ const App = (() => {
     if (!el) return;
     const a = el.dataset.action;
     if (!actions[a]) return;
-    if (!PUBLIC.has(a) && !isAdmin() && !(TOUR.has(a) && canTours())) return;
+    if (TOUR.has(a)) { curTour = null; if (el.dataset.id) tourById(el.dataset.id); else if (location.hash.startsWith('#/tornei/')) tourById(location.hash.split('/')[2]); }
+    if (!PUBLIC.has(a) && !isAdmin() && !(TOUR.has(a) && canTours()) && !SFIDE.has(a)) return;
     if (el.tagName !== 'A') e.preventDefault();
     if (a === 'close-dialog' && el.tagName === 'A') closeDialog();
     else actions[a](el.dataset, el, e);
@@ -2609,7 +2901,8 @@ const App = (() => {
     const f = e.target, name = f.dataset.form;
     if (!forms[name]) return;
     e.preventDefault();
-    if (!PUBLIC_FORMS.has(name) && !isAdmin() && !(TOUR_FORMS.has(name) && canTours())) return;
+    if (TOUR_FORMS.has(name)) { curTour = null; const id = (f.elements.tid && f.elements.tid.value) || (name === 'tour' && f.elements.id && f.elements.id.value); if (id) tourById(id); }
+    if (!PUBLIC_FORMS.has(name) && !isAdmin() && !(TOUR_FORMS.has(name) && canTours()) && !SFIDE_FORMS.has(name)) return;
     const v = Object.fromEntries(new FormData(f));
     // Date scritte gg/mm/aaaa -> AAAA-MM-GG.
     for (const el of f.querySelectorAll('input[data-date]')) {

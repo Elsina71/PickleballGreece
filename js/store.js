@@ -5,7 +5,7 @@ const Store = (() => {
   }
 
   function defaultSettings() {
-    return { nome: 'Pickleball Greece', maxGiorno: 2, maxOre: 2, giorniAnticipo: 7, avviso: '', premi: null };
+    return { nome: 'Pickleball Greece', maxGiorno: 2, maxOre: 2, giorniAnticipo: 7, avviso: '', premi: null, sfidePunti: null };
   }
 
   // Campo: nome, visibile (prenotabile) e orari di apertura per giorno della settimana (1 = lunedì … 7 = domenica).
@@ -20,7 +20,7 @@ const Store = (() => {
   }
 
   function empty() {
-    return { version: 1, settings: defaultSettings(), users: [], courts: [], bookings: [], courses: [], categories: [], tournaments: [], notifiche: [], articoli: [] };
+    return { version: 1, settings: defaultSettings(), users: [], courts: [], bookings: [], courses: [], categories: [], tournaments: [], notifiche: [], articoli: [], sfide: [], risp: [] };
   }
 
   function isValid(s) {

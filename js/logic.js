@@ -42,7 +42,7 @@ const Logic = (() => {
       poolSize: 4, qualify: 2, poolType: 'rr', thirdPlace: true,
       turni: 5, campi: 0, criterio: 'punti',
       poolPlayers: 8, poolTurni: 4, finalisti: 8,
-      squadre: 'rotazione', maxPartite: 5, minuti: 15, criterioTempo: 'quoziente', criterioRot: 'punti'
+      squadre: 'rotazione', maxPartite: 5, minuti: 15, criterioTempo: 'quoziente', criterioRot: 'punti', vincolo: 'equilibrato'
     };
   }
 
@@ -457,7 +457,14 @@ const Logic = (() => {
   // Nei tornei misti si creano quante più coppie uomo+donna possibile.
 
   const pk = (x, y) => (x < y ? x + '|' + y : y + '|' + x);
-  const mixedOf = t => t.genere === 'misto';
+  // Coppie sempre uomo + donna: tornei misti, oppure vincolo "misto" scelto per l'americana.
+  const mixedOf = t => t.genere === 'misto' || (t.config && t.config.vincolo === 'misto');
+  // Abbinamenti uomini/donne nelle formule a rotazione (americana, fantasma, americana a tempo).
+  const VINCOLI = {
+    misto: 'Sempre coppie miste (uomo + donna)',
+    equilibrato: 'Mai 2 uomini contro 2 donne (al massimo 2 uomini contro una coppia mista)',
+    libero: 'Nessun vincolo (anche 2 uomini contro una coppia mista o di sole donne)'
+  };
   const isMale = (t, id) => (t.sex || {})[id] === 'M';
 
   // Coppie casuali; nei misti quante più coppie uomo+donna possibile (prima le miste, poi le altre).
@@ -488,7 +495,7 @@ const Logic = (() => {
   // Equilibrio uomini/donne nelle gare (tornei open e misti): mai 2 uomini contro 2 donne;
   // al massimo 2 uomini contro un uomo e una donna, e quando si può gare alla pari.
   function sexCost(t, a, b) {
-    if (t.genere === 'M' || t.genere === 'F') return 0;
+    if (t.genere === 'M' || t.genere === 'F' || (t.config && t.config.vincolo === 'libero')) return 0;
     const sx = t.sex || {}, all = a.concat(b);
     if (all.some(id => sx[id] !== 'M' && sx[id] !== 'F')) return 0;
     const men = side => side.filter(id => sx[id] === 'M').length;
@@ -1074,12 +1081,17 @@ const Logic = (() => {
   // Categorie del ranking interno. Ogni torneo appartiene a una sola categoria (disciplina + genere);
   // le classifiche generali (maschile/femminile) sommano tutti i tornei, Open compresi.
   const RANK_CATS = {
+    sfide: 'Sfide',
     generale_m: 'Generale maschile', generale_f: 'Generale femminile',
     sm: 'Singolare maschile', sf: 'Singolare femminile',
     dm: 'Doppio maschile', df: 'Doppio femminile', dx: 'Doppio misto', open: 'Open'
   };
 
+  // Tabella punti predefinita dei tornei nati dalle sfide (punti di coppia: ogni giocatore ne prende metà).
+  const SFIDE_PUNTI = [[1, 100], [2, 80], [3, 65], [4, 55], [5, 45], [6, 40], [7, 35], [8, 30], [9, 25], [10, 20], [11, 15], [13, 10], [17, 5]];
+
   function rankCat(t) {
+    if (t.sfida) return 'sfide';
     if (t.genere === 'open') return 'open';
     const doppio = t.disciplina === 'doppio' || isIndividual(t.formato) || t.formato === 'americana_tempo';
     if (!doppio) return t.genere === 'M' ? 'sm' : t.genere === 'F' ? 'sf' : 'open';
@@ -1094,7 +1106,7 @@ const Logic = (() => {
     const general = cat.startsWith('generale_');
     state.tournaments
       .filter(t => t.closed && givesPoints(state, t) && (!filter.categoriaId || t.categoriaId === filter.categoriaId)
-        && (!cat || general || rankCat(t) === cat))
+        && (cat === 'sfide' ? !!t.sfida : !cat || (!t.sfida && (general || rankCat(t) === cat))))
       .forEach(t => {
         const pp = playerPlaces(t);
         if (!pp) return;
@@ -1160,7 +1172,7 @@ const Logic = (() => {
     fantasmaPoolMatches, fantasmaPoolStandings, fantasmaPoolsComplete, fantasmaQualifiers, fantasmaKo, fantasmaStage,
     tempoMatches, tempoComplete, tempoStandings, rotazioneStandings, ROT_CRITERI, rotCrit, rotazioneShape, isRotazione, TEMPO_SQUADRE, LIVELLI,
     fantasmaNextIds, fantasmaAdvance, fantasmaSetFinal, fantasmaUndo,
-    RANK_CATS, rankCat, playerSummary, medals,
+    RANK_CATS, rankCat, VINCOLI, SFIDE_PUNTI, playerSummary, medals,
     tablePoints, pointsRows, givesPoints, entryPoints, playerPoints, entryPlayers, ranking, rankMap, playerHistory
   };
 })();
