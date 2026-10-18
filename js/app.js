@@ -1796,7 +1796,11 @@ const App = (() => {
 
   // Blocco della home: sfide aperte a cui ci si può candidare.
   function sfideHomeBlock() {
-    const list = (S().sfide || []).filter(x => x.stato === 'aperta' && !sfPast(x) && !sfFull(x) && !sfMine(x) && !sfMyRisp(x)).slice(0, 4);
+    // prima le proprie (lanciate o con la propria candidatura), poi le altre aperte con posti liberi
+    const mia = x => sfMine(x) || (sfMyRisp(x) && ['attesa', 'confermata'].includes(sfMyRisp(x).stato));
+    const all = (S().sfide || []).filter(x => !sfPast(x) && x.stato !== 'annullata');
+    const mine = all.filter(mia), others = all.filter(x => !mia(x) && x.stato === 'aperta' && !sfFull(x) && !sfMyRisp(x)).slice(0, 4);
+    const list = mine.concat(others);
     return `<section>${sectionHead(T("Sfide aperte"), '<a href="#/sfide">' + T("Tutte") + '</a>')}
       ${list.length ? `<div class="grid">${list.map(sfCard).join('')}</div>` : empty(T("Nessuna sfida aperta al momento: lanciane una tu!"), 'swords')}</section>`;
   }
