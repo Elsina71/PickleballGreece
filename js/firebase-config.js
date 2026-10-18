@@ -10,4 +10,4 @@ export const firebaseConfig = {
 
 // Amministratori principali (UID; devono coincidere con firestore.rules). Altri amministratori: raccolta "admins",
 // gestita dall'app (Amministrazione → Utenti).
-export const mainAdminUids = [];
+export const mainAdminUids = ['T9wW3CKIW7YoFgyBxZ2WuUrasFF3'];

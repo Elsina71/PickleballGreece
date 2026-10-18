@@ -11,7 +11,7 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function isAdmin() {
       return signedIn()
-        && (request.auth.uid in []
+        && (request.auth.uid in ['T9wW3CKIW7YoFgyBxZ2WuUrasFF3']
             || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
     }
     // Gestore tornei: crea e gestisce i tornei, senza gli altri poteri dell'amministratore.
