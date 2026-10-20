@@ -72,7 +72,7 @@ function rebuild() {
     const priv = raw.users[id] || {};
     return {
       id, nome: p.nome || '', cognome: p.cognome || '', sesso: p.sesso || '', livello: Number(p.livello) || null,
-      email: priv.email || '', tel: priv.tel || '', tema: priv.tema || '',
+      email: priv.email || '', tel: priv.tel || '', tema: priv.tema || '', verificata: !!priv.verificata, approvato: !!priv.approvato,
       role: isMain(id) || raw.admins.has(id) || (user && id === user.uid && isAdmin) ? 'admin'
         : raw.tourAdmins.has(id) || (user && id === user.uid && isTourAdmin) ? 'tornei' : 'user'
     };
@@ -169,7 +169,11 @@ onAuthStateChanged(auth, async u => {
       try { isTourAdmin = (await getDoc(doc(db, 'tourAdmins', u.uid))).exists(); } catch (e) { isTourAdmin = false; }
       // account di un campo (tablet a bordo campo): compila gli scoresheet dei tornei
       if (!isTourAdmin && !raw.players[u.uid]) { try { const sc = await getDoc(doc(db, 'scorers', u.uid)); scorer = sc.exists() ? Object.assign({ id: u.uid }, sc.data()) : null; } catch (e) { scorer = null; } }
-      privUnsubs.push(listen('users', doc(db, 'users', u.uid), s => { raw.users = s.exists() ? { [u.uid]: s.data() } : {}; }));
+      privUnsubs.push(listen('users', doc(db, 'users', u.uid), s => {
+        raw.users = s.exists() ? { [u.uid]: s.data() } : {};
+        // l'admin vede chi ha confermato l'email: lo si segna una volta nel profilo
+        if (s.exists() && u.emailVerified && !s.data().verificata) updateDoc(doc(db, 'users', u.uid), { verificata: true }).catch(() => {});
+      }));
       privUnsubs.push(listen('notifiche', query(collection(db, 'notifiche'), where('to', '==', u.uid)), s => { raw.notifiche = byId(s); }));
       // candidature: le proprie e quelle alle sfide lanciate da questo utente
       privUnsubs.push(listen('rispMie', query(collection(db, 'sfideRisp'), where('uid', '==', u.uid)), s => { raw.rispMie = byId(s); }));
@@ -203,7 +207,11 @@ function shapes(st) {
   st.users.forEach(u => {
     d.players[u.id] = { nome: u.nome || '', cognome: u.cognome || '', sesso: u.sesso || '' };
     if (u.livello) d.players[u.id].livello = Number(u.livello);
-    if (u.email || u.tel || u.tema) d.users[u.id] = { email: u.email || '', tel: u.tel || '', tema: u.tema || '' };
+    if (u.email || u.tel || u.tema) {
+      d.users[u.id] = { email: u.email || '', tel: u.tel || '', tema: u.tema || '' };
+      if (u.verificata) d.users[u.id].verificata = true;
+      if (u.approvato) d.users[u.id].approvato = true;
+    }
     if (u.role === 'admin' && !isMain(u.id)) d.admins[u.id] = { nome: `${u.nome} ${u.cognome}` };
     if (u.role === 'tornei') d.tourAdmins[u.id] = { nome: `${u.nome} ${u.cognome}` };
   });
@@ -405,7 +413,8 @@ window.Cloud = {
   get isTourAdmin() { return isTourAdmin; },
   get allUsers() { return allUsers; },
   get lastError() { return lastError; },
-  get verified() { return !!user && user.emailVerified; },
+  // email confermata oppure registrazione confermata dall'admin
+  get verified() { return !!user && (user.emailVerified || !!(raw.users[user.uid] && raw.users[user.uid].approvato)); },
   get scorer() { return scorer; },
   get refertoCur() { return raw.refertoCur; },
   watchReferti, watchReferto, saveReferto, deleteReferto, createScorer, updateScorer, deleteScorer,

@@ -21,7 +21,12 @@ service cloud.firestore {
     }
     function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
     // Utente con indirizzo email confermato (link ricevuto dopo la registrazione).
-    function verified() { return signedIn() && request.auth.token.email_verified == true; }
+    // email confermata, oppure registrazione confermata dall'admin (campo "approvato" nel profilo privato)
+    function verified() {
+      return signedIn() && (request.auth.token.email_verified == true
+        || (exists(/databases/$(database)/documents/users/$(request.auth.uid))
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('approvato', false) == true));
+    }
     function data() { return request.resource.data; }
     function shortText(v, max) { return v is string && v.size() <= max; }
     // livello di gioco facoltativo: 1 principiante … 5 pro
@@ -57,8 +62,11 @@ service cloud.firestore {
       allow read: if isSelf(uid) || isAdmin();
       allow write: if isAdmin();
       allow create, update: if isSelf(uid)
-        && data().keys().hasOnly(['email', 'tel', 'tema'])
+        && data().keys().hasOnly(['email', 'tel', 'tema', 'verificata', 'approvato'])
         && data().email == request.auth.token.email
+        // "verificata" solo con l'email davvero confermata; "approvato" lo mette solo l'admin
+        && (data().get('verificata', false) == false || request.auth.token.email_verified == true || (request.method == 'update' && resource.data.get('verificata', false) == true))
+        && (data().get('approvato', false) == false || (request.method == 'update' && resource.data.get('approvato', false) == true))
         && shortText(data().tel, 30) && shortText(data().tema, 20);
     }
 

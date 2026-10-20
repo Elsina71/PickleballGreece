@@ -1216,5 +1216,11 @@ I18n.add('el', {
  "Email e telefono": "Email και τηλέφωνο",
  "Nessun utente trovato.": "Δεν βρέθηκαν χρήστες.",
  "Aggiungi giocatore senza account": "Προσθήκη παίκτη χωρίς λογαριασμό",
- "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Ρόλοι: ο Admin διαχειρίζεται τα πάντα· ο Διαχειριστής τουρνουά δημιουργεί και διαχειρίζεται μόνο τουρνουά. Ο κωδικός δεν εμφανίζεται: με «Επεξεργασία» μπορείς να στείλεις στον χρήστη email για να τον αλλάξει."
+ "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Ρόλοι: ο Admin διαχειρίζεται τα πάντα· ο Διαχειριστής τουρνουά δημιουργεί και διαχειρίζεται μόνο τουρνουά. Ο κωδικός δεν εμφανίζεται: με «Επεξεργασία» μπορείς να στείλεις στον χρήστη email για να τον αλλάξει.",
+ "Confermato dall’admin": "Εγκρίθηκε από τον admin",
+ "Email confermata": "Email επιβεβαιωμένο",
+ "Email non confermata": "Email μη επιβεβαιωμένο",
+ "Conferma registrazione": "Έγκριση εγγραφής",
+ "Confermare la registrazione di {0}? Potrà iscriversi e partecipare anche senza aver confermato l’email.": "Έγκριση της εγγραφής του/της {0}; Θα μπορεί να δηλώνει συμμετοχή ακόμη κι αν δεν έχει επιβεβαιώσει το email.",
+ "Registrazione confermata.": "Η εγγραφή εγκρίθηκε."
 });

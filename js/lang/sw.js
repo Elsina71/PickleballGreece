@@ -1216,5 +1216,11 @@ I18n.add('sw', {
  "Email e telefono": "Barua pepe na simu",
  "Nessun utente trovato.": "Hakuna mtumiaji aliyepatikana.",
  "Aggiungi giocatore senza account": "Ongeza mchezaji bila akaunti",
- "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Majukumu: Admin anasimamia kila kitu; Msimamizi wa mashindano huunda na kusimamia mashindano pekee. Nenosiri halionekani: kwa “Hariri” unaweza kumtumia mtumiaji barua pepe ya kulibadilisha."
+ "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Majukumu: Admin anasimamia kila kitu; Msimamizi wa mashindano huunda na kusimamia mashindano pekee. Nenosiri halionekani: kwa “Hariri” unaweza kumtumia mtumiaji barua pepe ya kulibadilisha.",
+ "Confermato dall’admin": "Imeidhinishwa na admin",
+ "Email confermata": "Barua pepe imethibitishwa",
+ "Email non confermata": "Barua pepe haijathibitishwa",
+ "Conferma registrazione": "Idhinisha usajili",
+ "Confermare la registrazione di {0}? Potrà iscriversi e partecipare anche senza aver confermato l’email.": "Idhinisha usajili wa {0}? Ataweza kujisajili na kushiriki hata bila kuthibitisha barua pepe.",
+ "Registrazione confermata.": "Usajili umeidhinishwa."
 });

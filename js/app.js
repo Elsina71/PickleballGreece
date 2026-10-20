@@ -2352,7 +2352,9 @@ const App = (() => {
       <div class="table-wrap"><table class="standings users-table"><thead><tr><th>${T("Nome")}</th><th>${T("Email e telefono")}</th><th>${T("Ruolo")}</th><th></th></tr></thead>
         <tbody>${users.map(u => `<tr data-reg="${u.email ? 1 : 0}" data-q="${esc([u.nome, u.cognome, u.email, u.tel].join(' ').toLowerCase())}" ${u.email ? '' : 'hidden'}>
           <td class="name">${esc(u.cognome + ' ' + u.nome)}${u.sesso ? ` <span class="muted small">${u.sesso}</span>` : ''}${u.livello ? ` <span class="chip">${levelName(u.livello)}</span>` : ''}</td>
-          <td class="small">${u.email ? esc(u.email) : '<span class="muted">' + T("senza account") + '</span>'}${u.tel ? `<br>${icon('phone')} <a href="tel:${esc(u.tel)}">${esc(u.tel)}</a>` : ''}</td>
+          <td class="small">${u.email ? esc(u.email) : '<span class="muted">' + T("senza account") + '</span>'}${u.tel ? `<br>${icon('phone')} <a href="tel:${esc(u.tel)}">${esc(u.tel)}</a>` : ''}
+            ${u.email ? `<br>${u.approvato ? `<span class="badge ok">${T("Confermato dall’admin")}</span>` : u.verificata ? `<span class="badge ok">${T("Email confermata")}</span>`
+              : `<span class="badge warn">${T("Email non confermata")}</span> <button class="btn small primary" data-action="user-approve" data-id="${u.id}">${icon('circle-check')} ${T("Conferma registrazione")}</button>`}` : ''}</td>
           <td>${u.email ? `<select data-change="user-role" data-id="${u.id}" ${u.id === me().id || Cloud.isMain(u.id) ? 'disabled' : ''}><option value="user">${T("Utente")}</option><option value="tornei" ${u.role === 'tornei' ? 'selected' : ''}>${T("Gestore tornei")}</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>${T("Admin")}</option></select>` : ''}</td>
           <td class="right nowrap"><button class="btn small" data-action="player-edit" data-id="${u.id}">${icon('edit')} ${T("Modifica")}</button>${u.id !== me().id ? ` <button class="btn small danger" data-action="user-delete" data-id="${u.id}">${icon('trash')} ${T("Elimina")}</button>` : ''}</td></tr>`).join('')}</tbody></table></div>
       <p class="muted small" data-user-none hidden>${T("Nessun utente trovato.")}</p>
@@ -3069,6 +3071,14 @@ const App = (() => {
           <p class="form-error" hidden></p>
           <div class="actions"><button type="button" class="btn" data-action="close-dialog">${T("Annulla")}</button><button class="btn primary">${T("Salva")}</button></div>
         </form>`);
+    },
+    'user-approve': d => {
+      const u = S().users.find(x => x.id === d.id);
+      if (!u || !u.email) return;
+      if (!confirm(T("Confermare la registrazione di {0}? Potrà iscriversi e partecipare anche senza aver confermato l’email.", [`${u.nome} ${u.cognome}`.trim() || u.email]))) return;
+      u.approvato = true;
+      save();
+      toast(T("Registrazione confermata."), 'ok');
     },
     'user-reset-pw': async d => {
       const u = S().users.find(x => x.id === d.id);

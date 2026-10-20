@@ -1216,5 +1216,11 @@ I18n.add('ru', {
  "Email e telefono": "Email и телефон",
  "Nessun utente trovato.": "Пользователи не найдены.",
  "Aggiungi giocatore senza account": "Добавить игрока без аккаунта",
- "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Роли: Admin управляет всем; Менеджер турниров создаёт и ведёт только турниры. Пароль не виден: через «Изменить» можно отправить пользователю письмо для смены пароля."
+ "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Роли: Admin управляет всем; Менеджер турниров создаёт и ведёт только турниры. Пароль не виден: через «Изменить» можно отправить пользователю письмо для смены пароля.",
+ "Confermato dall’admin": "Одобрено админом",
+ "Email confermata": "Email подтверждён",
+ "Email non confermata": "Email не подтверждён",
+ "Conferma registrazione": "Одобрить регистрацию",
+ "Confermare la registrazione di {0}? Potrà iscriversi e partecipare anche senza aver confermato l’email.": "Одобрить регистрацию {0}? Пользователь сможет записываться и участвовать даже без подтверждения email.",
+ "Registrazione confermata.": "Регистрация одобрена."
 });

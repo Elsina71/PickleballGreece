@@ -1216,5 +1216,11 @@ I18n.add('pt', {
  "Email e telefono": "Email e telefone",
  "Nessun utente trovato.": "Nenhum utilizador encontrado.",
  "Aggiungi giocatore senza account": "Adicionar jogador sem conta",
- "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Funções: o Admin gere tudo; o Gestor de torneios cria e gere apenas torneios. A palavra-passe não é visível: com «Editar» podes enviar ao utilizador o email para a alterar."
+ "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Funções: o Admin gere tudo; o Gestor de torneios cria e gere apenas torneios. A palavra-passe não é visível: com «Editar» podes enviar ao utilizador o email para a alterar.",
+ "Confermato dall’admin": "Aprovado pelo admin",
+ "Email confermata": "Email confirmado",
+ "Email non confermata": "Email não confirmado",
+ "Conferma registrazione": "Aprovar registo",
+ "Confermare la registrazione di {0}? Potrà iscriversi e partecipare anche senza aver confermato l’email.": "Aprovar o registo de {0}? Poderá inscrever-se e participar mesmo sem ter confirmado o email.",
+ "Registrazione confermata.": "Registo aprovado."
 });

@@ -1216,5 +1216,11 @@ I18n.add('ro', {
  "Email e telefono": "Email și telefon",
  "Nessun utente trovato.": "Niciun utilizator găsit.",
  "Aggiungi giocatore senza account": "Adaugă jucător fără cont",
- "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Roluri: Adminul gestionează totul; Managerul de turnee creează și gestionează doar turnee. Parola nu se vede: cu „Modifică” poți trimite utilizatorului emailul pentru a o schimba."
+ "Ruoli: Admin gestisce tutto; Gestore tornei crea e gestisce solo i tornei. La password non si vede: con “Modifica” puoi inviare all’utente l’email per cambiarla.": "Roluri: Adminul gestionează totul; Managerul de turnee creează și gestionează doar turnee. Parola nu se vede: cu „Modifică” poți trimite utilizatorului emailul pentru a o schimba.",
+ "Confermato dall’admin": "Aprobat de admin",
+ "Email confermata": "Email confirmat",
+ "Email non confermata": "Email neconfirmat",
+ "Conferma registrazione": "Aprobă înregistrarea",
+ "Confermare la registrazione di {0}? Potrà iscriversi e partecipare anche senza aver confermato l’email.": "Aprobi înregistrarea lui {0}? Va putea să se înscrie și să participe chiar fără să fi confirmat emailul.",
+ "Registrazione confermata.": "Înregistrare aprobată."
 });
