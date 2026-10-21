@@ -1222,5 +1222,9 @@ I18n.add('ru', {
  "Email non confermata": "Email не подтверждён",
  "Conferma registrazione": "Одобрить регистрацию",
  "Confermare la registrazione di {0}? Potrà iscriversi e partecipare anche senza aver confermato l’email.": "Одобрить регистрацию {0}? Пользователь сможет записываться и участвовать даже без подтверждения email.",
- "Registrazione confermata.": "Регистрация одобрена."
+ "Registrazione confermata.": "Регистрация одобрена.",
+ "Ora di inizio": "Время начала",
+ "Ora di fine": "Время окончания",
+ "Indica la data, l’ora di inizio e l’ora di fine.": "Укажите дату, время начала и время окончания.",
+ "L’ora di fine deve essere diversa dall’ora di inizio.": "Время окончания должно отличаться от времени начала."
 });

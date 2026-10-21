@@ -1222,5 +1222,9 @@ I18n.add('el', {
  "Email non confermata": "Email μη επιβεβαιωμένο",
  "Conferma registrazione": "Έγκριση εγγραφής",
  "Confermare la registrazione di {0}? Potrà iscriversi e partecipare anche senza aver confermato l’email.": "Έγκριση της εγγραφής του/της {0}; Θα μπορεί να δηλώνει συμμετοχή ακόμη κι αν δεν έχει επιβεβαιώσει το email.",
- "Registrazione confermata.": "Η εγγραφή εγκρίθηκε."
+ "Registrazione confermata.": "Η εγγραφή εγκρίθηκε.",
+ "Ora di inizio": "Ώρα έναρξης",
+ "Ora di fine": "Ώρα λήξης",
+ "Indica la data, l’ora di inizio e l’ora di fine.": "Συμπλήρωσε ημερομηνία, ώρα έναρξης και ώρα λήξης.",
+ "L’ora di fine deve essere diversa dall’ora di inizio.": "Η ώρα λήξης πρέπει να διαφέρει από την ώρα έναρξης."
 });

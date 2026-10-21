@@ -1222,5 +1222,9 @@ I18n.add('en', {
  "Email non confermata": "Email not confirmed",
  "Conferma registrazione": "Approve registration",
  "Confermare la registrazione di {0}? Potrà iscriversi e partecipare anche senza aver confermato l’email.": "Approve {0}’s registration? They will be able to sign up and take part even without confirming their email.",
- "Registrazione confermata.": "Registration approved."
+ "Registrazione confermata.": "Registration approved.",
+ "Ora di inizio": "Start time",
+ "Ora di fine": "End time",
+ "Indica la data, l’ora di inizio e l’ora di fine.": "Enter the date, start time and end time.",
+ "L’ora di fine deve essere diversa dall’ora di inizio.": "The end time must be different from the start time."
 });

@@ -1222,5 +1222,9 @@ I18n.add('ro', {
  "Email non confermata": "Email neconfirmat",
  "Conferma registrazione": "Aprobă înregistrarea",
  "Confermare la registrazione di {0}? Potrà iscriversi e partecipare anche senza aver confermato l’email.": "Aprobi înregistrarea lui {0}? Va putea să se înscrie și să participe chiar fără să fi confirmat emailul.",
- "Registrazione confermata.": "Înregistrare aprobată."
+ "Registrazione confermata.": "Înregistrare aprobată.",
+ "Ora di inizio": "Ora de început",
+ "Ora di fine": "Ora de sfârșit",
+ "Indica la data, l’ora di inizio e l’ora di fine.": "Indică data, ora de început și ora de sfârșit.",
+ "L’ora di fine deve essere diversa dall’ora di inizio.": "Ora de sfârșit trebuie să fie diferită de ora de început."
 });

@@ -1222,5 +1222,9 @@ I18n.add('fr', {
  "Email non confermata": "Email non confirmé",
  "Conferma registrazione": "Valider l’inscription",
  "Confermare la registrazione di {0}? Potrà iscriversi e partecipare anche senza aver confermato l’email.": "Valider l’inscription de {0} ? Cette personne pourra s’inscrire et participer même sans avoir confirmé son email.",
- "Registrazione confermata.": "Inscription validée."
+ "Registrazione confermata.": "Inscription validée.",
+ "Ora di inizio": "Heure de début",
+ "Ora di fine": "Heure de fin",
+ "Indica la data, l’ora di inizio e l’ora di fine.": "Indique la date, l’heure de début et l’heure de fin.",
+ "L’ora di fine deve essere diversa dall’ora di inizio.": "L’heure de fin doit être différente de l’heure de début."
 });

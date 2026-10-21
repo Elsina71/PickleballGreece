@@ -1695,7 +1695,9 @@ const App = (() => {
   const sfConf = x => ({ M: (x.conf && x.conf.M) || 0, F: (x.conf && x.conf.F) || 0, tot: (x.conf && x.conf.tot) || 0 });
   const sfFull = x => sfConf(x).tot >= sfMax(x);
   const sfByName = x => x.byName || userName(x.by);
-  const sfWhen = x => `${T("{0} · ore", [fmtDate(x.data, true)])} ${esc(x.ora || '')}`;
+  // ora di fine: le sfide create prima senza fine valgono 2 ore
+  const sfEndDefault = ora => { const [h, m] = String(ora || '18:00').split(':').map(Number), t = (h * 60 + m + 120) % 1440; return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`; };
+  const sfWhen = x => `${T("{0} · ore", [fmtDate(x.data, true)])} ${esc(x.ora || '')}${x.oraFine ? '–' + esc(x.oraFine) : ''}`;
   const sfTipo = x => (x.tipo === 'torneo' ? `${T("Torneo ·")} ${SF_FORMATI[x.formato] || ''}` : T("Gioco libero"));
   const SF_STATI = { attesa: [T("Da confermare"), 'warn'], confermata: [T("Confermata"), 'ok'], rifiutata: [T("Non confermata"), ''], non_confermata: [T("Non confermata"), ''], ritirata: [T("Ritirata"), ''] };
   const sfStatoBadge = r => (r ? `<span class="badge ${SF_STATI[r.stato][1]}">${SF_STATI[r.stato][0]}</span>` : '');
@@ -1775,10 +1777,13 @@ const App = (() => {
   }
 
   // ---------- calendario del telefono ----------
-  // Evento della sfida (2 ore) con due promemoria: il giorno prima e un'ora prima.
+  // Evento della sfida (dall’ora di inizio all’ora di fine) con due promemoria: il giorno prima e un’ora prima.
   function sfEvent(x) {
     const [y, mo, d] = x.data.split('-').map(Number), [h, mi] = (x.ora || '18:00').split(':').map(Number);
-    const start = new Date(y, mo - 1, d, h, mi), end = new Date(start.getTime() + 2 * 3600e3);
+    const [h2, m2] = (x.oraFine || sfEndDefault(x.ora)).split(':').map(Number);
+    const start = new Date(y, mo - 1, d, h, mi);
+    let end = new Date(y, mo - 1, d, h2, m2);
+    if (end <= start) end = new Date(end.getTime() + 24 * 3600e3);   // finisce dopo mezzanotte
     const f = dt => `${dt.getFullYear()}${String(dt.getMonth() + 1).padStart(2, '0')}${String(dt.getDate()).padStart(2, '0')}T${String(dt.getHours()).padStart(2, '0')}${String(dt.getMinutes()).padStart(2, '0')}00`;
     const title = `${T("Sfida di pickleball")} · ${sfByName(x)}`, place = x.luogo || '', note = `${sfTipo(x)}${x.nota ? ' — ' + x.nota : ''} · ${location.origin}${location.pathname}#/sfide`;
     return { start: f(start), end: f(end), title, place, note };
@@ -1888,7 +1893,8 @@ const App = (() => {
       <form data-form="sfida" class="sf-form">
         <div class="row">
           <label>${T("Data")}${dateField('data', f.data || todayKey(), { required: true, min: todayKey() })}</label>
-          <label>${T("Ora")}<input type="time" name="ora" required value="${f.ora || '18:00'}"></label>
+          <label>${T("Ora di inizio")}<input type="time" name="ora" required value="${f.ora || '18:00'}"></label>
+          <label>${T("Ora di fine")}<input type="time" name="oraFine" required value="${f.oraFine || '20:00'}"></label>
           <label>${T("Campi")}<select name="campi"><option value="1">${T("1 campo")}</option><option value="2">${T("2 campi")}</option></select></label>
         </div>
         <label>${T("Luogo")}<input name="luogo" maxlength="80" placeholder="${T("Centro sportivo / indirizzo")}"></label>
@@ -2729,7 +2735,8 @@ const App = (() => {
         <h2>${T("Modifica la sfida")}</h2>
         <div class="row">
           <label>${T("Data")}${dateField('data', x.data, { required: true })}</label>
-          <label>${T("Ora")}<input type="time" name="ora" required value="${esc(x.ora)}"></label>
+          <label>${T("Ora di inizio")}<input type="time" name="ora" required value="${esc(x.ora)}"></label>
+          <label>${T("Ora di fine")}<input type="time" name="oraFine" required value="${esc(x.oraFine || sfEndDefault(x.ora))}"></label>
           <label>${T("Campi")}<select name="campi"><option value="1">${T("1 campo")}</option><option value="2" ${x.campi === 2 ? 'selected' : ''}>${T("2 campi")}</option></select></label>
         </div>
         <label>${T("Luogo")}<input name="luogo" maxlength="80" value="${esc(x.luogo || '')}"></label>
@@ -3200,7 +3207,7 @@ const App = (() => {
       if (needVerified()) return;
       const n = k => Math.max(0, Math.round(Number(v[k]) || 0));
       const x = {
-        byName: `${u.nome} ${u.cognome}`.trim(), data: v.data, ora: v.ora, luogo: (v.luogo || '').trim(), campi: Number(v.campi) === 2 ? 2 : 1,
+        byName: `${u.nome} ${u.cognome}`.trim(), data: v.data, ora: v.ora, oraFine: v.oraFine, luogo: (v.luogo || '').trim(), campi: Number(v.campi) === 2 ? 2 : 1,
         modo: v.modo === 'indifferente' ? 'indifferente' : 'sesso', cercaM: n('cercaM'), cercaF: n('cercaF'), cercaTot: n('cercaTot'), max: n('max'),
         tipo: v.tipo === 'torneo' ? 'torneo' : 'libero', formato: v.tipo === 'torneo' ? v.formato : '', nota: (v.nota || '').trim(),
         cfg: v.tipo === 'torneo' ? { poolSize: n('poolSize') || 4, qualify: n('qualify') || 2, punti: n('punti') || 11, turni: n('turni') || 5, minuti: n('minuti') || 12, vincolo: v.vincolo || 'equilibrato' } : {},
@@ -3213,7 +3220,8 @@ const App = (() => {
         if (!pa) return formError(f, T("Indica il tuo compagno/a (per un non registrato: nome, cognome e sesso)."));
         x.partner = pa;
       }
-      if (!x.data || !x.ora) return formError(f, T("Indica data e ora."));
+      if (!x.data || !x.ora || !x.oraFine) return formError(f, T("Indica la data, l’ora di inizio e l’ora di fine."));
+      if (x.oraFine === x.ora) return formError(f, T("L’ora di fine deve essere diversa dall’ora di inizio."));
       if (isPast(x.data, x.ora)) return formError(f, T("La data e l’ora sono già passate."));
       const sought = x.modo === 'sesso' ? x.cercaM + x.cercaF : x.cercaTot;
       if (sought < 1) return formError(f, T("Indica quante persone cerchi."));
@@ -3457,10 +3465,11 @@ const App = (() => {
       const x = sfById(v.id);
       if (!x || !(sfMine(x) || isAdmin())) return closeDialog();
       const n = k => Math.max(0, Math.round(Number(v[k]) || 0));
-      const ch = { data: v.data, ora: v.ora, luogo: (v.luogo || '').trim(), campi: Number(v.campi) === 2 ? 2 : 1,
+      const ch = { data: v.data, ora: v.ora, oraFine: v.oraFine, luogo: (v.luogo || '').trim(), campi: Number(v.campi) === 2 ? 2 : 1,
         cercaM: n('cercaM'), cercaF: n('cercaF'), cercaTot: n('cercaTot'), max: n('max'), nota: (v.nota || '').trim(), livelli: x.privata ? x.livelli || [] : readLevels(f) };
       if (x.privata) { ch.invitati = readInvitati(f); if (!ch.invitati.length) return formError(f, T("Scegli almeno una persona da invitare.")); }
-      if (!ch.data || !ch.ora) return formError(f, T("Indica data e ora."));
+      if (!ch.data || !ch.ora || !ch.oraFine) return formError(f, T("Indica la data, l’ora di inizio e l’ora di fine."));
+      if (ch.oraFine === ch.ora) return formError(f, T("L’ora di fine deve essere diversa dall’ora di inizio."));
       const sought = x.modo === 'sesso' ? ch.cercaM + ch.cercaF : ch.cercaTot;
       if (sought < 1) return formError(f, T("Indica quante persone cerchi."));
       if (!ch.max) ch.max = sought;
