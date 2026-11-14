@@ -3,7 +3,7 @@
 // Le librerie esterne (Firebase, icone, caratteri, PDF) hanno la versione fissa: si usa la copia salvata e la si rinnova.
 const CACHE = 'pbm-app-v1';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'css/style.css', 'css/temi.css',
-  'js/i18n.js', 'js/temi.js', 'js/logic.js', 'js/store.js', 'js/premi.js', 'js/demo.js', 'js/score.js', 'js/referto.js', 'js/app.js', 'js/cloud.js', 'js/firebase-config.js',
+  'js/i18n.js', 'js/temi.js', 'js/logic.js', 'js/store.js', 'js/premi.js', 'js/demo.js', 'js/score.js', 'js/voce.js', 'js/referto.js', 'js/app.js', 'js/cloud.js', 'js/firebase-config.js',
   'img/logo.png', 'img/favicon-64.png', 'img/apple-touch-icon.png', 'img/icon-192.png',
   'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js', 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js', 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js',
   'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css'];

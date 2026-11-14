@@ -79,6 +79,8 @@
     st.g = G ? G.n : 0;
     st.cur = G;
     if (G) {
+      // lato da cui si serve: in doppio quello in cui si trova chi serve, in singolo destra con punteggio pari
+      G.side = doppio ? (G.pos[G.serve][0] === G.server ? 'destra' : 'sinistra') : (G.score[G.serve] % 2 === 0 ? 'destra' : 'sinistra');
       G.call = rally || !doppio || !G.sn ? `${G.score[G.serve]}-${G.score[1 - G.serve]}` : `${G.score[G.serve]}-${G.score[1 - G.serve]}-${G.sn}`;
       G.toLeft = [0, 1].map(t => timeouts(cfg, G.n) - G.to[t]);
       G.needCC = G.cc && !G.ccDone && st.phase === 'play';

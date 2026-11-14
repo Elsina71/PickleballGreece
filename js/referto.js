@@ -219,77 +219,69 @@
     const b = [];
     if (edit && r.ev.length) b.push(`<button class="btn" data-action="ref-undo">${H.icon('arrow-back-up')} ${T("Annulla l’ultima azione")}</button>`);
     if (edit && st.phase === 'play' && !(H.tourById(r.tid) && Array.isArray((H.findMatch(H.tourById(r.tid), r.key) || {}).a))) b.push(`<button class="btn" data-action="ref-retire">${H.icon('flag-off')} ${T("Ritiro")}</button>`);
-    if (edit && window.speechSynthesis) {
-      b.push(`<button class="btn" data-action="ref-voice">${H.icon(voiceOn ? 'volume' : 'volume-off')} ${voiceOn ? T("Chiamata vocale: attiva") : T("Chiamata vocale: spenta")}</button>`);
-      if (voiceOn) b.push(`<span class="voice-g" role="group" aria-label="${T("Voce")}">${[['F', T("Voce femminile")], ['M', T("Voce maschile")]].map(([g, l]) => `<button class="btn ${voiceGender === g ? 'primary' : ''}" data-action="ref-voice-g" data-g="${g}" aria-pressed="${voiceGender === g}">${H.icon(g === 'F' ? 'woman' : 'man')} ${l}</button>`).join('')}</span>`);
-    }
+    if (edit && V() && V().supported()) b.push(`<button class="btn ${ui.voiceOpen ? 'primary' : ''}" data-action="ref-voice-panel">${H.icon(V().on ? 'volume' : 'volume-off')} ${V().on ? T("Voce: attiva") : T("Voce: spenta")} · ${T("impostazioni")}</button>`);
     if (r.ev.length) b.push(`<button class="btn" data-action="ref-pdf">${H.icon('file-download')} ${T("Scarica PDF")}</button>`);
     if (r.libero) b.push(`<button class="btn" data-action="ref-new">${H.icon('refresh')} ${T("Nuova partita")}</button>`);
-    return b.length ? `<div class="actions wrap sb-tools">${b.join('')}</div>` : '';
+    return (b.length ? `<div class="actions wrap sb-tools">${b.join('')}</div>` : '') + (edit && ui.voiceOpen ? voicePanel() : '');
   }
 
   const toLeft = () => { if (!ui.to) return ''; const s = Math.max(0, Math.ceil((ui.to.end - Date.now()) / 1000)); return s ? `0:${String(s).padStart(2, '0')}` : T("tempo scaduto"); };
 
-  // ---------- chiamata vocale del punteggio (in inglese, con la voce del telefono) ----------
-  const VOICE = 'pbm-voce';
-  let voiceOn = (() => { try { return localStorage.getItem(VOICE) !== '0'; } catch (e) { return true; } })();
-  // voce femminile o maschile: si cerca una voce inglese del sesso scelto (nomi delle voci di iPhone, Android, Windows, Chrome)
-  const GENDER = 'pbm-voce-sesso';
-  let voiceGender = (() => { try { return localStorage.getItem(GENDER) === 'M' ? 'M' : 'F'; } catch (e) { return 'F'; } })();
-  const FEMALE = /samantha|karen|victoria|zira|susan|moira|tessa|fiona|serena|allison|ava\b|kate|hazel|libby|sonia|jenny|aria|emma|amy|joanna|salli|kimberly|ivy|nicky|google us english|female|-enus-x-(sfg|tpc|iob|iog)/i;
-  const MALE = /daniel|alex\b|fred|david|mark|george|arthur|aaron|gordon|rishi|guy\b|ryan|oliver|thomas|matthew|joey|justin|brian|google uk english male|\bmale\b|-enus-x-(iol|iom|tpd)/i;
-  const genderOf = v => { const n = `${v.name} ${v.voiceURI}`; return MALE.test(n) && !/female/i.test(n) ? 'M' : FEMALE.test(n) ? 'F' : ''; };
-  function pickVoice() {
-    const vs = speechSynthesis.getVoices().filter(x => /^en/i.test(x.lang));
-    const us = x => /^en[-_]US/i.test(x.lang);
-    const v = vs.find(x => genderOf(x) === voiceGender && us(x)) || vs.find(x => genderOf(x) === voiceGender) || vs.find(us) || vs[0] || null;
-    // se manca una voce del sesso scelto, si cambia il tono
-    const pitch = v && genderOf(v) === voiceGender ? 1 : voiceGender === 'M' ? 0.7 : 1.3;
-    return { v, pitch };
+  // ---------- chiamata vocale del punteggio (in inglese: js/voce.js) ----------
+  const V = () => window.Voce;
+  function speak(r, before, kind) {
+    if (!V() || !V().on || !r || !r.cfg) return;
+    const after = Score.replay(r.cfg, r.ev);
+    let txt = V().announce(before, after, r.nomi, kind);
+    const last = r.ev[r.ev.length - 1] || '';
+    if (kind !== 'undo' && last[0] === 'T') txt = `Timeout, ${V().teamText(r.nomi[Number(last[1])])}.`;
+    if (kind !== 'undo' && last === 'C') txt = `Ends changed. ${V().callText(after.cur)}.`;
+    V().say(txt);
   }
-  function say(text, force) {
-    if ((!voiceOn && !force) || !text || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
-    try {
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'en-US'; u.rate = 0.95;
-      const k = pickVoice();
-      if (k.v) u.voice = k.v;
-      u.pitch = k.pitch;
-      speechSynthesis.speak(u);
-    } catch (e) { /* voce non disponibile */ }
+  const SAMPLE = 'nine, seven, two, left.';
+  // scelta della voce: stile (donna/uomo, calda/squillante), voce del dispositivo, tono e velocità
+  function voicePanel() {
+    const v = V();
+    if (!v || !v.supported()) return '';
+    const P = v.pref, vs = v.voices(), k = v.setup(), st = v.STILI.find(x => x.id === P.stile) || v.STILI[1];
+    const gl = g => (g === 'F' ? T("donna") : g === 'M' ? T("uomo") : '?');
+    const note = !vs.length ? T("Il telefono non ha voci inglesi installate: si usa la voce predefinita.")
+      : !k.sameGender && !P.voce ? (st.g === 'M' ? T("Su questo telefono non c’è una voce inglese maschile: la simulo abbassando il tono.") : T("Su questo telefono non c’è una voce inglese femminile: la simulo alzando il tono.")) : '';
+    return `<div class="card voce-panel">
+      <div class="actions wrap"><button class="btn ${v.on ? 'primary' : ''}" data-action="ref-voice">${H.icon(v.on ? 'volume' : 'volume-off')} ${v.on ? T("Chiamata vocale: attiva") : T("Chiamata vocale: spenta")}</button>
+        <button class="btn" data-action="ref-voice-test">${H.icon('player-play')} ${T("Prova")}</button></div>
+      <div class="row voce-row">
+        <label>${T("Stile della voce")}<select data-voce="stile">${v.STILI.map(x => `<option value="${x.id}" ${x.id === st.id ? 'selected' : ''}>${T(x.label)}</option>`).join('')}</select></label>
+        <label>${T("Voce del telefono")}<select data-voce="voce"><option value="">${T("Automatica (secondo lo stile)")}</option>${vs.map(x => `<option value="${H.esc(x.uri)}" ${x.uri === P.voce ? 'selected' : ''}>${H.esc(x.name)} · ${H.esc(x.lang)} (${gl(x.g)})</option>`).join('')}</select></label></div>
+      <div class="row voce-row">
+        <label>${T("Tono: calda ↔ squillante")}<input type="range" data-voce="tono" min="-4" max="4" step="1" value="${Number(P.tono) || 0}"></label>
+        <label>${T("Velocità: lenta ↔ rapida")}<input type="range" data-voce="vel" min="0.7" max="1.4" step="0.05" value="${Number(P.vel) || 1}"></label></div>
+      <p class="muted small">${T("La chiamata è in inglese: punti di chi serve, punti di chi riceve, numero del battitore e lato del servizio.")}${note ? ' ' + note : ''}</p></div>`;
   }
-  if (window.speechSynthesis) try { speechSynthesis.getVoices(); } catch (e) { /* le voci arrivano dopo */ }
-  const spokenCall = call => String(call || '').split('-').join(', ');
-  const teamSpoken = (r, i) => r.nomi[i].join(' and ');
-  // cosa dire dopo l'evento e: confronta lo stato prima e dopo
-  function announce(r, e) {
-    const st = Score.replay(r.cfg, r.ev), G = st.cur;
-    if (!G) return;
-    const k = e[0];
-    if (k === 'G') return say(`Game ${G.n + 1}. ${spokenCall(G.call)}`);
-    if (k === 'T') return say(`Timeout, ${teamSpoken(r, Number(e[1]))}.`);
-    if (k === 'C') return say(`Ends changed. ${spokenCall(G.call)}`);
-    if (k === 'R') return say(`Retirement. Match, ${teamSpoken(r, st.winner)}.`);
-    if (k !== 'A' && k !== 'B') return;
-    const line = G.log[G.log.length - 1] || {};
-    if (st.phase === 'end') return say(`Match, ${teamSpoken(r, st.winner)}. ${st.games.map(g => g.score.join(' ')).join(', ')}.`);
-    if (st.phase === 'gameover') return say(`Game, ${teamSpoken(r, G.winner)}. ${G.score[G.winner]}, ${G.score[1 - G.winner]}. Change ends.`);
-    const pre = line.out ? 'Side out. ' : line.second ? 'Second server. ' : '';
-    say(`${pre}${spokenCall(G.call)}.${G.needCC ? ' Change ends.' : ''}`);
-  }
+  // modifiche ai comandi della voce: si salvano e si fa sentire subito la prova
+  document.addEventListener('change', e => {
+    const el = e.target.closest && e.target.closest('[data-voce]');
+    if (!el || !V()) return;
+    const k = el.dataset.voce;
+    V().setPref(k, el.type === 'range' ? Number(el.value) : el.value);
+    if (k === 'stile') V().setPref('voce', '');
+    V().say(SAMPLE, true);
+    if (H) H.render();
+  });
+  if (window.Voce) window.Voce.onVoices(() => { if (/^#\/referto/.test(location.hash) && ui.voiceOpen && H) H.render(); });
 
   // ---------- azioni ----------
   const cur = () => ui.ref;
   function push(e) {
     const r = cur();
     if (!r || !canEdit(r)) return;
-    if (Score.replay(r.cfg, r.ev).phase === 'end') return;   // partita finita: si può solo annullare
+    const before = Score.replay(r.cfg, r.ev);
+    if (before.phase === 'end') return;   // partita finita: si può solo annullare
     r.ev.push(e);
     if (!r.libero && r.stato === 'finito') r.stato = 'live';
     persist();
     H.render();
-    announce(r, e);
+    speak(r, before);
     if (navigator.vibrate) try { navigator.vibrate(15); } catch (err) { /* ignora */ }
   }
   const actions = {
@@ -304,27 +296,22 @@
     },
     'ref-to-end': () => { ui.to = null; clearInterval(ui.toTimer); H.render(); },
     'ref-cc': () => push('C'),
-    'ref-voice-g': d => {
-      voiceGender = d.g === 'M' ? 'M' : 'F';
-      try { localStorage.setItem(GENDER, voiceGender); } catch (e) { /* ignora */ }
-      const r = cur(), G = r && r.cfg && Score.replay(r.cfg, r.ev).cur;
-      say(G ? spokenCall(G.call) : 'Score call', true);
-      H.render();
-    },
     'ref-voice': () => {
-      voiceOn = !voiceOn;
-      try { localStorage.setItem(VOICE, voiceOn ? '1' : '0'); } catch (e) { /* ignora */ }
-      if (voiceOn) { const r = cur(), G = r && r.cfg && Score.replay(r.cfg, r.ev).cur; say(G ? spokenCall(G.call) : 'Voice on'); }
+      if (!V()) return;
+      V().setOn(!V().on);
+      if (V().on) { const r = cur(), G = r && r.cfg && Score.replay(r.cfg, r.ev).cur; V().say(G ? V().callText(G) + '.' : 'Voice on.'); }
       else if (window.speechSynthesis) speechSynthesis.cancel();
       H.render();
     },
+    'ref-voice-panel': () => { ui.voiceOpen = !ui.voiceOpen; H.render(); },
+    'ref-voice-test': () => { if (V()) V().say(SAMPLE, true); },
     'ref-undo': () => {
       const r = cur(); if (!r || !canEdit(r) || !r.ev.length) return;
+      const before = Score.replay(r.cfg, r.ev);
       r.ev.pop();
       if (!r.libero && r.stato === 'finito') r.stato = 'live';
       persist(); H.render();
-      const G = Score.replay(r.cfg, r.ev).cur;
-      say(G ? `Correction. ${spokenCall(G.call)}.` : 'Correction.');
+      speak(r, before, 'undo');
     },
     'ref-retire': () => {
       const r = cur(); if (!r) return;
