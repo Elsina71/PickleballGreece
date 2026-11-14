@@ -1228,5 +1228,8 @@ I18n.add('ru', {
  "Indica la data, l’ora di inizio e l’ora di fine.": "Укажите дату, время начала и время окончания.",
  "L’ora di fine deve essere diversa dall’ora di inizio.": "Время окончания должно отличаться от времени начала.",
  "Chiamata vocale: attiva": "Голосовой счёт: вкл.",
- "Chiamata vocale: spenta": "Голосовой счёт: выкл."
+ "Chiamata vocale: spenta": "Голосовой счёт: выкл.",
+ "Voce": "Голос",
+ "Voce femminile": "Женский голос",
+ "Voce maschile": "Мужской голос"
 });

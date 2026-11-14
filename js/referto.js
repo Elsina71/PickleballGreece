@@ -219,7 +219,10 @@
     const b = [];
     if (edit && r.ev.length) b.push(`<button class="btn" data-action="ref-undo">${H.icon('arrow-back-up')} ${T("Annulla l’ultima azione")}</button>`);
     if (edit && st.phase === 'play' && !(H.tourById(r.tid) && Array.isArray((H.findMatch(H.tourById(r.tid), r.key) || {}).a))) b.push(`<button class="btn" data-action="ref-retire">${H.icon('flag-off')} ${T("Ritiro")}</button>`);
-    if (edit && window.speechSynthesis) b.push(`<button class="btn" data-action="ref-voice">${H.icon(voiceOn ? 'volume' : 'volume-off')} ${voiceOn ? T("Chiamata vocale: attiva") : T("Chiamata vocale: spenta")}</button>`);
+    if (edit && window.speechSynthesis) {
+      b.push(`<button class="btn" data-action="ref-voice">${H.icon(voiceOn ? 'volume' : 'volume-off')} ${voiceOn ? T("Chiamata vocale: attiva") : T("Chiamata vocale: spenta")}</button>`);
+      if (voiceOn) b.push(`<span class="voice-g" role="group" aria-label="${T("Voce")}">${[['F', T("Voce femminile")], ['M', T("Voce maschile")]].map(([g, l]) => `<button class="btn ${voiceGender === g ? 'primary' : ''}" data-action="ref-voice-g" data-g="${g}" aria-pressed="${voiceGender === g}">${H.icon(g === 'F' ? 'woman' : 'man')} ${l}</button>`).join('')}</span>`);
+    }
     if (r.ev.length) b.push(`<button class="btn" data-action="ref-pdf">${H.icon('file-download')} ${T("Scarica PDF")}</button>`);
     if (r.libero) b.push(`<button class="btn" data-action="ref-new">${H.icon('refresh')} ${T("Nuova partita")}</button>`);
     return b.length ? `<div class="actions wrap sb-tools">${b.join('')}</div>` : '';
@@ -230,17 +233,33 @@
   // ---------- chiamata vocale del punteggio (in inglese, con la voce del telefono) ----------
   const VOICE = 'pbm-voce';
   let voiceOn = (() => { try { return localStorage.getItem(VOICE) !== '0'; } catch (e) { return true; } })();
-  function say(text) {
-    if (!voiceOn || !text || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+  // voce femminile o maschile: si cerca una voce inglese del sesso scelto (nomi delle voci di iPhone, Android, Windows, Chrome)
+  const GENDER = 'pbm-voce-sesso';
+  let voiceGender = (() => { try { return localStorage.getItem(GENDER) === 'M' ? 'M' : 'F'; } catch (e) { return 'F'; } })();
+  const FEMALE = /samantha|karen|victoria|zira|susan|moira|tessa|fiona|serena|allison|ava\b|kate|hazel|libby|sonia|jenny|aria|emma|amy|joanna|salli|kimberly|ivy|nicky|google us english|female|-enus-x-(sfg|tpc|iob|iog)/i;
+  const MALE = /daniel|alex\b|fred|david|mark|george|arthur|aaron|gordon|rishi|guy\b|ryan|oliver|thomas|matthew|joey|justin|brian|google uk english male|\bmale\b|-enus-x-(iol|iom|tpd)/i;
+  const genderOf = v => { const n = `${v.name} ${v.voiceURI}`; return MALE.test(n) && !/female/i.test(n) ? 'M' : FEMALE.test(n) ? 'F' : ''; };
+  function pickVoice() {
+    const vs = speechSynthesis.getVoices().filter(x => /^en/i.test(x.lang));
+    const us = x => /^en[-_]US/i.test(x.lang);
+    const v = vs.find(x => genderOf(x) === voiceGender && us(x)) || vs.find(x => genderOf(x) === voiceGender) || vs.find(us) || vs[0] || null;
+    // se manca una voce del sesso scelto, si cambia il tono
+    const pitch = v && genderOf(v) === voiceGender ? 1 : voiceGender === 'M' ? 0.7 : 1.3;
+    return { v, pitch };
+  }
+  function say(text, force) {
+    if ((!voiceOn && !force) || !text || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
       u.lang = 'en-US'; u.rate = 0.95;
-      const v = speechSynthesis.getVoices().find(x => /^en[-_]US/i.test(x.lang)) || speechSynthesis.getVoices().find(x => /^en/i.test(x.lang));
-      if (v) u.voice = v;
+      const k = pickVoice();
+      if (k.v) u.voice = k.v;
+      u.pitch = k.pitch;
       speechSynthesis.speak(u);
     } catch (e) { /* voce non disponibile */ }
   }
+  if (window.speechSynthesis) try { speechSynthesis.getVoices(); } catch (e) { /* le voci arrivano dopo */ }
   const spokenCall = call => String(call || '').split('-').join(', ');
   const teamSpoken = (r, i) => r.nomi[i].join(' and ');
   // cosa dire dopo l'evento e: confronta lo stato prima e dopo
@@ -285,6 +304,13 @@
     },
     'ref-to-end': () => { ui.to = null; clearInterval(ui.toTimer); H.render(); },
     'ref-cc': () => push('C'),
+    'ref-voice-g': d => {
+      voiceGender = d.g === 'M' ? 'M' : 'F';
+      try { localStorage.setItem(GENDER, voiceGender); } catch (e) { /* ignora */ }
+      const r = cur(), G = r && r.cfg && Score.replay(r.cfg, r.ev).cur;
+      say(G ? spokenCall(G.call) : 'Score call', true);
+      H.render();
+    },
     'ref-voice': () => {
       voiceOn = !voiceOn;
       try { localStorage.setItem(VOICE, voiceOn ? '1' : '0'); } catch (e) { /* ignora */ }

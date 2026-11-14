@@ -1228,5 +1228,8 @@ I18n.add('sw', {
  "Indica la data, l’ora di inizio e l’ora di fine.": "Weka tarehe, saa ya kuanza na saa ya kumaliza.",
  "L’ora di fine deve essere diversa dall’ora di inizio.": "Saa ya kumaliza lazima iwe tofauti na saa ya kuanza.",
  "Chiamata vocale: attiva": "Sauti ya alama: imewashwa",
- "Chiamata vocale: spenta": "Sauti ya alama: imezimwa"
+ "Chiamata vocale: spenta": "Sauti ya alama: imezimwa",
+ "Voce": "Sauti",
+ "Voce femminile": "Sauti ya kike",
+ "Voce maschile": "Sauti ya kiume"
 });

@@ -736,3 +736,4 @@ label, legend { font-size: .92rem; }
 @media (max-width: 860px) { .mainnav a { font-size: .62rem; } }
 .users-tools { align-items: flex-end; }
 .users-table td.nowrap { white-space: nowrap; }
+.voice-g { display: inline-flex; gap: 6px; flex-wrap: wrap; }

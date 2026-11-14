@@ -1228,5 +1228,8 @@ I18n.add('en', {
  "Indica la data, l’ora di inizio e l’ora di fine.": "Enter the date, start time and end time.",
  "L’ora di fine deve essere diversa dall’ora di inizio.": "The end time must be different from the start time.",
  "Chiamata vocale: attiva": "Voice call: on",
- "Chiamata vocale: spenta": "Voice call: off"
+ "Chiamata vocale: spenta": "Voice call: off",
+ "Voce": "Voice",
+ "Voce femminile": "Female voice",
+ "Voce maschile": "Male voice"
 });

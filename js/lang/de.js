@@ -1228,5 +1228,8 @@ I18n.add('de', {
  "Indica la data, l’ora di inizio e l’ora di fine.": "Gib Datum, Beginn und Ende an.",
  "L’ora di fine deve essere diversa dall’ora di inizio.": "Das Ende muss sich vom Beginn unterscheiden.",
  "Chiamata vocale: attiva": "Sprachansage: an",
- "Chiamata vocale: spenta": "Sprachansage: aus"
+ "Chiamata vocale: spenta": "Sprachansage: aus",
+ "Voce": "Stimme",
+ "Voce femminile": "Weibliche Stimme",
+ "Voce maschile": "Männliche Stimme"
 });

@@ -1228,5 +1228,8 @@ I18n.add('el', {
  "Indica la data, l’ora di inizio e l’ora di fine.": "Συμπλήρωσε ημερομηνία, ώρα έναρξης και ώρα λήξης.",
  "L’ora di fine deve essere diversa dall’ora di inizio.": "Η ώρα λήξης πρέπει να διαφέρει από την ώρα έναρξης.",
  "Chiamata vocale: attiva": "Φωνητική εκφώνηση: ενεργή",
- "Chiamata vocale: spenta": "Φωνητική εκφώνηση: ανενεργή"
+ "Chiamata vocale: spenta": "Φωνητική εκφώνηση: ανενεργή",
+ "Voce": "Φωνή",
+ "Voce femminile": "Γυναικεία φωνή",
+ "Voce maschile": "Ανδρική φωνή"
 });
