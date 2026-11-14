@@ -38,7 +38,6 @@
     if (G && G.log.length === 0 && kind !== 'undo') out.push(`Game ${num(G.n + 1)}. ${teamText(nomi[G.serve])} to serve.`);
     const line = G && kind !== 'undo' && G.log.length ? G.log[G.log.length - 1] : null;
     if (line && line.out) out.push('Side out.');
-    else if (line && line.second) out.push('Second server.');
     out.push(callText(G) + '.');
     if (G && G.needCC && (!a || !a.cur || !a.cur.needCC || a.cur.n !== G.n)) out.push('Change ends.');
     return out.join(' ');
