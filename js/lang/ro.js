@@ -1226,5 +1226,7 @@ I18n.add('ro', {
  "Ora di inizio": "Ora de început",
  "Ora di fine": "Ora de sfârșit",
  "Indica la data, l’ora di inizio e l’ora di fine.": "Indică data, ora de început și ora de sfârșit.",
- "L’ora di fine deve essere diversa dall’ora di inizio.": "Ora de sfârșit trebuie să fie diferită de ora de început."
+ "L’ora di fine deve essere diversa dall’ora di inizio.": "Ora de sfârșit trebuie să fie diferită de ora de început.",
+ "Chiamata vocale: attiva": "Anunț vocal: activ",
+ "Chiamata vocale: spenta": "Anunț vocal: oprit"
 });

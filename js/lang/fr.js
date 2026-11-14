@@ -1226,5 +1226,7 @@ I18n.add('fr', {
  "Ora di inizio": "Heure de début",
  "Ora di fine": "Heure de fin",
  "Indica la data, l’ora di inizio e l’ora di fine.": "Indique la date, l’heure de début et l’heure de fin.",
- "L’ora di fine deve essere diversa dall’ora di inizio.": "L’heure de fin doit être différente de l’heure de début."
+ "L’ora di fine deve essere diversa dall’ora di inizio.": "L’heure de fin doit être différente de l’heure de début.",
+ "Chiamata vocale: attiva": "Annonce vocale : activée",
+ "Chiamata vocale: spenta": "Annonce vocale : désactivée"
 });

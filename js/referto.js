@@ -183,7 +183,7 @@
         <p class="sb-games">${Array.from({ length: Score.needWins(r.cfg) }, (_, k) => `<span class="dot ${k < st.wins[i] ? 'on' : ''}"></span>`).join('')}</p>
         <p class="sb-score">${G.score[i]}</p>
         <ul class="plain sb-players">${players}</ul>
-        ${edit ? `<button class="btn primary big sb-win" data-action="ref-rally" data-w="${i}" ${G.needCC ? 'disabled' : ''}>${r.cfg.sistema === 'rally' ? T("Punto") : serving ? T("Punto") : T("Vince lo scambio")}</button>
+        ${edit && st.phase !== 'end' ? `<button class="btn primary big sb-win" data-action="ref-rally" data-w="${i}" ${G.needCC ? 'disabled' : ''}>${r.cfg.sistema === 'rally' ? T("Punto") : serving ? T("Punto") : T("Vince lo scambio")}</button>
           <button class="btn small" data-action="ref-to" data-t="${i}" ${G.toLeft[i] ? '' : 'disabled'}>${H.icon('clock-pause')} ${T("Timeout ({0})", [G.toLeft[i]])}</button>` : ''}
       </div>`;
     };
@@ -219,6 +219,7 @@
     const b = [];
     if (edit && r.ev.length) b.push(`<button class="btn" data-action="ref-undo">${H.icon('arrow-back-up')} ${T("Annulla l’ultima azione")}</button>`);
     if (edit && st.phase === 'play' && !(H.tourById(r.tid) && Array.isArray((H.findMatch(H.tourById(r.tid), r.key) || {}).a))) b.push(`<button class="btn" data-action="ref-retire">${H.icon('flag-off')} ${T("Ritiro")}</button>`);
+    if (edit && window.speechSynthesis) b.push(`<button class="btn" data-action="ref-voice">${H.icon(voiceOn ? 'volume' : 'volume-off')} ${voiceOn ? T("Chiamata vocale: attiva") : T("Chiamata vocale: spenta")}</button>`);
     if (r.ev.length) b.push(`<button class="btn" data-action="ref-pdf">${H.icon('file-download')} ${T("Scarica PDF")}</button>`);
     if (r.libero) b.push(`<button class="btn" data-action="ref-new">${H.icon('refresh')} ${T("Nuova partita")}</button>`);
     return b.length ? `<div class="actions wrap sb-tools">${b.join('')}</div>` : '';
@@ -226,15 +227,50 @@
 
   const toLeft = () => { if (!ui.to) return ''; const s = Math.max(0, Math.ceil((ui.to.end - Date.now()) / 1000)); return s ? `0:${String(s).padStart(2, '0')}` : T("tempo scaduto"); };
 
+  // ---------- chiamata vocale del punteggio (in inglese, con la voce del telefono) ----------
+  const VOICE = 'pbm-voce';
+  let voiceOn = (() => { try { return localStorage.getItem(VOICE) !== '0'; } catch (e) { return true; } })();
+  function say(text) {
+    if (!voiceOn || !text || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US'; u.rate = 0.95;
+      const v = speechSynthesis.getVoices().find(x => /^en[-_]US/i.test(x.lang)) || speechSynthesis.getVoices().find(x => /^en/i.test(x.lang));
+      if (v) u.voice = v;
+      speechSynthesis.speak(u);
+    } catch (e) { /* voce non disponibile */ }
+  }
+  const spokenCall = call => String(call || '').split('-').join(', ');
+  const teamSpoken = (r, i) => r.nomi[i].join(' and ');
+  // cosa dire dopo l'evento e: confronta lo stato prima e dopo
+  function announce(r, e) {
+    const st = Score.replay(r.cfg, r.ev), G = st.cur;
+    if (!G) return;
+    const k = e[0];
+    if (k === 'G') return say(`Game ${G.n + 1}. ${spokenCall(G.call)}`);
+    if (k === 'T') return say(`Timeout, ${teamSpoken(r, Number(e[1]))}.`);
+    if (k === 'C') return say(`Ends changed. ${spokenCall(G.call)}`);
+    if (k === 'R') return say(`Retirement. Match, ${teamSpoken(r, st.winner)}.`);
+    if (k !== 'A' && k !== 'B') return;
+    const line = G.log[G.log.length - 1] || {};
+    if (st.phase === 'end') return say(`Match, ${teamSpoken(r, st.winner)}. ${st.games.map(g => g.score.join(' ')).join(', ')}.`);
+    if (st.phase === 'gameover') return say(`Game, ${teamSpoken(r, G.winner)}. ${G.score[G.winner]}, ${G.score[1 - G.winner]}. Change ends.`);
+    const pre = line.out ? 'Side out. ' : line.second ? 'Second server. ' : '';
+    say(`${pre}${spokenCall(G.call)}.${G.needCC ? ' Change ends.' : ''}`);
+  }
+
   // ---------- azioni ----------
   const cur = () => ui.ref;
   function push(e) {
     const r = cur();
     if (!r || !canEdit(r)) return;
+    if (Score.replay(r.cfg, r.ev).phase === 'end') return;   // partita finita: si può solo annullare
     r.ev.push(e);
     if (!r.libero && r.stato === 'finito') r.stato = 'live';
     persist();
     H.render();
+    announce(r, e);
     if (navigator.vibrate) try { navigator.vibrate(15); } catch (err) { /* ignora */ }
   }
   const actions = {
@@ -249,11 +285,20 @@
     },
     'ref-to-end': () => { ui.to = null; clearInterval(ui.toTimer); H.render(); },
     'ref-cc': () => push('C'),
+    'ref-voice': () => {
+      voiceOn = !voiceOn;
+      try { localStorage.setItem(VOICE, voiceOn ? '1' : '0'); } catch (e) { /* ignora */ }
+      if (voiceOn) { const r = cur(), G = r && r.cfg && Score.replay(r.cfg, r.ev).cur; say(G ? spokenCall(G.call) : 'Voice on'); }
+      else if (window.speechSynthesis) speechSynthesis.cancel();
+      H.render();
+    },
     'ref-undo': () => {
       const r = cur(); if (!r || !canEdit(r) || !r.ev.length) return;
       r.ev.pop();
       if (!r.libero && r.stato === 'finito') r.stato = 'live';
       persist(); H.render();
+      const G = Score.replay(r.cfg, r.ev).cur;
+      say(G ? `Correction. ${spokenCall(G.call)}.` : 'Correction.');
     },
     'ref-retire': () => {
       const r = cur(); if (!r) return;
