@@ -1303,5 +1303,20 @@ I18n.add('fr', {
  "Ferma la prova dei tasti": "Arrêter le test des touches",
  "Prova dei tasti": "Test des touches",
  "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Appuie sur les Flic : ci-dessous tu vois ce qui arrive (touche, bas/haut, millisecondes depuis la précédente).",
- "Ancora nessun tasto.": "Aucune touche pour l’instant."
+ "Ancora nessun tasto.": "Aucune touche pour l’instant.",
+ "Tasti comuni ai due pulsanti": "Touches communes aux deux boutons",
+ "(se nell’app Flic hai dato lo stesso tasto ai due pulsanti)": "(si dans l’app Flic tu as donné la même touche aux deux boutons)",
+ "Usa: 1 e 2 punto · 3 annulla · 5 azzera": "Utiliser : 1 et 2 point · 3 annuler · 5 réinitialiser",
+ "Tasti impostati: 1 e 2 punto, 3 annulla, 5 azzera.": "Touches définies : 1 et 2 point, 3 annuler, 5 réinitialiser.",
+ "Abbinamento dei pulsanti": "Appairage des boutons",
+ "Abbina tutto (pulsanti e gesti)": "Tout appairer (boutons et gestes)",
+ "Abbina solo i pulsanti": "Appairer seulement les boutons",
+ "1 · Premi una volta il pulsante della squadra {0}": "1 · Appuie une fois sur le bouton de l’équipe {0}",
+ "2 · Premi una volta il pulsante della squadra {0}": "2 · Appuie une fois sur le bouton de l’équipe {0}",
+ "3 · Fai un doppio clic su uno dei due pulsanti (annulla)": "3 · Fais un double clic sur l’un des deux boutons (annuler)",
+ "4 · Tieni premuto uno dei due pulsanti (azzera)": "4 · Maintiens appuyé l’un des deux boutons (remettre à zéro)",
+ "Questo è il pulsante della prima squadra: premi quello dell’altra.": "C’est le bouton de la première équipe : appuie sur celui de l’autre.",
+ "Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera.": "Appairage terminé : 1 appui point, double clic annuler, appui long remise à zéro.",
+ "Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo.": "Boutons et double clic appairés. L’appui long envoie la même touche que le clic : pour remettre à zéro, utilise le bouton à l’écran.",
+ "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Le Flic envoie toujours la même touche : l’app reconnaît les gestes (1 appui, 2 appuis, appui long)."
 });

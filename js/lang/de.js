@@ -1303,5 +1303,20 @@ I18n.add('de', {
  "Ferma la prova dei tasti": "Tastentest beenden",
  "Prova dei tasti": "Tastentest",
  "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Drücke die Flics: unten siehst du, was ankommt (Taste, runter/hoch, Millisekunden seit der vorherigen).",
- "Ancora nessun tasto.": "Noch keine Taste."
+ "Ancora nessun tasto.": "Noch keine Taste.",
+ "Tasti comuni ai due pulsanti": "Gemeinsame Tasten für beide Buttons",
+ "(se nell’app Flic hai dato lo stesso tasto ai due pulsanti)": "(wenn du in der Flic-App beiden Buttons dieselbe Taste gegeben hast)",
+ "Usa: 1 e 2 punto · 3 annulla · 5 azzera": "Verwenden: 1 und 2 Punkt · 3 rückgängig · 5 zurücksetzen",
+ "Tasti impostati: 1 e 2 punto, 3 annulla, 5 azzera.": "Tasten gesetzt: 1 und 2 Punkt, 3 rückgängig, 5 zurücksetzen.",
+ "Abbinamento dei pulsanti": "Tasten koppeln",
+ "Abbina tutto (pulsanti e gesti)": "Alles koppeln (Tasten und Gesten)",
+ "Abbina solo i pulsanti": "Nur die Tasten koppeln",
+ "1 · Premi una volta il pulsante della squadra {0}": "1 · Drücke einmal die Taste von Team {0}",
+ "2 · Premi una volta il pulsante della squadra {0}": "2 · Drücke einmal die Taste von Team {0}",
+ "3 · Fai un doppio clic su uno dei due pulsanti (annulla)": "3 · Doppelklicke auf eine der beiden Tasten (rückgängig)",
+ "4 · Tieni premuto uno dei due pulsanti (azzera)": "4 · Halte eine der beiden Tasten gedrückt (zurücksetzen)",
+ "Questo è il pulsante della prima squadra: premi quello dell’altra.": "Das ist die Taste des ersten Teams: drücke die des anderen.",
+ "Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera.": "Kopplung abgeschlossen: 1 Tipp Punkt, Doppelklick rückgängig, langes Drücken zurücksetzen.",
+ "Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo.": "Tasten und Doppelklick gekoppelt. Langes Drücken sendet dieselbe Taste wie der Klick: zum Zurücksetzen die Schaltfläche auf dem Bildschirm benutzen.",
+ "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Der Flic sendet immer dieselbe Taste: die Gesten erkennt die App (1 Tipp, 2 Tipps, langes Drücken)."
 });

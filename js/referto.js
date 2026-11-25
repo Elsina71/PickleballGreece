@@ -390,10 +390,17 @@
         <details class="small"><summary>${T("Tasti separati per i gesti (facoltativo)")}</summary><p>${extra}</p></details>
         <p class="small">${T("Ponte sul PC")}: <strong>${c.bridge[b] ? H.esc(c.bridge[b]) : '—'}</strong> ${F.wsState === 'collegato' ? learnBtn(b, 'bridge', T("Abbina dal ponte")) : ''}</p></div>`;
     };
+    const PSTEP = [T("1 · Premi una volta il pulsante della squadra {0}", [H.esc(teamLabel(r, 0))]), T("2 · Premi una volta il pulsante della squadra {0}", [H.esc(teamLabel(r, 1))]),
+      T("3 · Fai un doppio clic su uno dei due pulsanti (annulla)"), T("4 · Tieni premuto uno dei due pulsanti (azzera)")];
+    if (F.pairing != null) return `<section class="card sb-flic"><h3>${H.icon('link')} ${T("Abbinamento dei pulsanti")}</h3>
+        <div class="notice sb-banner flic-wiz">${H.icon('hand-click')} <span><strong>${PSTEP[F.pairing]}</strong></span>
+          <button class="btn small" data-action="ref-flic-pair-stop">${T("Annulla")}</button></div>
+        <ol class="small flic-howto">${PSTEP.map((x, i) => `<li class="${i < F.pairing ? 'muted' : ''}">${i < F.pairing ? '✓ ' : ''}${x.replace(/^\d · /, '')}</li>`).join('')}</ol></section>`;
     const wiz = L && ['press', 'bridge'].includes(L.slot) && ui.wizard != null
       ? `<div class="notice sb-banner flic-wiz">${H.icon('hand-click')} <span><strong>${T("Premi il pulsante di {0}", [H.esc(teamLabel(r, team(L.team)))])}</strong> (${T("pulsante {0} di 2", [L.team + 1])})</span>
         <button class="btn small" data-action="ref-flic-cancel">${T("Annulla")}</button></div>`
-      : `<div class="actions wrap"><button class="btn primary" data-action="ref-flic-wizard">${H.icon('link')} ${T("Abbina i pulsanti")}</button>
+      : `<div class="actions wrap"><button class="btn primary" data-action="ref-flic-pair">${H.icon('link')} ${T("Abbina tutto (pulsanti e gesti)")}</button>
+        <button class="btn" data-action="ref-flic-wizard">${H.icon('link')} ${T("Abbina solo i pulsanti")}</button>
         ${F.wsState === 'collegato' ? `<button class="btn" data-action="ref-flic-wizard" data-slot="bridge">${H.icon('link')} ${T("Abbina dal ponte")}</button>` : ''}</div>`;
     return `<section class="card sb-flic">
         <h3>${H.icon('hand-click')} ${T("Pulsanti Flic")}</h3>
@@ -405,6 +412,12 @@
         </ol>
         ${wiz}
         ${[0, 1].map(row).join('')}
+        <div class="flic-row">
+          <p><strong>${T("Tasti comuni ai due pulsanti")}</strong> <span class="muted small">${T("(se nell’app Flic hai dato lo stesso tasto ai due pulsanti)")}</span></p>
+          <p class="small">${T("Annulla l’ultima azione")}: <strong>${H.esc(F.keyLabel(c.comuni.double))}</strong> ${c.comuni.double ? `<button type="button" class="link" data-action="ref-flic-clear" data-b="comune" data-slot="double" aria-label="${T("Togli")}">×</button>` : ''} ${learnBtn('comune', 'double', T("Abbina"))}</p>
+          <p class="small">${T("Azzera la partita")}: <strong>${H.esc(F.keyLabel(c.comuni.hold))}</strong> ${c.comuni.hold ? `<button type="button" class="link" data-action="ref-flic-clear" data-b="comune" data-slot="hold" aria-label="${T("Togli")}">×</button>` : ''} ${learnBtn('comune', 'hold', T("Abbina"))}</p>
+          <p><button class="btn small" data-action="ref-flic-preset">${H.icon('wand')} ${T("Usa: 1 e 2 punto · 3 annulla · 5 azzera")}</button></p>
+        </div>
         <div class="flic-test">
           <label>${T("Tempo per il doppio tocco")}: <strong>${Number(c.tap) || 450} ms</strong>
             <input type="range" data-flic-tap min="300" max="1000" step="50" value="${Number(c.tap) || 450}"></label>
@@ -449,7 +462,7 @@
     'ref-reset-ok': () => doReset(),
     'ref-reset-no': () => { ui.reset = null; clearTimeout(ui.resetTimer); H.render(); },
     'ref-flic-panel': () => { ui.flicOpen = !ui.flicOpen; H.render(); },
-    'ref-flic-learn': d => window.Flic.learn(Number(d.b), d.slot, () => H.toast(T("Pulsante abbinato."), 'ok')),
+    'ref-flic-learn': d => window.Flic.learn(d.b === 'comune' ? 'comune' : Number(d.b), d.slot, () => H.toast(T("Pulsante abbinato."), 'ok')),
     'ref-flic-wizard': d => {
       const slot = d.slot || 'press', r = cur();
       const name = b => (r && r.nomi ? teamLabel(r, window.Flic.cfg.swap ? 1 - b : b) : T("squadra {0}", [b + 1]));
@@ -461,7 +474,24 @@
       });
     },
     'ref-flic-cancel': () => { ui.wizard = null; window.Flic.cancelLearn(); },
-    'ref-flic-clear': d => window.Flic.clearKey(Number(d.b), d.slot),
+    'ref-flic-clear': d => window.Flic.clearKey(d.b === 'comune' ? 'comune' : Number(d.b), d.slot),
+    'ref-flic-pair': () => {
+      const r = cur(), say = t => { if (V()) V().say(t, true); };
+      ui.flicOpen = true;
+      say('Press the button of the first team once.');
+      window.Flic.pairAll((n, why) => {
+        if (why === 'stesso') { H.toast(T("Questo è il pulsante della prima squadra: premi quello dell’altra."), 'err'); say('Now the other button.'); return; }
+        say(['', 'Now press the button of the second team once.', 'Now double click one of the buttons.', 'Now hold one of the buttons.'][n]);
+      }, how => {
+        H.toast({ gesti: T("Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera."),
+          'senza-azzera': T("Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo."),
+          tocchi: T("Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).") }[how], 'ok');
+        say('Buttons paired.');
+        H.render();
+      });
+    },
+    'ref-flic-pair-stop': () => window.Flic.cancelPair(),
+    'ref-flic-preset': () => { window.Flic.preset(); H.toast(T("Tasti impostati: 1 e 2 punto, 3 annulla, 5 azzera."), 'ok'); },
     'ref-flic-log': () => window.Flic.setLog(!window.Flic.logOn),
     'ref-flic-swap': () => window.Flic.set('swap', !window.Flic.cfg.swap),
     'ref-flic-sim': () => window.Flic.set('sim', !window.Flic.cfg.sim),

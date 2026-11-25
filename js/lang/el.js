@@ -1303,5 +1303,20 @@ I18n.add('el', {
  "Ferma la prova dei tasti": "Διακοπή δοκιμής πλήκτρων",
  "Prova dei tasti": "Δοκιμή πλήκτρων",
  "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Πάτα τα Flic: παρακάτω βλέπεις τι φτάνει (πλήκτρο, πάτημα/άφημα, χιλιοστά του δευτερολέπτου από το προηγούμενο).",
- "Ancora nessun tasto.": "Κανένα πλήκτρο ακόμη."
+ "Ancora nessun tasto.": "Κανένα πλήκτρο ακόμη.",
+ "Tasti comuni ai due pulsanti": "Κοινά πλήκτρα για τα δύο κουμπιά",
+ "(se nell’app Flic hai dato lo stesso tasto ai due pulsanti)": "(αν στην εφαρμογή Flic έδωσες το ίδιο πλήκτρο και στα δύο κουμπιά)",
+ "Usa: 1 e 2 punto · 3 annulla · 5 azzera": "Χρήση: 1 και 2 πόντος · 3 αναίρεση · 5 μηδενισμός",
+ "Tasti impostati: 1 e 2 punto, 3 annulla, 5 azzera.": "Ορίστηκαν: 1 και 2 πόντος, 3 αναίρεση, 5 μηδενισμός.",
+ "Abbinamento dei pulsanti": "Σύζευξη κουμπιών",
+ "Abbina tutto (pulsanti e gesti)": "Σύζευξη όλων (κουμπιά και κινήσεις)",
+ "Abbina solo i pulsanti": "Σύζευξη μόνο των κουμπιών",
+ "1 · Premi una volta il pulsante della squadra {0}": "1 · Πάτησε μία φορά το κουμπί της ομάδας {0}",
+ "2 · Premi una volta il pulsante della squadra {0}": "2 · Πάτησε μία φορά το κουμπί της ομάδας {0}",
+ "3 · Fai un doppio clic su uno dei due pulsanti (annulla)": "3 · Κάνε διπλό κλικ σε ένα από τα δύο κουμπιά (αναίρεση)",
+ "4 · Tieni premuto uno dei due pulsanti (azzera)": "4 · Κράτα πατημένο ένα από τα δύο κουμπιά (μηδενισμός)",
+ "Questo è il pulsante della prima squadra: premi quello dell’altra.": "Αυτό είναι το κουμπί της πρώτης ομάδας: πάτησε το άλλο.",
+ "Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera.": "Η σύζευξη ολοκληρώθηκε: 1 πάτημα πόντος, διπλό κλικ αναίρεση, παρατεταμένο πάτημα μηδενισμός.",
+ "Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo.": "Τα κουμπιά και το διπλό κλικ συνδέθηκαν. Το παρατεταμένο πάτημα στέλνει το ίδιο πλήκτρο με το κλικ: για μηδενισμό χρησιμοποίησε το κουμπί στην οθόνη.",
+ "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Το Flic στέλνει πάντα το ίδιο πλήκτρο: τις κινήσεις τις αναγνωρίζει η εφαρμογή (1 πάτημα, 2 πατήματα, παρατεταμένο πάτημα)."
 });

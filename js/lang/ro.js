@@ -1303,5 +1303,20 @@ I18n.add('ro', {
  "Ferma la prova dei tasti": "Oprește testul tastelor",
  "Prova dei tasti": "Testul tastelor",
  "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Apasă Flic-urile: mai jos vezi ce ajunge (tastă, jos/sus, milisecunde de la precedenta).",
- "Ancora nessun tasto.": "Încă nicio tastă."
+ "Ancora nessun tasto.": "Încă nicio tastă.",
+ "Tasti comuni ai due pulsanti": "Taste comune pentru ambele butoane",
+ "(se nell’app Flic hai dato lo stesso tasto ai due pulsanti)": "(dacă în aplicația Flic ai dat aceeași tastă ambelor butoane)",
+ "Usa: 1 e 2 punto · 3 annulla · 5 azzera": "Folosește: 1 și 2 punct · 3 anulează · 5 resetează",
+ "Tasti impostati: 1 e 2 punto, 3 annulla, 5 azzera.": "Taste setate: 1 și 2 punct, 3 anulează, 5 resetează.",
+ "Abbinamento dei pulsanti": "Asocierea butoanelor",
+ "Abbina tutto (pulsanti e gesti)": "Asociază tot (butoane și gesturi)",
+ "Abbina solo i pulsanti": "Asociază doar butoanele",
+ "1 · Premi una volta il pulsante della squadra {0}": "1 · Apasă o dată butonul echipei {0}",
+ "2 · Premi una volta il pulsante della squadra {0}": "2 · Apasă o dată butonul echipei {0}",
+ "3 · Fai un doppio clic su uno dei due pulsanti (annulla)": "3 · Fă dublu clic pe unul dintre cele două butoane (anulează)",
+ "4 · Tieni premuto uno dei due pulsanti (azzera)": "4 · Ține apăsat unul dintre cele două butoane (resetează)",
+ "Questo è il pulsante della prima squadra: premi quello dell’altra.": "Acesta este butonul primei echipe: apasă-l pe al celeilalte.",
+ "Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera.": "Asociere finalizată: 1 atingere punct, dublu clic anulează, apăsare lungă resetează.",
+ "Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo.": "Butoanele și dublul clic au fost asociate. Apăsarea lungă trimite aceeași tastă ca clicul: pentru resetare folosește butonul de pe ecran.",
+ "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Flic trimite mereu aceeași tastă: gesturile le recunoaște aplicația (1 atingere, 2 atingeri, apăsare lungă)."
 });

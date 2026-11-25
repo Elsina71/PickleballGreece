@@ -53,9 +53,10 @@
 
   // ---------- impostazioni (su questo dispositivo) ----------
   // keys[i] = { press: codice del tasto (giù/su), click, double, hold: tasti già "pronti" (facoltativi) }
-  const def = () => ({ keys: [{ press: 'Digit1' }, { press: 'Digit2' }], ws: 'ws://localhost:8765', bridge: ['', ''], swap: false, sim: false, ponte: false, tap: TAP_MS });
+  const def = () => ({ keys: [{ press: 'Digit1' }, { press: 'Digit2' }], ws: 'ws://localhost:8765', bridge: ['', ''], swap: false, sim: false, ponte: false, tap: TAP_MS, comuni: { double: '', hold: '' } });
   let cfg = def();
   try { cfg = Object.assign(def(), JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) { cfg = def(); }
+  cfg.comuni = Object.assign({ double: '', hold: '' }, cfg.comuni || {});
   const save = () => { try { localStorage.setItem(LS, JSON.stringify(cfg)); } catch (e) { /* ignora */ } };
 
   let handler = null;        // (squadra 0/1, gesto) => void
@@ -81,36 +82,73 @@
 
   // ---------- Bluetooth diretto (Flic come tastiera) ----------
   const typing = el => el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+  // "1" della riga dei numeri e "1" del tastierino valgono uguale
+  const same = (a, b) => !!a && !!b && a.replace(/^(Digit|Numpad)/, '#') === b.replace(/^(Digit|Numpad)/, '#');
   function keyMatch(code) {
     for (let b = 0; b < 2; b++) {
       const k = cfg.keys[b] || {};
-      if (k.press === code) return { b, slot: 'press' };
-      for (const g of ['click', 'double', 'hold']) if (k[g] && k[g] === code) return { b, slot: g };
+      if (same(k.press, code)) return { b, slot: 'press' };
+      for (const g of ['click', 'double', 'hold']) if (same(k[g], code)) return { b, slot: g };
     }
+    // tasti comuni ai due pulsanti: annulla e azzera non dipendono dalla squadra
+    for (const g of ['double', 'hold']) if (same(cfg.comuni[g], code)) return { b: 0, slot: g, common: true };
     return null;
   }
+  // ---------- abbinamento unico: 1 tocco squadra A, 1 tocco squadra B, doppio clic, pressione lunga ----------
+  // Se il Flic manda sempre lo stesso tasto (non riconosce i gesti da solo), si passa al conteggio dei tocchi.
+  let pairing = null;   // { step, codes, onStep, onDone }
+  let quietUntil = 0;   // subito dopo l'abbinamento si ignorano i tasti (es. il secondo tocco di un doppio clic)
+  function pairKey(code) {
+    const P = pairing, c = P.codes;
+    if (P.step === 0) { c[0] = code; P.step = 1; P.onStep(1); return; }
+    if (P.step === 1) {
+      if (same(code, c[0])) { P.onStep(1, 'stesso'); return; }   // serve il pulsante dell'altra squadra
+      c[1] = code; P.step = 2; P.onStep(2); return;
+    }
+    if (P.step === 2) {
+      if (same(code, c[0]) || same(code, c[1])) {
+        // il doppio clic manda lo stesso tasto del clic: i gesti li riconosce l'app contando i tocchi
+        cfg.keys = [{ press: c[0] }, { press: c[1] }]; cfg.comuni = { double: '', hold: '' };
+        pairing = null; quietUntil = Date.now() + 1000; save(); changed(); P.onDone('tocchi'); return;
+      }
+      c[2] = code; P.step = 3; P.onStep(3); return;
+    }
+    if (P.step === 3) {
+      const hold = same(code, c[0]) || same(code, c[1]) || same(code, c[2]) ? '' : code;
+      cfg.keys = [{ click: c[0] }, { click: c[1] }]; cfg.comuni = { double: c[2], hold };
+      pairing = null; quietUntil = Date.now() + 1000; save(); changed(); P.onDone(hold ? 'gesti' : 'senza-azzera');
+    }
+  }
+
   document.addEventListener('keydown', e => {
     const code = e.code || e.key;
     if (!typing(e.target)) note(code, e.repeat ? 'ripetizione' : 'giù');
+    if (pairing) {
+      e.preventDefault();
+      if (code === 'Escape') { pairing = null; changed(); return; }
+      if (!e.repeat) pairKey(code);
+      return;
+    }
     if (learning && code === 'Escape') { learning = null; changed(); return; }
     if (learning && learning.slot !== 'bridge') {
       e.preventDefault();
       const { team, slot, cb } = learning;
       learning = null;
       // un tasto può avere un solo ruolo: lo si toglie dagli altri
-      cfg.keys.forEach(k => Object.keys(k).forEach(x => { if (k[x] === code) delete k[x]; }));
-      cfg.keys[team] = cfg.keys[team] || {};
-      cfg.keys[team][slot] = code;
+      cfg.keys.forEach(k => Object.keys(k).forEach(x => { if (same(k[x], code)) delete k[x]; }));
+      ['double', 'hold'].forEach(g => { if (same(cfg.comuni[g], code)) cfg.comuni[g] = ''; });
+      if (team === 'comune') cfg.comuni[slot] = code;
+      else { cfg.keys[team] = cfg.keys[team] || {}; cfg.keys[team][slot] = code; }
       save(); changed();
       if (cb) cb(code);
       return;
     }
-    if (!handler || typing(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!handler || typing(e.target) || e.ctrlKey || e.metaKey || e.altKey || Date.now() < quietUntil) return;
     const m = keyMatch(code);
     if (!m) return;
     e.preventDefault();
     if (m.slot === 'press') det.down(m.b);
-    else if (!e.repeat) fire(m.b, m.slot);
+    else if (!e.repeat) { if (m.common) { if (handler) handler(0, m.slot); } else fire(m.b, m.slot); }
   }, true);
   document.addEventListener('keyup', e => {
     if (!typing(e.target)) note(e.code || e.key, 'su');
@@ -196,7 +234,12 @@
     onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
     learn(team, slot, cb) { learning = { team, slot: slot || 'press', cb }; changed(); },
     cancelLearn() { learning = null; changed(); },
-    clearKey(team, slot) { if (cfg.keys[team]) delete cfg.keys[team][slot]; save(); changed(); },
+    clearKey(team, slot) { if (team === 'comune') cfg.comuni[slot] = ''; else if (cfg.keys[team]) delete cfg.keys[team][slot]; save(); changed(); },
+    // il Flic riconosce da solo i gesti: 1/2 = punto della squadra, 3 = annulla, 5 = azzera (comuni ai due pulsanti)
+    get pairing() { return pairing ? pairing.step : null; },
+    pairAll(onStep, onDone) { learning = null; pairing = { step: 0, codes: [], onStep: (n, why) => { changed(); onStep(n, why); }, onDone }; changed(); },
+    cancelPair() { pairing = null; changed(); },
+    preset() { cfg.keys = [{ click: 'Digit1' }, { click: 'Digit2' }]; cfg.comuni = { double: 'Digit3', hold: 'Digit5' }; save(); changed(); },
     set(k, v) { cfg[k] = v; save(); changed(); },
     get log() { return log; },
     get logOn() { return logOn; },

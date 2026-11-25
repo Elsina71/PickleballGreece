@@ -1303,5 +1303,20 @@ I18n.add('en', {
  "Ferma la prova dei tasti": "Stop the key test",
  "Prova dei tasti": "Key test",
  "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Press the Flics: below you see what arrives (key, down/up, milliseconds since the previous one).",
- "Ancora nessun tasto.": "No key yet."
+ "Ancora nessun tasto.": "No key yet.",
+ "Tasti comuni ai due pulsanti": "Keys shared by both buttons",
+ "(se nell’app Flic hai dato lo stesso tasto ai due pulsanti)": "(if you gave both buttons the same key in the Flic app)",
+ "Usa: 1 e 2 punto · 3 annulla · 5 azzera": "Use: 1 and 2 point · 3 undo · 5 reset",
+ "Tasti impostati: 1 e 2 punto, 3 annulla, 5 azzera.": "Keys set: 1 and 2 point, 3 undo, 5 reset.",
+ "Abbinamento dei pulsanti": "Button pairing",
+ "Abbina tutto (pulsanti e gesti)": "Pair everything (buttons and gestures)",
+ "Abbina solo i pulsanti": "Pair buttons only",
+ "1 · Premi una volta il pulsante della squadra {0}": "1 · Press the button of team {0} once",
+ "2 · Premi una volta il pulsante della squadra {0}": "2 · Press the button of team {0} once",
+ "3 · Fai un doppio clic su uno dei due pulsanti (annulla)": "3 · Double-click either button (undo)",
+ "4 · Tieni premuto uno dei due pulsanti (azzera)": "4 · Press and hold either button (reset)",
+ "Questo è il pulsante della prima squadra: premi quello dell’altra.": "That is the first team’s button: press the other one.",
+ "Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera.": "Pairing complete: 1 tap point, double-click undo, long press reset.",
+ "Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo.": "Buttons and double-click paired. The long press sends the same key as the click: to reset, use the on-screen button.",
+ "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "The Flic always sends the same key: the app recognises the gestures (1 tap, 2 taps, long press)."
 });

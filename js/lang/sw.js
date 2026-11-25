@@ -1303,5 +1303,20 @@ I18n.add('sw', {
  "Ferma la prova dei tasti": "Simamisha jaribio la vitufe",
  "Prova dei tasti": "Jaribio la vitufe",
  "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Bonyeza Flic: hapa chini unaona kinachofika (kitufe, chini/juu, milisekunde tangu cha awali).",
- "Ancora nessun tasto.": "Bado hakuna kitufe."
+ "Ancora nessun tasto.": "Bado hakuna kitufe.",
+ "Tasti comuni ai due pulsanti": "Vitufe vya pamoja kwa vitufe vyote viwili",
+ "(se nell’app Flic hai dato lo stesso tasto ai due pulsanti)": "(ikiwa kwenye programu ya Flic ulivipa vitufe vyote viwili kitufe kimoja)",
+ "Usa: 1 e 2 punto · 3 annulla · 5 azzera": "Tumia: 1 na 2 pointi · 3 tendua · 5 anza upya",
+ "Tasti impostati: 1 e 2 punto, 3 annulla, 5 azzera.": "Vitufe vimewekwa: 1 na 2 pointi, 3 tendua, 5 anza upya.",
+ "Abbinamento dei pulsanti": "Kuunganisha vitufe",
+ "Abbina tutto (pulsanti e gesti)": "Unganisha vyote (vitufe na ishara)",
+ "Abbina solo i pulsanti": "Unganisha vitufe tu",
+ "1 · Premi una volta il pulsante della squadra {0}": "1 · Bonyeza mara moja kitufe cha timu {0}",
+ "2 · Premi una volta il pulsante della squadra {0}": "2 · Bonyeza mara moja kitufe cha timu {0}",
+ "3 · Fai un doppio clic su uno dei due pulsanti (annulla)": "3 · Bofya mara mbili kimoja kati ya vitufe viwili (tendua)",
+ "4 · Tieni premuto uno dei due pulsanti (azzera)": "4 · Shikilia kimoja kati ya vitufe viwili (anza upya)",
+ "Questo è il pulsante della prima squadra: premi quello dell’altra.": "Hiki ni kitufe cha timu ya kwanza: bonyeza cha timu nyingine.",
+ "Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera.": "Kuunganisha kumekamilika: mguso 1 pointi, kubofya mara mbili tendua, kushikilia anza upya.",
+ "Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo.": "Vitufe na kubofya mara mbili vimeunganishwa. Kushikilia hutuma kitufe kilekile cha kubofya: kuanza upya tumia kitufe kwenye skrini.",
+ "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Flic hutuma kitufe kilekile kila mara: programu hutambua ishara (mguso 1, miguso 2, kushikilia)."
 });

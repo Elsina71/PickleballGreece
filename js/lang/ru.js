@@ -1303,5 +1303,20 @@ I18n.add('ru', {
  "Ferma la prova dei tasti": "Остановить проверку клавиш",
  "Prova dei tasti": "Проверка клавиш",
  "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Нажимайте Flic: ниже видно, что приходит (клавиша, нажатие/отпускание, миллисекунды с предыдущего).",
- "Ancora nessun tasto.": "Пока нет клавиш."
+ "Ancora nessun tasto.": "Пока нет клавиш.",
+ "Tasti comuni ai due pulsanti": "Общие клавиши для обеих кнопок",
+ "(se nell’app Flic hai dato lo stesso tasto ai due pulsanti)": "(если в приложении Flic вы дали обеим кнопкам одну клавишу)",
+ "Usa: 1 e 2 punto · 3 annulla · 5 azzera": "Использовать: 1 и 2 очко · 3 отменить · 5 сбросить",
+ "Tasti impostati: 1 e 2 punto, 3 annulla, 5 azzera.": "Клавиши заданы: 1 и 2 очко, 3 отменить, 5 сбросить.",
+ "Abbinamento dei pulsanti": "Привязка кнопок",
+ "Abbina tutto (pulsanti e gesti)": "Привязать всё (кнопки и жесты)",
+ "Abbina solo i pulsanti": "Привязать только кнопки",
+ "1 · Premi una volta il pulsante della squadra {0}": "1 · Нажмите один раз кнопку команды {0}",
+ "2 · Premi una volta il pulsante della squadra {0}": "2 · Нажмите один раз кнопку команды {0}",
+ "3 · Fai un doppio clic su uno dei due pulsanti (annulla)": "3 · Сделайте двойной клик по одной из кнопок (отмена)",
+ "4 · Tieni premuto uno dei due pulsanti (azzera)": "4 · Нажмите и удерживайте одну из кнопок (сброс)",
+ "Questo è il pulsante della prima squadra: premi quello dell’altra.": "Это кнопка первой команды: нажмите кнопку другой.",
+ "Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera.": "Привязка завершена: 1 нажатие — очко, двойной клик — отмена, долгое нажатие — сброс.",
+ "Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo.": "Кнопки и двойной клик привязаны. Долгое нажатие отправляет ту же клавишу, что и клик: для сброса используйте кнопку на экране.",
+ "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Flic всегда отправляет одну и ту же клавишу: жесты распознаёт приложение (1 нажатие, 2 нажатия, долгое нажатие)."
 });

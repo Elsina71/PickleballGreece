@@ -1303,5 +1303,20 @@ I18n.add('es', {
  "Ferma la prova dei tasti": "Detener la prueba de teclas",
  "Prova dei tasti": "Prueba de teclas",
  "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Pulsa los Flic: abajo ves lo que llega (tecla, abajo/arriba, milisegundos desde el anterior).",
- "Ancora nessun tasto.": "Todavía ninguna tecla."
+ "Ancora nessun tasto.": "Todavía ninguna tecla.",
+ "Tasti comuni ai due pulsanti": "Teclas comunes a los dos botones",
+ "(se nell’app Flic hai dato lo stesso tasto ai due pulsanti)": "(si en la app Flic diste la misma tecla a los dos botones)",
+ "Usa: 1 e 2 punto · 3 annulla · 5 azzera": "Usar: 1 y 2 punto · 3 deshacer · 5 reiniciar",
+ "Tasti impostati: 1 e 2 punto, 3 annulla, 5 azzera.": "Teclas configuradas: 1 y 2 punto, 3 deshacer, 5 reiniciar.",
+ "Abbinamento dei pulsanti": "Emparejamiento de botones",
+ "Abbina tutto (pulsanti e gesti)": "Emparejar todo (botones y gestos)",
+ "Abbina solo i pulsanti": "Emparejar solo los botones",
+ "1 · Premi una volta il pulsante della squadra {0}": "1 · Pulsa una vez el botón del equipo {0}",
+ "2 · Premi una volta il pulsante della squadra {0}": "2 · Pulsa una vez el botón del equipo {0}",
+ "3 · Fai un doppio clic su uno dei due pulsanti (annulla)": "3 · Haz doble clic en uno de los dos botones (deshacer)",
+ "4 · Tieni premuto uno dei due pulsanti (azzera)": "4 · Mantén pulsado uno de los dos botones (reiniciar)",
+ "Questo è il pulsante della prima squadra: premi quello dell’altra.": "Este es el botón del primer equipo: pulsa el del otro.",
+ "Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera.": "Emparejamiento completado: 1 toque punto, doble clic deshacer, pulsación larga reiniciar.",
+ "Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo.": "Botones y doble clic emparejados. La pulsación larga envía la misma tecla que el clic: para reiniciar usa el botón de la pantalla.",
+ "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "El Flic envía siempre la misma tecla: la app reconoce los gestos (1 toque, 2 toques, pulsación larga)."
 });
