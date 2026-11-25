@@ -1318,5 +1318,21 @@ I18n.add('es', {
  "Questo è il pulsante della prima squadra: premi quello dell’altra.": "Este es el botón del primer equipo: pulsa el del otro.",
  "Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera.": "Emparejamiento completado: 1 toque punto, doble clic deshacer, pulsación larga reiniciar.",
  "Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo.": "Botones y doble clic emparejados. La pulsación larga envía la misma tecla que el clic: para reiniciar usa el botón de la pantalla.",
- "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "El Flic envía siempre la misma tecla: la app reconoce los gestos (1 toque, 2 toques, pulsación larga)."
+ "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "El Flic envía siempre la misma tecla: la app reconoce los gestos (1 toque, 2 toques, pulsación larga).",
+ "Senza tastiera Bluetooth (consigliato su iPhone)": "Sin teclado Bluetooth (recomendado en iPhone)",
+ "Il Flic resta collegato solo all’app Flic: a ogni pressione l’app Flic manda un segnale via internet allo scoresheet. Così il telefono non vede nessuna tastiera e puoi scrivere normalmente. Serve internet.": "El Flic queda conectado solo a la app Flic: en cada pulsación la app Flic envía una señal por internet a la planilla. El teléfono no ve ningún teclado y puedes escribir normalmente. Se necesita internet.",
+ "Attiva il collegamento via internet": "Activar la conexión por internet",
+ "Ultimo segnale: {0}": "Última señal: {0}",
+ "Ancora nessun segnale: premi un Flic per provare.": "Aún sin señales: pulsa un Flic para probar.",
+ "Copia": "Copiar",
+ "In ascolto": "Escuchando",
+ "Non in ascolto (serve la connessione)": "Sin escuchar (se necesita conexión)",
+ "Se il Flic era abbinato come tastiera: Impostazioni → Bluetooth → (i) accanto al Flic → Dissocia dispositivo; nell’app Flic togli la modalità tastiera.": "Si el Flic estaba emparejado como teclado: Ajustes → Bluetooth → (i) junto al Flic → Omitir dispositivo; en la app Flic desactiva el modo teclado.",
+ "Nell’app Flic apri il pulsante, tocca “Click” e scegli l’azione “Internet Request”.": "En la app Flic abre el botón, toca “Click” y elige la acción “Internet Request”.",
+ "Metodo POST, l’indirizzo (URL) qui sotto, tipo di contenuto application/json e il testo (Body) del gesto. Ripeti per “Double Click” e “Hold” e poi per l’altro pulsante.": "Método POST, la dirección (URL) de abajo, tipo de contenido application/json y el texto (Body) del gesto. Repite para “Double Click” y “Hold” y luego para el otro botón.",
+ "Indirizzo (URL), uguale per tutti": "Dirección (URL), igual para todos",
+ "Non condividere questo indirizzo: chi lo ha può segnare punti. Con “Nuovo codice” lo cambi (poi vanno rifatte le azioni nell’app Flic).": "No compartas esta dirección: quien la tenga puede anotar puntos. Con “Nuevo código” la cambias (luego hay que rehacer las acciones en la app Flic).",
+ "Nuovo codice": "Nuevo código",
+ "Il codice cambia: dovrai rifare le azioni nell’app Flic. Continuare?": "El código cambiará: tendrás que rehacer las acciones en la app Flic. ¿Continuar?",
+ "Copiato.": "Copiado."
 });

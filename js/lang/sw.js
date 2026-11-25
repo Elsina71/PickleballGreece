@@ -1318,5 +1318,21 @@ I18n.add('sw', {
  "Questo è il pulsante della prima squadra: premi quello dell’altra.": "Hiki ni kitufe cha timu ya kwanza: bonyeza cha timu nyingine.",
  "Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera.": "Kuunganisha kumekamilika: mguso 1 pointi, kubofya mara mbili tendua, kushikilia anza upya.",
  "Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo.": "Vitufe na kubofya mara mbili vimeunganishwa. Kushikilia hutuma kitufe kilekile cha kubofya: kuanza upya tumia kitufe kwenye skrini.",
- "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Flic hutuma kitufe kilekile kila mara: programu hutambua ishara (mguso 1, miguso 2, kushikilia)."
+ "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Flic hutuma kitufe kilekile kila mara: programu hutambua ishara (mguso 1, miguso 2, kushikilia).",
+ "Senza tastiera Bluetooth (consigliato su iPhone)": "Bila kibodi ya Bluetooth (inapendekezwa kwa iPhone)",
+ "Il Flic resta collegato solo all’app Flic: a ogni pressione l’app Flic manda un segnale via internet allo scoresheet. Così il telefono non vede nessuna tastiera e puoi scrivere normalmente. Serve internet.": "Flic inabaki imeunganishwa na programu ya Flic tu: kila unapobonyeza programu ya Flic hutuma ishara kupitia intaneti kwa karatasi ya alama. Simu haioni kibodi yoyote na unaweza kuandika kawaida. Intaneti inahitajika.",
+ "Attiva il collegamento via internet": "Washa muunganisho wa intaneti",
+ "Ultimo segnale: {0}": "Ishara ya mwisho: {0}",
+ "Ancora nessun segnale: premi un Flic per provare.": "Bado hakuna ishara: bonyeza Flic kujaribu.",
+ "Copia": "Nakili",
+ "In ascolto": "Inasikiliza",
+ "Non in ascolto (serve la connessione)": "Haisikilizi (muunganisho unahitajika)",
+ "Se il Flic era abbinato come tastiera: Impostazioni → Bluetooth → (i) accanto al Flic → Dissocia dispositivo; nell’app Flic togli la modalità tastiera.": "Kama Flic iliunganishwa kama kibodi: Mipangilio → Bluetooth → (i) karibu na Flic → Sahau kifaa hiki; kwenye programu ya Flic zima hali ya kibodi.",
+ "Nell’app Flic apri il pulsante, tocca “Click” e scegli l’azione “Internet Request”.": "Kwenye programu ya Flic fungua kitufe, gusa “Click” na uchague kitendo “Internet Request”.",
+ "Metodo POST, l’indirizzo (URL) qui sotto, tipo di contenuto application/json e il testo (Body) del gesto. Ripeti per “Double Click” e “Hold” e poi per l’altro pulsante.": "Njia POST, anwani (URL) hapa chini, aina ya maudhui application/json na maandishi (Body) ya ishara. Rudia kwa “Double Click” na “Hold”, kisha kwa kitufe kingine.",
+ "Indirizzo (URL), uguale per tutti": "Anwani (URL), sawa kwa zote",
+ "Non condividere questo indirizzo: chi lo ha può segnare punti. Con “Nuovo codice” lo cambi (poi vanno rifatte le azioni nell’app Flic).": "Usishiriki anwani hii: aliye nayo anaweza kuweka pointi. “Msimbo mpya” huibadilisha (kisha rudia vitendo kwenye programu ya Flic).",
+ "Nuovo codice": "Msimbo mpya",
+ "Il codice cambia: dovrai rifare le azioni nell’app Flic. Continuare?": "Msimbo utabadilika: utalazimika kurudia vitendo kwenye programu ya Flic. Endelea?",
+ "Copiato.": "Imenakiliwa."
 });

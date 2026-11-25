@@ -1318,5 +1318,21 @@ I18n.add('ro', {
  "Questo è il pulsante della prima squadra: premi quello dell’altra.": "Acesta este butonul primei echipe: apasă-l pe al celeilalte.",
  "Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera.": "Asociere finalizată: 1 atingere punct, dublu clic anulează, apăsare lungă resetează.",
  "Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo.": "Butoanele și dublul clic au fost asociate. Apăsarea lungă trimite aceeași tastă ca clicul: pentru resetare folosește butonul de pe ecran.",
- "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Flic trimite mereu aceeași tastă: gesturile le recunoaște aplicația (1 atingere, 2 atingeri, apăsare lungă)."
+ "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Flic trimite mereu aceeași tastă: gesturile le recunoaște aplicația (1 atingere, 2 atingeri, apăsare lungă).",
+ "Senza tastiera Bluetooth (consigliato su iPhone)": "Fără tastatură Bluetooth (recomandat pe iPhone)",
+ "Il Flic resta collegato solo all’app Flic: a ogni pressione l’app Flic manda un segnale via internet allo scoresheet. Così il telefono non vede nessuna tastiera e puoi scrivere normalmente. Serve internet.": "Flic rămâne conectat doar la aplicația Flic: la fiecare apăsare aplicația Flic trimite un semnal prin internet la foaia de meci. Telefonul nu vede nicio tastatură și poți scrie normal. E nevoie de internet.",
+ "Attiva il collegamento via internet": "Activează conexiunea prin internet",
+ "Ultimo segnale: {0}": "Ultimul semnal: {0}",
+ "Ancora nessun segnale: premi un Flic per provare.": "Încă niciun semnal: apasă un Flic pentru test.",
+ "Copia": "Copiază",
+ "In ascolto": "În ascultare",
+ "Non in ascolto (serve la connessione)": "Nu ascultă (e nevoie de conexiune)",
+ "Se il Flic era abbinato come tastiera: Impostazioni → Bluetooth → (i) accanto al Flic → Dissocia dispositivo; nell’app Flic togli la modalità tastiera.": "Dacă Flic era asociat ca tastatură: Configurări → Bluetooth → (i) lângă Flic → Ignoră acest dispozitiv; în aplicația Flic dezactivează modul tastatură.",
+ "Nell’app Flic apri il pulsante, tocca “Click” e scegli l’azione “Internet Request”.": "În aplicația Flic deschide butonul, atinge „Click” și alege acțiunea „Internet Request”.",
+ "Metodo POST, l’indirizzo (URL) qui sotto, tipo di contenuto application/json e il testo (Body) del gesto. Ripeti per “Double Click” e “Hold” e poi per l’altro pulsante.": "Metoda POST, adresa (URL) de mai jos, tipul de conținut application/json și textul (Body) gestului. Repetă pentru „Double Click” și „Hold”, apoi pentru celălalt buton.",
+ "Indirizzo (URL), uguale per tutti": "Adresa (URL), aceeași pentru toate",
+ "Non condividere questo indirizzo: chi lo ha può segnare punti. Con “Nuovo codice” lo cambi (poi vanno rifatte le azioni nell’app Flic).": "Nu partaja această adresă: cine o are poate marca puncte. Cu „Cod nou” o schimbi (apoi refaci acțiunile în aplicația Flic).",
+ "Nuovo codice": "Cod nou",
+ "Il codice cambia: dovrai rifare le azioni nell’app Flic. Continuare?": "Codul se schimbă: va trebui să refaci acțiunile în aplicația Flic. Continui?",
+ "Copiato.": "Copiat."
 });

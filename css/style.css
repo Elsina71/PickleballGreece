@@ -755,3 +755,7 @@ label, legend { font-size: .92rem; }
 .flic-test { border-top: 1px solid var(--border); padding: 8px 0; }
 .flic-log { font-size: .85rem; max-height: 220px; overflow: auto; }
 .flic-test input[type=range] { width: 100%; }
+/* Flic via internet */
+.flic-net h4 { margin: 4px 0; }
+.flic-copy { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; max-width: 100%; }
+.flic-copy code { word-break: break-all; font-size: .85em; background: var(--bg-soft, rgba(0,0,0,.05)); padding: 2px 4px; border-radius: 4px; }

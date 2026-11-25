@@ -404,6 +404,7 @@
         ${F.wsState === 'collegato' ? `<button class="btn" data-action="ref-flic-wizard" data-slot="bridge">${H.icon('link')} ${T("Abbina dal ponte")}</button>` : ''}</div>`;
     return `<section class="card sb-flic">
         <h3>${H.icon('hand-click')} ${T("Pulsanti Flic")}</h3>
+        ${netPanel(r)}
         <p><strong>${T("1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).")}</strong></p>
         <ol class="small flic-howto">
           <li>${T("Nell’app Flic imposta ogni pulsante come tastiera (HID) e scegli un tasto diverso per ciascuno.")}</li>
@@ -436,7 +437,38 @@
       </section>`;
   }
 
+  // collegamento via internet: il Flic resta nell'app Flic (niente tastiera Bluetooth, il telefono tiene la sua tastiera)
+  function netPanel(r) {
+    const F = window.Flic, N = F.net, team = b => (F.cfg.swap ? 1 - b : b);
+    const G = { click: T("1 tocco"), double: T("2 tocchi"), hold: T("pressione lunga") };
+    const head = `<h4>${H.icon('world')} ${T("Senza tastiera Bluetooth (consigliato su iPhone)")}</h4>
+      <p class="small">${T("Il Flic resta collegato solo all’app Flic: a ogni pressione l’app Flic manda un segnale via internet allo scoresheet. Così il telefono non vede nessuna tastiera e puoi scrivere normalmente. Serve internet.")}</p>`;
+    if (!N.on) return `<div class="flic-row flic-net">${head}<p><button class="btn primary" data-action="ref-flic-net" data-on="1">${H.icon('world')} ${T("Attiva il collegamento via internet")}</button></p></div>`;
+    const last = N.last ? T("Ultimo segnale: {0}", [`${T("Pulsante {0}", [N.last.b + 1])} · ${G[N.last.g]} · ${new Date(N.last.at).toLocaleTimeString()}`]) : T("Ancora nessun segnale: premi un Flic per provare.");
+    const copy = (txt, lbl) => `<span class="flic-copy"><code>${H.esc(txt)}</code> <button type="button" class="btn small" data-action="ref-flic-copy" data-txt="${H.esc(txt)}">${H.icon('copy')} ${lbl || T("Copia")}</button></span>`;
+    return `<div class="flic-row flic-net">${head}
+      <p class="small"><strong>${N.live ? '🟢 ' + T("In ascolto") : '⚪ ' + T("Non in ascolto (serve la connessione)")}</strong> · ${H.esc(last)}</p>
+      <ol class="small flic-howto">
+        <li>${T("Se il Flic era abbinato come tastiera: Impostazioni → Bluetooth → (i) accanto al Flic → Dissocia dispositivo; nell’app Flic togli la modalità tastiera.")}</li>
+        <li>${T("Nell’app Flic apri il pulsante, tocca “Click” e scegli l’azione “Internet Request”.")}</li>
+        <li>${T("Metodo POST, l’indirizzo (URL) qui sotto, tipo di contenuto application/json e il testo (Body) del gesto. Ripeti per “Double Click” e “Hold” e poi per l’altro pulsante.")}</li>
+      </ol>
+      <p class="small"><strong>${T("Indirizzo (URL), uguale per tutti")}</strong><br>${copy(F.netUrl())}</p>
+      ${[0, 1].map(b => `<p class="small"><strong>${T("Pulsante {0}", [b + 1])}</strong> → ${H.esc(teamLabel(r, team(b)))}<br>
+        ${['click', 'double', 'hold'].map(g => `${G[g]}: ${copy(F.netBody(b, g))}`).join('<br>')}</p>`).join('')}
+      <p class="muted small">${T("Non condividere questo indirizzo: chi lo ha può segnare punti. Con “Nuovo codice” lo cambi (poi vanno rifatte le azioni nell’app Flic).")}</p>
+      <div class="actions wrap"><button class="btn small" data-action="ref-flic-net" data-on="0">${T("Disattiva")}</button>
+        <button class="btn small" data-action="ref-flic-net-code">${H.icon('refresh')} ${T("Nuovo codice")}</button></div></div>`;
+  }
+
   const actions = {
+    'ref-flic-net': d => window.Flic.netOn(d.on === '1'),
+    'ref-flic-net-code': () => { if (confirm(T("Il codice cambia: dovrai rifare le azioni nell’app Flic. Continuare?"))) window.Flic.netNewCode(); },
+    'ref-flic-copy': d => {
+      const ok = () => H.toast(T("Copiato."), 'ok');
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(d.txt).then(ok, () => window.prompt(T("Copia"), d.txt));
+      else window.prompt(T("Copia"), d.txt);
+    },
     'ref-rally': d => push(Number(d.w) === 0 ? 'A' : 'B'),
     'ref-to': d => {
       const r = cur(); if (!r) return;

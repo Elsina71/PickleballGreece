@@ -127,6 +127,15 @@ service cloud.firestore {
     }
     // Scoresheet delle gare (pubblici: punteggio in diretta). Li compilano admin, organizzatori e account dei campi;
     // il risultato entra nel torneo solo quando l'organizzatore lo conferma (stato "omologato").
+    // Pulsanti Flic via internet: l'app Flic (Richiesta Internet) scrive un gesto; lo scoresheet lo legge e lo cancella.
+    // Il codice è segreto e lungo: lo conosce solo il dispositivo che tiene il punteggio.
+    match /flic/{code}/ev/{id} {
+      allow create: if code.size() >= 16 && code.size() <= 40
+        && request.resource.data.keys().hasOnly(['g'])
+        && request.resource.data.g in ['0c', '0d', '0h', '1c', '1d', '1h'];
+      allow read, delete: if code.size() >= 16 && code.size() <= 40;
+    }
+
     match /referti/{id} {
       allow read: if true;
       function okRef() { return signedIn() && data().tid is string && id.matches(data().tid + '__.+') && data().ev is list && data().ev.size() <= 3000; }

@@ -57,6 +57,7 @@
   let cfg = def();
   try { cfg = Object.assign(def(), JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) { cfg = def(); }
   cfg.comuni = Object.assign({ double: '', hold: '' }, cfg.comuni || {});
+  cfg.net = Object.assign({ on: false, code: '' }, cfg.net || {});
   const save = () => { try { localStorage.setItem(LS, JSON.stringify(cfg)); } catch (e) { /* ignora */ } };
 
   let handler = null;        // (squadra 0/1, gesto) => void
@@ -222,6 +223,26 @@
   document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-flic-sim]')) e.preventDefault(); });
 
   // descrizione leggibile di un tasto
+  // ---------- via internet (app Flic → "Internet Request" → database) ----------
+  // Il Flic resta collegato solo all'app Flic, non come tastiera: così il telefono tiene la sua tastiera.
+  // A ogni gesto l'app Flic scrive { g: '0c' } (pulsante 0/1 + c=click, d=doppio, h=lunga) in flic/{codice}/ev.
+  const newCode = () => Array.from(crypto.getRandomValues(new Uint8Array(20)), x => 'abcdefghijkmnpqrstuvwxyz23456789'[x % 32]).join('');
+  let netUnsub = null, netLast = null;
+  function syncNet() {
+    const want = cfg.net.on && cfg.net.code && handler && window.Cloud && window.Cloud.watchFlic;
+    if (want && !netUnsub) {
+      netUnsub = window.Cloud.watchFlic(cfg.net.code, g => {
+        const b = Number(g[0]), gest = { c: 'click', d: 'double', h: 'hold' }[g[1]];
+        if ((b !== 0 && b !== 1) || !gest) return;
+        netLast = { b, g: gest, at: Date.now() };
+        fire(b, gest);
+        changed();
+      });
+    } else if (!want && netUnsub) { netUnsub(); netUnsub = null; }
+  }
+  // lo scoresheet ridisegna spesso: se il database è arrivato dopo, ci si collega al primo giro utile
+  window.addEventListener('cloud-ready', syncNet);
+
   const keyLabel = c => (!c ? '—' : c.replace(/^Key/, '').replace(/^Digit/, '').replace(/^Numpad/, 'Num ').replace(/^Arrow/, '↔ '));
 
   window.Flic = {
@@ -230,7 +251,13 @@
     get wsState() { return wsState; },
     get learning() { return learning; },
     // l'app indica chi riceve i gesti (null = nessuno: scoresheet chiuso)
-    setHandler(fn) { handler = fn; if (!fn) det.reset(); },
+    setHandler(fn) { handler = fn; if (!fn) det.reset(); syncNet(); },
+    // collegamento via internet
+    get net() { return { on: cfg.net.on, code: cfg.net.code, live: !!netUnsub, last: netLast }; },
+    netOn(on) { if (on && !cfg.net.code) cfg.net.code = newCode(); cfg.net.on = !!on; save(); syncNet(); changed(); },
+    netNewCode() { cfg.net.code = newCode(); save(); if (netUnsub) { netUnsub(); netUnsub = null; } syncNet(); changed(); },
+    netUrl() { const p = (window.Cloud && window.Cloud.projectId) || ''; return `https://firestore.googleapis.com/v1/projects/${p}/databases/(default)/documents/flic/${cfg.net.code}/ev`; },
+    netBody: (b, g) => `{"fields":{"g":{"stringValue":"${b}${{ click: 'c', double: 'd', hold: 'h' }[g]}"}}}`,
     onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
     learn(team, slot, cb) { learning = { team, slot: slot || 'press', cb }; changed(); },
     cancelLearn() { learning = null; changed(); },

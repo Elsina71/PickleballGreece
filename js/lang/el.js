@@ -1318,5 +1318,21 @@ I18n.add('el', {
  "Questo è il pulsante della prima squadra: premi quello dell’altra.": "Αυτό είναι το κουμπί της πρώτης ομάδας: πάτησε το άλλο.",
  "Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera.": "Η σύζευξη ολοκληρώθηκε: 1 πάτημα πόντος, διπλό κλικ αναίρεση, παρατεταμένο πάτημα μηδενισμός.",
  "Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo.": "Τα κουμπιά και το διπλό κλικ συνδέθηκαν. Το παρατεταμένο πάτημα στέλνει το ίδιο πλήκτρο με το κλικ: για μηδενισμό χρησιμοποίησε το κουμπί στην οθόνη.",
- "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Το Flic στέλνει πάντα το ίδιο πλήκτρο: τις κινήσεις τις αναγνωρίζει η εφαρμογή (1 πάτημα, 2 πατήματα, παρατεταμένο πάτημα)."
+ "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Το Flic στέλνει πάντα το ίδιο πλήκτρο: τις κινήσεις τις αναγνωρίζει η εφαρμογή (1 πάτημα, 2 πατήματα, παρατεταμένο πάτημα).",
+ "Senza tastiera Bluetooth (consigliato su iPhone)": "Χωρίς πληκτρολόγιο Bluetooth (προτείνεται σε iPhone)",
+ "Il Flic resta collegato solo all’app Flic: a ogni pressione l’app Flic manda un segnale via internet allo scoresheet. Così il telefono non vede nessuna tastiera e puoi scrivere normalmente. Serve internet.": "Το Flic μένει συνδεδεμένο μόνο στην εφαρμογή Flic: σε κάθε πάτημα η εφαρμογή Flic στέλνει σήμα μέσω internet στο φύλλο αγώνα. Το τηλέφωνο δεν βλέπει πληκτρολόγιο και γράφεις κανονικά. Χρειάζεται internet.",
+ "Attiva il collegamento via internet": "Ενεργοποίηση σύνδεσης μέσω internet",
+ "Ultimo segnale: {0}": "Τελευταίο σήμα: {0}",
+ "Ancora nessun segnale: premi un Flic per provare.": "Κανένα σήμα ακόμα: πάτησε ένα Flic για δοκιμή.",
+ "Copia": "Αντιγραφή",
+ "In ascolto": "Σε αναμονή σημάτων",
+ "Non in ascolto (serve la connessione)": "Εκτός σύνδεσης (χρειάζεται internet)",
+ "Se il Flic era abbinato come tastiera: Impostazioni → Bluetooth → (i) accanto al Flic → Dissocia dispositivo; nell’app Flic togli la modalità tastiera.": "Αν το Flic ήταν συνδεδεμένο ως πληκτρολόγιο: Ρυθμίσεις → Bluetooth → (i) δίπλα στο Flic → Λησμόνηση συσκευής· στην εφαρμογή Flic απενεργοποίησε τη λειτουργία πληκτρολογίου.",
+ "Nell’app Flic apri il pulsante, tocca “Click” e scegli l’azione “Internet Request”.": "Στην εφαρμογή Flic άνοιξε το κουμπί, πάτησε “Click” και διάλεξε την ενέργεια “Internet Request”.",
+ "Metodo POST, l’indirizzo (URL) qui sotto, tipo di contenuto application/json e il testo (Body) del gesto. Ripeti per “Double Click” e “Hold” e poi per l’altro pulsante.": "Μέθοδος POST, η διεύθυνση (URL) παρακάτω, τύπος περιεχομένου application/json και το κείμενο (Body) της κίνησης. Επανάλαβε για “Double Click” και “Hold” και μετά για το άλλο κουμπί.",
+ "Indirizzo (URL), uguale per tutti": "Διεύθυνση (URL), ίδια για όλα",
+ "Non condividere questo indirizzo: chi lo ha può segnare punti. Con “Nuovo codice” lo cambi (poi vanno rifatte le azioni nell’app Flic).": "Μη μοιράζεσαι αυτή τη διεύθυνση: όποιος την έχει μπορεί να βάλει πόντους. Με “Νέος κωδικός” την αλλάζεις (μετά ξαναφτιάχνεις τις ενέργειες στην εφαρμογή Flic).",
+ "Nuovo codice": "Νέος κωδικός",
+ "Il codice cambia: dovrai rifare le azioni nell’app Flic. Continuare?": "Ο κωδικός θα αλλάξει: θα πρέπει να ξαναφτιάξεις τις ενέργειες στην εφαρμογή Flic. Συνέχεια;",
+ "Copiato.": "Αντιγράφηκε."
 });

@@ -1318,5 +1318,21 @@ I18n.add('ru', {
  "Questo è il pulsante della prima squadra: premi quello dell’altra.": "Это кнопка первой команды: нажмите кнопку другой.",
  "Abbinamento completato: 1 tocco punto, doppio clic annulla, pressione lunga azzera.": "Привязка завершена: 1 нажатие — очко, двойной клик — отмена, долгое нажатие — сброс.",
  "Pulsanti e doppio clic abbinati. La pressione lunga manda lo stesso tasto del clic: per azzerare usa il pulsante sullo schermo.": "Кнопки и двойной клик привязаны. Долгое нажатие отправляет ту же клавишу, что и клик: для сброса используйте кнопку на экране.",
- "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Flic всегда отправляет одну и ту же клавишу: жесты распознаёт приложение (1 нажатие, 2 нажатия, долгое нажатие)."
+ "Il Flic manda sempre lo stesso tasto: i gesti li riconosce l’app (1 tocco, 2 tocchi, pressione lunga).": "Flic всегда отправляет одну и ту же клавишу: жесты распознаёт приложение (1 нажатие, 2 нажатия, долгое нажатие).",
+ "Senza tastiera Bluetooth (consigliato su iPhone)": "Без Bluetooth-клавиатуры (рекомендуется на iPhone)",
+ "Il Flic resta collegato solo all’app Flic: a ogni pressione l’app Flic manda un segnale via internet allo scoresheet. Così il telefono non vede nessuna tastiera e puoi scrivere normalmente. Serve internet.": "Flic подключён только к приложению Flic: при каждом нажатии приложение Flic отправляет сигнал через интернет в протокол. Телефон не видит клавиатуру, и вы можете печатать как обычно. Нужен интернет.",
+ "Attiva il collegamento via internet": "Включить подключение через интернет",
+ "Ultimo segnale: {0}": "Последний сигнал: {0}",
+ "Ancora nessun segnale: premi un Flic per provare.": "Сигналов пока нет: нажмите Flic для проверки.",
+ "Copia": "Копировать",
+ "In ascolto": "Ожидает сигналы",
+ "Non in ascolto (serve la connessione)": "Не ожидает (нужно подключение)",
+ "Se il Flic era abbinato come tastiera: Impostazioni → Bluetooth → (i) accanto al Flic → Dissocia dispositivo; nell’app Flic togli la modalità tastiera.": "Если Flic был подключён как клавиатура: Настройки → Bluetooth → (i) рядом с Flic → Забыть это устройство; в приложении Flic выключите режим клавиатуры.",
+ "Nell’app Flic apri il pulsante, tocca “Click” e scegli l’azione “Internet Request”.": "В приложении Flic откройте кнопку, нажмите «Click» и выберите действие «Internet Request».",
+ "Metodo POST, l’indirizzo (URL) qui sotto, tipo di contenuto application/json e il testo (Body) del gesto. Ripeti per “Double Click” e “Hold” e poi per l’altro pulsante.": "Метод POST, адрес (URL) ниже, тип содержимого application/json и текст (Body) жеста. Повторите для «Double Click» и «Hold», затем для другой кнопки.",
+ "Indirizzo (URL), uguale per tutti": "Адрес (URL), одинаковый для всех",
+ "Non condividere questo indirizzo: chi lo ha può segnare punti. Con “Nuovo codice” lo cambi (poi vanno rifatte le azioni nell’app Flic).": "Не делитесь этим адресом: у кого он есть, тот может ставить очки. «Новый код» меняет его (затем заново настройте действия в приложении Flic).",
+ "Nuovo codice": "Новый код",
+ "Il codice cambia: dovrai rifare le azioni nell’app Flic. Continuare?": "Код изменится: придётся заново настроить действия в приложении Flic. Продолжить?",
+ "Copiato.": "Скопировано."
 });
