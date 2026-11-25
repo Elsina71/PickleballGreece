@@ -739,3 +739,16 @@ label, legend { font-size: .92rem; }
 .voice-g { display: inline-flex; gap: 6px; flex-wrap: wrap; }
 .voce-panel { margin-top: 12px; }
 .voce-row input[type=range] { width: 100%; }
+
+/* Pulsanti Flic */
+.sb-flic { margin-top: 12px; }
+.flic-row { border-top: 1px solid var(--border); padding: 8px 0; }
+.flic-row p { margin: 4px 0; }
+.flic-howto { margin: 6px 0 10px; padding-left: 1.2em; }
+.flic-sim { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.flic-sim p { grid-column: 1 / -1; margin: 0; }
+.flic-sim-btn { --sim: var(--primary); min-height: 96px; border-radius: 50%; aspect-ratio: 1; max-width: 140px; justify-self: center; width: 100%;
+  border: 6px solid var(--sim); background: var(--surface); color: var(--text); font-weight: 800; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; }
+.flic-sim-btn small { font-weight: 500; font-size: .7rem; padding: 0 8px; text-align: center; }
+.flic-sim-btn.down { transform: scale(.94); background: color-mix(in srgb, var(--sim) 25%, var(--surface)); }

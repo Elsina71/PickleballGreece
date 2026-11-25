@@ -10,12 +10,18 @@
       "mockups/**",
       "img/logo-originale.jpg",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "flic-ponte/**"
     ],
     "headers": [
       {
         "source": "**",
-        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
       }
     ]
   },
@@ -23,8 +29,14 @@
     "rules": "firestore.rules"
   },
   "emulators": {
-    "auth": { "port": 9099 },
-    "firestore": { "port": 8080 },
-    "ui": { "enabled": false }
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": false
+    }
   }
 }

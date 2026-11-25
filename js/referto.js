@@ -80,7 +80,11 @@
     }
     return ui.ref;
   }
-  function close() { window.Cloud && window.Cloud.watchReferto && window.Cloud.watchReferto(null); }
+  function close() {
+    window.Cloud && window.Cloud.watchReferto && window.Cloud.watchReferto(null);
+    if (window.Flic) window.Flic.setHandler(null);
+    wake(false);
+  }
 
   function persist(now) {
     const r = ui.ref;
@@ -118,10 +122,13 @@
       <p class="muted small">${t ? H.esc(t.nome) + ' · ' : ''}${sistemaLabel(r.cfg)} · ${r.cfg.giochi === 1 ? T("game unico") : T("{0} game su {1}", [Score.needWins(r.cfg), r.cfg.giochi])} · ${T("ai {0}", [r.cfg.punti[0]])}${r.cfg.giochi > 1 && r.cfg.punti[r.cfg.giochi - 1] !== r.cfg.punti[0] ? ' ' + T("(decisivo ai {0})", [r.cfg.punti[r.cfg.giochi - 1]]) : ''} · ${ccText(r.cfg)}</p></div>`;
     if (!r.libero && !r.loaded) return head + `<p class="muted">${T("Caricamento…")}</p>`;
     if (!edit && !r.ev.length) return head + H.empty(T("Lo scoresheet di questa gara non è ancora iniziato."), 'clipboard-text');
+    // i pulsanti Flic comandano questo scoresheet finché è aperto; lo schermo resta acceso
+    if (window.Flic) window.Flic.setHandler(edit ? onFlic : null);
+    wake(edit && st.phase !== 'end');
     let body;
     if (st.phase === 'setup' || st.phase === 'gameover') body = (st.phase === 'gameover' ? gameOverBanner(r, st) : '') + (edit ? startForm(r, st) : `<p class="muted">${T("In attesa dell’inizio del game.")}</p>`);
     else body = board(r, st, edit);
-    return `<div class="sb-page">${head}${body}${history(r, st)}${tools(r, st, edit)}</div>`;
+    return `<div class="sb-page">${head}${edit ? resetBanner() : ''}${body}${edit && window.Flic && window.Flic.cfg.sim ? simButtons(r) : ''}${history(r, st)}${tools(r, st, edit)}</div>`;
   }
 
   function freeSetup() {
@@ -219,10 +226,12 @@
     const b = [];
     if (edit && r.ev.length) b.push(`<button class="btn" data-action="ref-undo">${H.icon('arrow-back-up')} ${T("Annulla l’ultima azione")}</button>`);
     if (edit && st.phase === 'play' && !(H.tourById(r.tid) && Array.isArray((H.findMatch(H.tourById(r.tid), r.key) || {}).a))) b.push(`<button class="btn" data-action="ref-retire">${H.icon('flag-off')} ${T("Ritiro")}</button>`);
+    if (edit && window.Flic) b.push(`<button class="btn ${ui.flicOpen ? 'primary' : ''}" data-action="ref-flic-panel">${H.icon('hand-click')} ${T("Pulsanti Flic")}${window.Flic.wsState === 'collegato' ? ' · ' + T("ponte collegato") : ''}</button>`);
+    if (edit && r.ev.length) b.push(`<button class="btn" data-action="ref-reset">${H.icon('restore')} ${T("Azzera la partita")}</button>`);
     if (edit && V() && V().supported()) b.push(`<button class="btn ${ui.voiceOpen ? 'primary' : ''}" data-action="ref-voice-panel">${H.icon(V().on ? 'volume' : 'volume-off')} ${V().on ? T("Voce: attiva") : T("Voce: spenta")} · ${T("impostazioni")}</button>`);
     if (r.ev.length) b.push(`<button class="btn" data-action="ref-pdf">${H.icon('file-download')} ${T("Scarica PDF")}</button>`);
     if (r.libero) b.push(`<button class="btn" data-action="ref-new">${H.icon('refresh')} ${T("Nuova partita")}</button>`);
-    return (b.length ? `<div class="actions wrap sb-tools">${b.join('')}</div>` : '') + (edit && ui.voiceOpen ? voicePanel() : '');
+    return (b.length ? `<div class="actions wrap sb-tools">${b.join('')}</div>` : '') + (edit && ui.flicOpen ? flicPanel(r) : '') + (edit && ui.voiceOpen ? voicePanel() : '');
   }
 
   const toLeft = () => { if (!ui.to) return ''; const s = Math.max(0, Math.ceil((ui.to.end - Date.now()) / 1000)); return s ? `0:${String(s).padStart(2, '0')}` : T("tempo scaduto"); };
@@ -277,13 +286,133 @@
     if (!r || !canEdit(r)) return;
     const before = Score.replay(r.cfg, r.ev);
     if (before.phase === 'end') return;   // partita finita: si può solo annullare
-    r.ev.push(e);
+    [].concat(e).forEach(x => r.ev.push(x));
+    ui.undoReset = null;
     if (!r.libero && r.stato === 'finito') r.stato = 'live';
     persist();
     H.render();
     speak(r, before);
     if (navigator.vibrate) try { navigator.vibrate(15); } catch (err) { /* ignora */ }
   }
+  function undo() {
+    const r = cur(); if (!r || !canEdit(r)) return;
+    // subito dopo un azzeramento, "annulla" rimette la partita com'era
+    if (!r.ev.length && ui.undoReset && ui.undoReset.r === r) {
+      r.ev = ui.undoReset.ev; ui.undoReset = null;
+      persist(); H.render();
+      if (V()) V().say(`Match restored. ${V().callText(Score.replay(r.cfg, r.ev).cur)}.`);
+      return;
+    }
+    if (!r.ev.length) return;
+    const before = Score.replay(r.cfg, r.ev);
+    r.ev.pop();
+    if (!r.libero && r.stato === 'finito') r.stato = 'live';
+    persist(); H.render();
+    speak(r, before, 'undo');
+  }
+  // azzeramento: si chiede conferma (un'altra pressione lunga entro 5 secondi, o il pulsante sullo schermo)
+  function askReset() {
+    const r = cur(); if (!r || !canEdit(r) || !r.ev.length) return;
+    if (ui.reset && ui.reset.until > Date.now()) return doReset();
+    ui.reset = { until: Date.now() + 5000 };
+    clearTimeout(ui.resetTimer);
+    ui.resetTimer = setTimeout(() => { ui.reset = null; H.render(); }, 5000);
+    H.render();
+    if (V()) V().say('Reset the match? Hold the button again to confirm.', true);
+  }
+  function doReset() {
+    const r = cur();
+    ui.reset = null; clearTimeout(ui.resetTimer);
+    if (!r || !canEdit(r) || !r.ev.length) { H.render(); return; }
+    ui.undoReset = { r, ev: r.ev.slice() };
+    r.ev = [];
+    if (!r.libero && r.stato === 'finito') r.stato = 'live';
+    persist(true); H.render();
+    if (V()) V().say('Match reset.', true);
+    H.toast(T("Partita azzerata: due tocchi (o Annulla) la ripristinano."), 'ok');
+  }
+  const resetBanner = () => (ui.reset ? `<div class="notice warn-box sb-banner">${H.icon('alert-triangle')} <span><strong>${T("Azzerare la partita?")}</strong> ${T("Conferma con un’altra pressione lunga entro 5 secondi, oppure qui.")}</span>
+    <button class="btn small danger" data-action="ref-reset-ok">${T("Azzera")}</button><button class="btn small" data-action="ref-reset-no">${T("Annulla")}</button></div>` : '');
+  // gesti dei pulsanti Flic (squadra 0/1): 1 tocco = scambio vinto, 2 tocchi = annulla, pressione lunga = azzera
+  function onFlic(team, g) {
+    const r = cur();
+    if (!r || !r.cfg || !canEdit(r)) return;
+    if (document.querySelector('dialog[open]')) return;
+    if (g === 'hold') return askReset();
+    if (g === 'triple') return;   // 3 o più tocchi: nessuna azione
+    if (ui.reset) { ui.reset = null; clearTimeout(ui.resetTimer); }
+    if (g === 'double') return undo();
+    if (g !== 'click') return;
+    const st = Score.replay(r.cfg, r.ev);
+    if (st.phase === 'play') {
+      // se c'era da cambiare campo, il tocco vuol dire che il cambio è stato fatto
+      push(st.cur.needCC ? ['C', team ? 'B' : 'A'] : (team ? 'B' : 'A'));
+    } else if (st.phase === 'setup' || st.phase === 'gameover') {
+      // inizio del game: serve la squadra che preme; a destra come nel game precedente
+      const prev = st.games[st.games.length - 1], rr = prev ? prev.start.r : [0, 0];
+      push('G' + team + rr[0] + rr[1]);
+    } else if (V()) V().say(V().announce(null, st, r.nomi), true);
+  }
+  // schermo sempre acceso durante la partita (il telefono non va in blocco e i pulsanti restano collegati)
+  let lock = null;
+  function wake(on) {
+    if (!('wakeLock' in navigator)) return;
+    if (on && !lock && document.visibilityState === 'visible') {
+      lock = 'attesa';
+      navigator.wakeLock.request('screen').then(l => { lock = l; l.addEventListener('release', () => { if (lock === l) lock = null; }); }).catch(() => { lock = null; });
+    } else if (!on && lock && lock !== 'attesa') { lock.release().catch(() => {}); lock = null; }
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && /^#\/referto/.test(location.hash) && H) H.render(); });
+  if (window.Flic) window.Flic.onChange(() => { if (/^#\/referto/.test(location.hash) && H) H.render(); });
+
+  // due pulsanti sullo schermo che si comportano come i Flic (prove senza pulsanti)
+  function simButtons(r) {
+    const F = window.Flic, team = b => (F.cfg.swap ? 1 - b : b);
+    return `<div class="flic-sim">${[0, 1].map(b => `<button type="button" class="flic-sim-btn" data-flic-sim="${b}" ${r.colori ? `style="--sim:${r.colori[team(b)]}"` : ''}>
+      <span>${T("Flic {0}", [b + 1])}</span><small>${H.esc(teamLabel(r, team(b)))}</small></button>`).join('')}
+      <p class="muted small">${T("Simulatore: 1 tocco = vince lo scambio · 2 tocchi = annulla · tieni premuto = azzera")}</p></div>`;
+  }
+  // impostazioni dei pulsanti Flic
+  function flicPanel(r) {
+    const F = window.Flic;
+    if (!F) return '';
+    const c = F.cfg, L = F.learning, team = b => (c.swap ? 1 - b : b);
+    const learnBtn = (b, slot, lbl) => L && L.team === b && L.slot === slot
+      ? `<button class="btn small primary" data-action="ref-flic-cancel">${T("Premi ora il pulsante… (tocca per annullare)")}</button>`
+      : `<button class="btn small" data-action="ref-flic-learn" data-b="${b}" data-slot="${slot}">${lbl}</button>`;
+    const row = b => {
+      const k = c.keys[b] || {};
+      const extra = ['click', 'double', 'hold'].map(g => `<span class="chip">${{ click: T("1 tocco"), double: T("2 tocchi"), hold: T("pressione lunga") }[g]}: ${k[g] ? H.esc(F.keyLabel(k[g])) + ` <button type="button" class="link" data-action="ref-flic-clear" data-b="${b}" data-slot="${g}" aria-label="${T("Togli")}">×</button>` : '—'} ${learnBtn(b, g, T("Abbina"))}</span>`).join(' ');
+      return `<div class="flic-row"><p><strong>${T("Pulsante {0}", [b + 1])}</strong> → ${H.esc(teamLabel(r, team(b)))}</p>
+        <p class="small">${T("Tasto Bluetooth")}: <strong>${H.esc(F.keyLabel(k.press))}</strong> ${learnBtn(b, 'press', T("Abbina tasto"))}</p>
+        <details class="small"><summary>${T("Tasti separati per i gesti (facoltativo)")}</summary><p>${extra}</p></details>
+        <p class="small">${T("Ponte sul PC")}: <strong>${c.bridge[b] ? H.esc(c.bridge[b]) : '—'}</strong> ${F.wsState === 'collegato' ? learnBtn(b, 'bridge', T("Abbina dal ponte")) : ''}</p></div>`;
+    };
+    const wiz = L && ['press', 'bridge'].includes(L.slot) && ui.wizard != null
+      ? `<div class="notice sb-banner flic-wiz">${H.icon('hand-click')} <span><strong>${T("Premi il pulsante di {0}", [H.esc(teamLabel(r, team(L.team)))])}</strong> (${T("pulsante {0} di 2", [L.team + 1])})</span>
+        <button class="btn small" data-action="ref-flic-cancel">${T("Annulla")}</button></div>`
+      : `<div class="actions wrap"><button class="btn primary" data-action="ref-flic-wizard">${H.icon('link')} ${T("Abbina i pulsanti")}</button>
+        ${F.wsState === 'collegato' ? `<button class="btn" data-action="ref-flic-wizard" data-slot="bridge">${H.icon('link')} ${T("Abbina dal ponte")}</button>` : ''}</div>`;
+    return `<section class="card sb-flic">
+        <h3>${H.icon('hand-click')} ${T("Pulsanti Flic")}</h3>
+        <p><strong>${T("1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).")}</strong></p>
+        <ol class="small flic-howto">
+          <li>${T("Nell’app Flic imposta ogni pulsante come tastiera (HID) e scegli un tasto diverso per ciascuno.")}</li>
+          <li>${T("Abbina il pulsante al telefono, al Mac o al PC dalle impostazioni Bluetooth, come una tastiera.")}</li>
+          <li>${T("Qui premi “Abbina i pulsanti” e poi il pulsante di ogni squadra.")}</li>
+        </ol>
+        ${wiz}
+        ${[0, 1].map(row).join('')}
+        <div class="actions wrap"><button class="btn small" data-action="ref-flic-swap">${H.icon('arrows-exchange')} ${T("Inverti i pulsanti")}</button>
+          <button class="btn small ${c.sim ? 'primary' : ''}" data-action="ref-flic-sim">${H.icon('device-gamepad-2')} ${c.sim ? T("Nascondi simulatore") : T("Mostra simulatore")}</button></div>
+        <details class="small"><summary>${T("In alternativa: ponte su PC Windows o Linux (programma ufficiale Flic)")}</summary>
+          <p class="muted">${T("Avvia il programma Flic e il ponte (cartella flic-ponte del progetto: ponte_flic.py), poi collega qui.")}</p>
+          <form data-form="ref-ponte" class="row flic-ponte"><label>${T("Indirizzo del ponte")}<input name="ws" value="${H.esc(c.ws)}" placeholder="ws://localhost:8765"></label>
+            <span class="actions">${F.wsState === 'off' ? `<button class="btn small">${T("Collega")}</button>` : `<button class="btn small" type="button" data-action="ref-ponte-off">${T("Scollega")}</button>`}
+            <span class="muted small">${{ off: T("non collegato"), connessione: T("collegamento…"), collegato: T("collegato"), riconnessione: T("ponte non raggiungibile, riprovo…"), errore: T("indirizzo non valido") }[F.wsState] || ''}</span></span></form></details>
+      </section>`;
+  }
+
   const actions = {
     'ref-rally': d => push(Number(d.w) === 0 ? 'A' : 'B'),
     'ref-to': d => {
@@ -305,14 +434,27 @@
     },
     'ref-voice-panel': () => { ui.voiceOpen = !ui.voiceOpen; H.render(); },
     'ref-voice-test': () => { if (V()) V().say(SAMPLE, true); },
-    'ref-undo': () => {
-      const r = cur(); if (!r || !canEdit(r) || !r.ev.length) return;
-      const before = Score.replay(r.cfg, r.ev);
-      r.ev.pop();
-      if (!r.libero && r.stato === 'finito') r.stato = 'live';
-      persist(); H.render();
-      speak(r, before, 'undo');
+    'ref-undo': () => undo(),
+    'ref-reset': () => askReset(),
+    'ref-reset-ok': () => doReset(),
+    'ref-reset-no': () => { ui.reset = null; clearTimeout(ui.resetTimer); H.render(); },
+    'ref-flic-panel': () => { ui.flicOpen = !ui.flicOpen; H.render(); },
+    'ref-flic-learn': d => window.Flic.learn(Number(d.b), d.slot, () => H.toast(T("Pulsante abbinato."), 'ok')),
+    'ref-flic-wizard': d => {
+      const slot = d.slot || 'press', r = cur();
+      const name = b => (r && r.nomi ? teamLabel(r, window.Flic.cfg.swap ? 1 - b : b) : T("squadra {0}", [b + 1]));
+      ui.wizard = 0;
+      window.Flic.learn(0, slot, () => {
+        ui.wizard = 1;
+        if (V()) V().say(`Now the button of ${name(1).replace(/ \/ /g, ' and ')}.`, true);
+        window.Flic.learn(1, slot, () => { ui.wizard = null; H.toast(T("Pulsanti abbinati: si gioca!"), 'ok'); if (V()) V().say('Buttons paired.', true); });
+      });
     },
+    'ref-flic-cancel': () => { ui.wizard = null; window.Flic.cancelLearn(); },
+    'ref-flic-clear': d => window.Flic.clearKey(Number(d.b), d.slot),
+    'ref-flic-swap': () => window.Flic.set('swap', !window.Flic.cfg.swap),
+    'ref-flic-sim': () => window.Flic.set('sim', !window.Flic.cfg.sim),
+    'ref-ponte-off': () => window.Flic.disconnect(),
     'ref-retire': () => {
       const r = cur(); if (!r) return;
       const w = prompt(T("Quale squadra si ritira? Scrivi 1 per {0} o 2 per {1}", [teamLabel(r, 0), teamLabel(r, 1)]));
@@ -338,6 +480,7 @@
     }
   };
   const forms = {
+    'ref-ponte': v => { window.Flic.set('ws', (v.ws || '').trim() || 'ws://localhost:8765'); window.Flic.connect(); },
     'ref-libero': (v, f) => {
       const doppio = v.doppio === '1';
       const nomi = [[v.a0, v.a1], [v.b0, v.b1]].map(x => (doppio ? x : x.slice(0, 1)).map(s => (s || '').trim()));
