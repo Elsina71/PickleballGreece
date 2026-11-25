@@ -1334,5 +1334,10 @@ I18n.add('el', {
  "Non condividere questo indirizzo: chi lo ha può segnare punti. Con “Nuovo codice” lo cambi (poi vanno rifatte le azioni nell’app Flic).": "Μη μοιράζεσαι αυτή τη διεύθυνση: όποιος την έχει μπορεί να βάλει πόντους. Με “Νέος κωδικός” την αλλάζεις (μετά ξαναφτιάχνεις τις ενέργειες στην εφαρμογή Flic).",
  "Nuovo codice": "Νέος κωδικός",
  "Il codice cambia: dovrai rifare le azioni nell’app Flic. Continuare?": "Ο κωδικός θα αλλάξει: θα πρέπει να ξαναφτιάξεις τις ενέργειες στην εφαρμογή Flic. Συνέχεια;",
- "Copiato.": "Αντιγράφηκε."
+ "Copiato.": "Αντιγράφηκε.",
+ "Il Flic resta collegato solo all’app Flic: a ogni pressione l’app Flic manda un segnale via internet allo scoresheet. Serve internet.": "Το Flic μένει συνδεδεμένο μόνο με την εφαρμογή Flic: σε κάθε πάτημα η εφαρμογή στέλνει σήμα μέσω ίντερνετ στο φύλλο αγώνα. Χρειάζεται ίντερνετ.",
+ "Attiva il collegamento diretto": "Ενεργοποίηση άμεσης σύνδεσης",
+ "URL: incolla il link del gesto (qui sotto). Metodo: POST. Content Type: application/json. Body: vuoto.": "URL: επικόλλησε τον σύνδεσμο της κίνησης (παρακάτω). Μέθοδος: POST. Content Type: application/json. Body: κενό.",
+ "Ripeti per “Double Click” e “Hold”, poi per l’altro pulsante: 6 link in tutto, uno per gesto.": "Επανάλαβε για «Double Click» και «Hold», μετά για το άλλο κουμπί: 6 σύνδεσμοι συνολικά, ένας ανά κίνηση.",
+ "Non condividere questi link: chi li ha può segnare punti. Con “Nuovo codice” cambiano (poi vanno rifatte le azioni nell’app Flic).": "Μη μοιράζεσαι αυτούς τους συνδέσμους: όποιος τους έχει μπορεί να βάλει πόντους. Με «Νέος κωδικός» αλλάζουν (μετά ξαναφτιάχνεις τις ενέργειες στην εφαρμογή Flic).",
 });

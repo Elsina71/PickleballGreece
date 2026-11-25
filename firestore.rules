@@ -129,6 +129,13 @@ service cloud.firestore {
     // il risultato entra nel torneo solo quando l'organizzatore lo conferma (stato "omologato").
     // Pulsanti Flic via internet: l'app Flic (Richiesta Internet) scrive un gesto; lo scoresheet lo legge e lo cancella.
     // Il codice è segreto e lungo: lo conosce solo il dispositivo che tiene il punteggio.
+    // Collegamento diretto: un link per gesto (flic/{codice}/{gesto}), metodo POST senza testo (documento vuoto).
+    match /flic/{code}/{g}/{id} {
+      allow create: if code.size() >= 16 && code.size() <= 40
+        && g in ['0c', '0d', '0h', '1c', '1d', '1h']
+        && request.resource.data.keys().size() == 0;
+      allow read, delete: if code.size() >= 16 && code.size() <= 40 && g in ['0c', '0d', '0h', '1c', '1d', '1h'];
+    }
     match /flic/{code}/ev/{id} {
       allow create: if code.size() >= 16 && code.size() <= 40
         && request.resource.data.keys().hasOnly(['g'])

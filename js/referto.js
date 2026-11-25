@@ -128,7 +128,7 @@
     let body;
     if (st.phase === 'setup' || st.phase === 'gameover') body = (st.phase === 'gameover' ? gameOverBanner(r, st) : '') + (edit ? startForm(r, st) : `<p class="muted">${T("In attesa dell’inizio del game.")}</p>`);
     else body = board(r, st, edit);
-    return `<div class="sb-page">${head}${edit ? resetBanner() : ''}${body}${edit && window.Flic && window.Flic.cfg.sim ? simButtons(r) : ''}${history(r, st)}${tools(r, st, edit)}</div>`;
+    return `<div class="sb-page">${head}${edit ? resetBanner() : ''}${body}${history(r, st)}${tools(r, st, edit)}</div>`;
   }
 
   function freeSetup() {
@@ -387,8 +387,7 @@
       const extra = ['click', 'double', 'hold'].map(g => `<span class="chip">${{ click: T("1 tocco"), double: T("2 tocchi"), hold: T("pressione lunga") }[g]}: ${k[g] ? H.esc(F.keyLabel(k[g])) + ` <button type="button" class="link" data-action="ref-flic-clear" data-b="${b}" data-slot="${g}" aria-label="${T("Togli")}">×</button>` : '—'} ${learnBtn(b, g, T("Abbina"))}</span>`).join(' ');
       return `<div class="flic-row"><p><strong>${T("Pulsante {0}", [b + 1])}</strong> → ${H.esc(teamLabel(r, team(b)))}</p>
         <p class="small">${T("Tasto Bluetooth")}: <strong>${H.esc(F.keyLabel(k.press))}</strong> ${learnBtn(b, 'press', T("Abbina tasto"))}</p>
-        <details class="small"><summary>${T("Tasti separati per i gesti (facoltativo)")}</summary><p>${extra}</p></details>
-        <p class="small">${T("Ponte sul PC")}: <strong>${c.bridge[b] ? H.esc(c.bridge[b]) : '—'}</strong> ${F.wsState === 'collegato' ? learnBtn(b, 'bridge', T("Abbina dal ponte")) : ''}</p></div>`;
+        <details class="small"><summary>${T("Tasti separati per i gesti (facoltativo)")}</summary><p>${extra}</p></details></div>`;
     };
     const PSTEP = [T("1 · Premi una volta il pulsante della squadra {0}", [H.esc(teamLabel(r, 0))]), T("2 · Premi una volta il pulsante della squadra {0}", [H.esc(teamLabel(r, 1))]),
       T("3 · Fai un doppio clic su uno dei due pulsanti (annulla)"), T("4 · Tieni premuto uno dei due pulsanti (azzera)")];
@@ -401,11 +400,13 @@
         <button class="btn small" data-action="ref-flic-cancel">${T("Annulla")}</button></div>`
       : `<div class="actions wrap"><button class="btn primary" data-action="ref-flic-pair">${H.icon('link')} ${T("Abbina tutto (pulsanti e gesti)")}</button>
         <button class="btn" data-action="ref-flic-wizard">${H.icon('link')} ${T("Abbina solo i pulsanti")}</button>
-        ${F.wsState === 'collegato' ? `<button class="btn" data-action="ref-flic-wizard" data-slot="bridge">${H.icon('link')} ${T("Abbina dal ponte")}</button>` : ''}</div>`;
+</div>`;
     return `<section class="card sb-flic">
         <h3>${H.icon('hand-click')} ${T("Pulsanti Flic")}</h3>
-        ${netPanel(r)}
         <p><strong>${T("1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).")}</strong></p>
+        ${netPanel(r)}
+        <div class="flic-row flic-kb">
+        <h4>${H.icon('keyboard')} CONNECTION BY KEYBOARD</h4>
         <ol class="small flic-howto">
           <li>${T("Nell’app Flic imposta ogni pulsante come tastiera (HID) e scegli un tasto diverso per ciascuno.")}</li>
           <li>${T("Abbina il pulsante al telefono, al Mac o al PC dalle impostazioni Bluetooth, come una tastiera.")}</li>
@@ -427,36 +428,30 @@
           ${F.logOn ? `<p class="muted small">${T("Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).")}</p>
             <ul class="plain flic-log">${F.log.map(x => `<li><code>${H.esc(F.keyLabel(x.code))}</code> ${H.esc(x.kind)} <span class="muted">+${x.dt} ms</span></li>`).join('') || `<li class="muted">${T("Ancora nessun tasto.")}</li>`}</ul>` : ''}
         </div>
-        <div class="actions wrap"><button class="btn small" data-action="ref-flic-swap">${H.icon('arrows-exchange')} ${T("Inverti i pulsanti")}</button>
-          <button class="btn small ${c.sim ? 'primary' : ''}" data-action="ref-flic-sim">${H.icon('device-gamepad-2')} ${c.sim ? T("Nascondi simulatore") : T("Mostra simulatore")}</button></div>
-        <details class="small"><summary>${T("In alternativa: ponte su PC Windows o Linux (programma ufficiale Flic)")}</summary>
-          <p class="muted">${T("Avvia il programma Flic e il ponte (cartella flic-ponte del progetto: ponte_flic.py), poi collega qui.")}</p>
-          <form data-form="ref-ponte" class="row flic-ponte"><label>${T("Indirizzo del ponte")}<input name="ws" value="${H.esc(c.ws)}" placeholder="ws://localhost:8765"></label>
-            <span class="actions">${F.wsState === 'off' ? `<button class="btn small">${T("Collega")}</button>` : `<button class="btn small" type="button" data-action="ref-ponte-off">${T("Scollega")}</button>`}
-            <span class="muted small">${{ off: T("non collegato"), connessione: T("collegamento…"), collegato: T("collegato"), riconnessione: T("ponte non raggiungibile, riprovo…"), errore: T("indirizzo non valido") }[F.wsState] || ''}</span></span></form></details>
+        </div>
+        <div class="actions wrap"><button class="btn small" data-action="ref-flic-swap">${H.icon('arrows-exchange')} ${T("Inverti i pulsanti")}</button></div>
       </section>`;
   }
 
-  // collegamento via internet: il Flic resta nell'app Flic (niente tastiera Bluetooth, il telefono tiene la sua tastiera)
+  // collegamento diretto: il Flic resta nell'app Flic; a ogni gesto l'app Flic chiama il suo link (POST, senza testo)
   function netPanel(r) {
     const F = window.Flic, N = F.net, team = b => (F.cfg.swap ? 1 - b : b);
     const G = { click: T("1 tocco"), double: T("2 tocchi"), hold: T("pressione lunga") };
-    const head = `<h4>${H.icon('world')} ${T("Senza tastiera Bluetooth (consigliato su iPhone)")}</h4>
-      <p class="small">${T("Il Flic resta collegato solo all’app Flic: a ogni pressione l’app Flic manda un segnale via internet allo scoresheet. Così il telefono non vede nessuna tastiera e puoi scrivere normalmente. Serve internet.")}</p>`;
-    if (!N.on) return `<div class="flic-row flic-net">${head}<p><button class="btn primary" data-action="ref-flic-net" data-on="1">${H.icon('world')} ${T("Attiva il collegamento via internet")}</button></p></div>`;
+    const head = `<h4>${H.icon('world')} Direct connection to FLIC APP</h4>
+      <p class="small">${T("Il Flic resta collegato solo all’app Flic: a ogni pressione l’app Flic manda un segnale via internet allo scoresheet. Serve internet.")}</p>`;
+    if (!N.on) return `<div class="flic-row flic-net">${head}<p><button class="btn primary" data-action="ref-flic-net" data-on="1">${H.icon('world')} ${T("Attiva il collegamento diretto")}</button></p></div>`;
     const last = N.last ? T("Ultimo segnale: {0}", [`${T("Pulsante {0}", [N.last.b + 1])} · ${G[N.last.g]} · ${new Date(N.last.at).toLocaleTimeString()}`]) : T("Ancora nessun segnale: premi un Flic per provare.");
-    const copy = (txt, lbl) => `<span class="flic-copy"><code>${H.esc(txt)}</code> <button type="button" class="btn small" data-action="ref-flic-copy" data-txt="${H.esc(txt)}">${H.icon('copy')} ${lbl || T("Copia")}</button></span>`;
+    const copy = txt => `<span class="flic-copy"><code>${H.esc(txt)}</code> <button type="button" class="btn small" data-action="ref-flic-copy" data-txt="${H.esc(txt)}">${H.icon('copy')} ${T("Copia")}</button></span>`;
     return `<div class="flic-row flic-net">${head}
       <p class="small"><strong>${N.live ? '🟢 ' + T("In ascolto") : '⚪ ' + T("Non in ascolto (serve la connessione)")}</strong> · ${H.esc(last)}</p>
       <ol class="small flic-howto">
-        <li>${T("Se il Flic era abbinato come tastiera: Impostazioni → Bluetooth → (i) accanto al Flic → Dissocia dispositivo; nell’app Flic togli la modalità tastiera.")}</li>
         <li>${T("Nell’app Flic apri il pulsante, tocca “Click” e scegli l’azione “Internet Request”.")}</li>
-        <li>${T("Metodo POST, l’indirizzo (URL) qui sotto, tipo di contenuto application/json e il testo (Body) del gesto. Ripeti per “Double Click” e “Hold” e poi per l’altro pulsante.")}</li>
+        <li>${T("URL: incolla il link del gesto (qui sotto). Metodo: POST. Content Type: application/json. Body: vuoto.")}</li>
+        <li>${T("Ripeti per “Double Click” e “Hold”, poi per l’altro pulsante: 6 link in tutto, uno per gesto.")}</li>
       </ol>
-      <p class="small"><strong>${T("Indirizzo (URL), uguale per tutti")}</strong><br>${copy(F.netUrl())}</p>
       ${[0, 1].map(b => `<p class="small"><strong>${T("Pulsante {0}", [b + 1])}</strong> → ${H.esc(teamLabel(r, team(b)))}<br>
-        ${['click', 'double', 'hold'].map(g => `${G[g]}: ${copy(F.netBody(b, g))}`).join('<br>')}</p>`).join('')}
-      <p class="muted small">${T("Non condividere questo indirizzo: chi lo ha può segnare punti. Con “Nuovo codice” lo cambi (poi vanno rifatte le azioni nell’app Flic).")}</p>
+        ${['click', 'double', 'hold'].map(g => `${G[g]}: ${copy(F.netLink(b, g))}`).join('<br>')}</p>`).join('')}
+      <p class="muted small">${T("Non condividere questi link: chi li ha può segnare punti. Con “Nuovo codice” cambiano (poi vanno rifatte le azioni nell’app Flic).")}</p>
       <div class="actions wrap"><button class="btn small" data-action="ref-flic-net" data-on="0">${T("Disattiva")}</button>
         <button class="btn small" data-action="ref-flic-net-code">${H.icon('refresh')} ${T("Nuovo codice")}</button></div></div>`;
   }

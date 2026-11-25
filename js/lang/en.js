@@ -1334,5 +1334,10 @@ I18n.add('en', {
  "Non condividere questo indirizzo: chi lo ha può segnare punti. Con “Nuovo codice” lo cambi (poi vanno rifatte le azioni nell’app Flic).": "Do not share this address: anyone who has it can score points. “New code” changes it (then redo the actions in the Flic app).",
  "Nuovo codice": "New code",
  "Il codice cambia: dovrai rifare le azioni nell’app Flic. Continuare?": "The code will change: you will have to redo the actions in the Flic app. Continue?",
- "Copiato.": "Copied."
+ "Copiato.": "Copied.",
+ "Il Flic resta collegato solo all’app Flic: a ogni pressione l’app Flic manda un segnale via internet allo scoresheet. Serve internet.": "The Flic stays connected only to the Flic app: at every press the Flic app sends a signal over the internet to the scoresheet. Internet is needed.",
+ "Attiva il collegamento diretto": "Enable the direct connection",
+ "URL: incolla il link del gesto (qui sotto). Metodo: POST. Content Type: application/json. Body: vuoto.": "URL: paste the gesture link (below). Method: POST. Content Type: application/json. Body: empty.",
+ "Ripeti per “Double Click” e “Hold”, poi per l’altro pulsante: 6 link in tutto, uno per gesto.": "Repeat for “Double Click” and “Hold”, then for the other button: 6 links in all, one per gesture.",
+ "Non condividere questi link: chi li ha può segnare punti. Con “Nuovo codice” cambiano (poi vanno rifatte le azioni nell’app Flic).": "Do not share these links: whoever has them can score points. “New code” changes them (then redo the actions in the Flic app).",
 });
