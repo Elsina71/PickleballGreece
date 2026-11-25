@@ -257,6 +257,8 @@
     netOn(on) { if (on && !cfg.net.code) cfg.net.code = newCode(); cfg.net.on = !!on; save(); syncNet(); changed(); },
     netNewCode() { cfg.net.code = newCode(); save(); if (netUnsub) { netUnsub(); netUnsub = null; } syncNet(); changed(); },
     netUrl() { const p = (window.Cloud && window.Cloud.projectId) || ''; return `https://firestore.googleapis.com/v1/projects/${p}/databases/(default)/documents/flic/${cfg.net.code}/ev`; },
+    // collegamento diretto: un link per gesto (POST, nessun testo)
+    netLink(b, g) { const p = (window.Cloud && window.Cloud.projectId) || ''; return `https://firestore.googleapis.com/v1/projects/${p}/databases/(default)/documents/flic/${cfg.net.code}/${b}${{ click: 'c', double: 'd', hold: 'h' }[g]}`; },
     netBody: (b, g) => `{"fields":{"g":{"stringValue":"${b}${{ click: 'c', double: 'd', hold: 'h' }[g]}"}}}`,
     onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
     learn(team, slot, cb) { learning = { team, slot: slot || 'press', cb }; changed(); },

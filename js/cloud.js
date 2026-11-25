@@ -403,19 +403,25 @@ function dismiss(id) {
   deleteDoc(doc(db, 'notifiche', id)).catch(onError);
 }
 
-// Pulsanti Flic via internet: l'app Flic scrive un evento in flic/{codice}/ev a ogni gesto.
-// Si applicano solo gli eventi arrivati dopo l'apertura dello scoresheet; ognuno si cancella subito dopo.
+// Pulsanti Flic via internet: l'app Flic scrive un documento a ogni gesto.
+//  - collegamento diretto: un link per gesto, flic/{codice}/{gesto} (gesto = 0c 0d 0h 1c 1d 1h), documento vuoto;
+//  - vecchio collegamento: flic/{codice}/ev con il gesto nel testo (campo g).
+// Si applicano solo i gesti arrivati dopo l'apertura dello scoresheet; ognuno si cancella subito dopo.
+const FLIC_COLS = ['ev', '0c', '0d', '0h', '1c', '1d', '1h'];
 function watchFlic(code, onEvent) {
-  let ready = false;
-  return onSnapshot(collection(db, 'flic', code, 'ev'), { includeMetadataChanges: true }, snap => {
-    const apply = ready;
-    if (!snap.metadata.fromCache) ready = true;
-    snap.docChanges().forEach(ch => {
-      if (ch.type !== 'added' || ch.doc.metadata.hasPendingWrites) return;
-      if (apply) onEvent(String(ch.doc.data().g || ''));
-      deleteDoc(ch.doc.ref).catch(() => {});
-    });
-  }, onError);
+  const subs = FLIC_COLS.map(col => {
+    let ready = false;
+    return onSnapshot(collection(db, 'flic', code, col), { includeMetadataChanges: true }, snap => {
+      const apply = ready;
+      if (!snap.metadata.fromCache) ready = true;
+      snap.docChanges().forEach(ch => {
+        if (ch.type !== 'added' || ch.doc.metadata.hasPendingWrites) return;
+        if (apply) onEvent(col === 'ev' ? String(ch.doc.data().g || '') : col);
+        deleteDoc(ch.doc.ref).catch(() => {});
+      });
+    }, onError);
+  });
+  return () => subs.forEach(u => { try { u(); } catch (e) { /* ignora */ } });
 }
 
 async function resetPassword(email) {
