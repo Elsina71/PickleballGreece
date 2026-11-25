@@ -759,3 +759,8 @@ label, legend { font-size: .92rem; }
 .flic-net h4 { margin: 4px 0; }
 .flic-copy { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; max-width: 100%; }
 .flic-copy code { word-break: break-all; font-size: .85em; background: var(--bg-soft, rgba(0,0,0,.05)); padding: 2px 4px; border-radius: 4px; }
+/* impostazioni Flic in fondo alla pagina, richiudibili */
+.sb-flic-box { margin-top: 16px; }
+.sb-flic-box > summary { cursor: pointer; font-size: 1.05rem; list-style: revert; }
+.sb-flic-box > .card.sb-flic { border: 0 !important; box-shadow: none; padding: 0; margin: 10px 0 0; background: none; }
+.sb-flic-box > .card.sb-flic > h3:first-child { display: none; }

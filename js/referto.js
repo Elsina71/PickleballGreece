@@ -128,7 +128,7 @@
     let body;
     if (st.phase === 'setup' || st.phase === 'gameover') body = (st.phase === 'gameover' ? gameOverBanner(r, st) : '') + (edit ? startForm(r, st) : `<p class="muted">${T("In attesa dell’inizio del game.")}</p>`);
     else body = board(r, st, edit);
-    return `<div class="sb-page">${head}${edit ? resetBanner() : ''}${body}${history(r, st)}${tools(r, st, edit)}</div>`;
+    return `<div class="sb-page">${head}${edit ? resetBanner() : ''}${body}${history(r, st)}${tools(r, st, edit)}${edit ? flicBox(r) : ''}</div>`;
   }
 
   function freeSetup() {
@@ -226,12 +226,11 @@
     const b = [];
     if (edit && r.ev.length) b.push(`<button class="btn" data-action="ref-undo">${H.icon('arrow-back-up')} ${T("Annulla l’ultima azione")}</button>`);
     if (edit && st.phase === 'play' && !(H.tourById(r.tid) && Array.isArray((H.findMatch(H.tourById(r.tid), r.key) || {}).a))) b.push(`<button class="btn" data-action="ref-retire">${H.icon('flag-off')} ${T("Ritiro")}</button>`);
-    if (edit && window.Flic) b.push(`<button class="btn ${ui.flicOpen ? 'primary' : ''}" data-action="ref-flic-panel">${H.icon('hand-click')} ${T("Pulsanti Flic")}${window.Flic.wsState === 'collegato' ? ' · ' + T("ponte collegato") : ''}</button>`);
     if (edit && r.ev.length) b.push(`<button class="btn" data-action="ref-reset">${H.icon('restore')} ${T("Azzera la partita")}</button>`);
     if (edit && V() && V().supported()) b.push(`<button class="btn ${ui.voiceOpen ? 'primary' : ''}" data-action="ref-voice-panel">${H.icon(V().on ? 'volume' : 'volume-off')} ${V().on ? T("Voce: attiva") : T("Voce: spenta")} · ${T("impostazioni")}</button>`);
     if (r.ev.length) b.push(`<button class="btn" data-action="ref-pdf">${H.icon('file-download')} ${T("Scarica PDF")}</button>`);
     if (r.libero) b.push(`<button class="btn" data-action="ref-new">${H.icon('refresh')} ${T("Nuova partita")}</button>`);
-    return (b.length ? `<div class="actions wrap sb-tools">${b.join('')}</div>` : '') + (edit && ui.flicOpen ? flicPanel(r) : '') + (edit && ui.voiceOpen ? voicePanel() : '');
+    return (b.length ? `<div class="actions wrap sb-tools">${b.join('')}</div>` : '') + (edit && ui.voiceOpen ? voicePanel() : '');
   }
 
   const toLeft = () => { if (!ui.to) return ''; const s = Math.max(0, Math.ceil((ui.to.end - Date.now()) / 1000)); return s ? `0:${String(s).padStart(2, '0')}` : T("tempo scaduto"); };
@@ -375,6 +374,21 @@
       <p class="muted small">${T("Simulatore: 1 tocco = vince lo scambio · 2 tocchi = annulla · tieni premuto = azzera")}</p></div>`;
   }
   // impostazioni dei pulsanti Flic
+  // impostazioni dei Flic in fondo alla pagina, in una sezione che si apre e si chiude
+  function flicBox(r) {
+    const F = window.Flic;
+    if (!F) return '';
+    const state = [F.net && F.net.live ? '🟢 ' + T("In ascolto") : '', F.wsState === 'collegato' ? T("ponte collegato") : ''].filter(Boolean).join(' · ');
+    return `<details class="card sb-flic-box" data-flic-box ${ui.flicOpen ? 'open' : ''}>
+      <summary>${H.icon('hand-click')} <strong>Flic Setting</strong>${state ? ` <span class="muted small">${state}</span>` : ''}</summary>
+      ${ui.flicOpen ? flicPanel(r) : ''}</details>`;
+  }
+  document.addEventListener('toggle', e => {
+    if (!e.target.matches || !e.target.matches('[data-flic-box]')) return;
+    if (ui.flicOpen === e.target.open) return;
+    ui.flicOpen = e.target.open;
+    if (H) H.render();
+  }, true);
   function flicPanel(r) {
     const F = window.Flic;
     if (!F) return '';
