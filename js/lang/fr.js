@@ -1297,5 +1297,11 @@ I18n.add('fr', {
  "Conferma con un’altra pressione lunga entro 5 secondi, oppure qui.": "Confirme par un autre appui long dans les 5 secondes, ou ici.",
  "Simulatore: 1 tocco = vince lo scambio · 2 tocchi = annulla · tieni premuto = azzera": "Simulateur : 1 appui = gagne l’échange · 2 appuis = annuler · maintenir = réinitialiser",
  "pressione lunga": "appui long",
- "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 appui = l’équipe gagne l’échange (point ou side out) · 2 appuis = annuler la dernière action · appui long = réinitialiser le match (confirmer par un autre appui long)."
+ "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 appui = l’équipe gagne l’échange (point ou side out) · 2 appuis = annuler la dernière action · appui long = réinitialiser le match (confirmer par un autre appui long).",
+ "Tempo per il doppio tocco": "Délai du double appui",
+ "Se 2 tocchi segnano due punti invece di annullare, allunga questo tempo.": "Si 2 appuis marquent deux points au lieu d’annuler, allonge ce délai.",
+ "Ferma la prova dei tasti": "Arrêter le test des touches",
+ "Prova dei tasti": "Test des touches",
+ "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Appuie sur les Flic : ci-dessous tu vois ce qui arrive (touche, bas/haut, millisecondes depuis la précédente).",
+ "Ancora nessun tasto.": "Aucune touche pour l’instant."
 });

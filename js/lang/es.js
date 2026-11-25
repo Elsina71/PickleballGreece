@@ -1297,5 +1297,11 @@ I18n.add('es', {
  "Conferma con un’altra pressione lunga entro 5 secondi, oppure qui.": "Confirma con otra pulsación larga en 5 segundos, o aquí.",
  "Simulatore: 1 tocco = vince lo scambio · 2 tocchi = annulla · tieni premuto = azzera": "Simulador: 1 toque = gana el punto · 2 toques = deshacer · mantener pulsado = reiniciar",
  "pressione lunga": "pulsación larga",
- "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 toque = el equipo gana el punto (punto o side out) · 2 toques = deshacer la última acción · pulsación larga = reiniciar el partido (se confirma con otra pulsación larga)."
+ "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 toque = el equipo gana el punto (punto o side out) · 2 toques = deshacer la última acción · pulsación larga = reiniciar el partido (se confirma con otra pulsación larga).",
+ "Tempo per il doppio tocco": "Tiempo del doble toque",
+ "Se 2 tocchi segnano due punti invece di annullare, allunga questo tempo.": "Si 2 toques suman dos puntos en vez de deshacer, alarga este tiempo.",
+ "Ferma la prova dei tasti": "Detener la prueba de teclas",
+ "Prova dei tasti": "Prueba de teclas",
+ "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Pulsa los Flic: abajo ves lo que llega (tecla, abajo/arriba, milisegundos desde el anterior).",
+ "Ancora nessun tasto.": "Todavía ninguna tecla."
 });

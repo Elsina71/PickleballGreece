@@ -1297,5 +1297,11 @@ I18n.add('de', {
  "Conferma con un’altra pressione lunga entro 5 secondi, oppure qui.": "Bestätige mit einem weiteren langen Drücken innerhalb von 5 Sekunden oder hier.",
  "Simulatore: 1 tocco = vince lo scambio · 2 tocchi = annulla · tieni premuto = azzera": "Simulator: 1× tippen = gewinnt den Ballwechsel · 2× tippen = rückgängig · gedrückt halten = zurücksetzen",
  "pressione lunga": "langes Drücken",
- "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1× tippen = das Team gewinnt den Ballwechsel (Punkt oder Side-out) · 2× tippen = letzte Aktion rückgängig · langes Drücken = Match zurücksetzen (mit einem weiteren langen Drücken bestätigen)."
+ "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1× tippen = das Team gewinnt den Ballwechsel (Punkt oder Side-out) · 2× tippen = letzte Aktion rückgängig · langes Drücken = Match zurücksetzen (mit einem weiteren langen Drücken bestätigen).",
+ "Tempo per il doppio tocco": "Zeit für Doppeltippen",
+ "Se 2 tocchi segnano due punti invece di annullare, allunga questo tempo.": "Wenn 2× tippen zwei Punkte zählt statt rückgängig zu machen, verlängere diese Zeit.",
+ "Ferma la prova dei tasti": "Tastentest beenden",
+ "Prova dei tasti": "Tastentest",
+ "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Drücke die Flics: unten siehst du, was ankommt (Taste, runter/hoch, Millisekunden seit der vorherigen).",
+ "Ancora nessun tasto.": "Noch keine Taste."
 });

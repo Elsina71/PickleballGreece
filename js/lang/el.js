@@ -1297,5 +1297,11 @@ I18n.add('el', {
  "Conferma con un’altra pressione lunga entro 5 secondi, oppure qui.": "Επιβεβαίωσε με άλλο ένα παρατεταμένο πάτημα μέσα σε 5 δευτερόλεπτα ή εδώ.",
  "Simulatore: 1 tocco = vince lo scambio · 2 tocchi = annulla · tieni premuto = azzera": "Προσομοιωτής: 1 πάτημα = κερδίζει τον πόντο · 2 πατήματα = αναίρεση · κράτα πατημένο = μηδενισμός",
  "pressione lunga": "παρατεταμένο πάτημα",
- "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 πάτημα = η ομάδα κερδίζει τον πόντο (πόντος ή side out) · 2 πατήματα = αναίρεση της τελευταίας ενέργειας · παρατεταμένο πάτημα = μηδενισμός του αγώνα (επιβεβαίωση με άλλο ένα παρατεταμένο πάτημα)."
+ "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 πάτημα = η ομάδα κερδίζει τον πόντο (πόντος ή side out) · 2 πατήματα = αναίρεση της τελευταίας ενέργειας · παρατεταμένο πάτημα = μηδενισμός του αγώνα (επιβεβαίωση με άλλο ένα παρατεταμένο πάτημα).",
+ "Tempo per il doppio tocco": "Χρόνος διπλού πατήματος",
+ "Se 2 tocchi segnano due punti invece di annullare, allunga questo tempo.": "Αν 2 πατήματα δίνουν δύο πόντους αντί για αναίρεση, μεγάλωσε αυτόν τον χρόνο.",
+ "Ferma la prova dei tasti": "Διακοπή δοκιμής πλήκτρων",
+ "Prova dei tasti": "Δοκιμή πλήκτρων",
+ "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Πάτα τα Flic: παρακάτω βλέπεις τι φτάνει (πλήκτρο, πάτημα/άφημα, χιλιοστά του δευτερολέπτου από το προηγούμενο).",
+ "Ancora nessun tasto.": "Κανένα πλήκτρο ακόμη."
 });

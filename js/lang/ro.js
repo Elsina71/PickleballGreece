@@ -1297,5 +1297,11 @@ I18n.add('ro', {
  "Conferma con un’altra pressione lunga entro 5 secondi, oppure qui.": "Confirmă cu încă o apăsare lungă în 5 secunde, sau aici.",
  "Simulatore: 1 tocco = vince lo scambio · 2 tocchi = annulla · tieni premuto = azzera": "Simulator: 1 atingere = câștigă schimbul · 2 atingeri = anulează · ține apăsat = resetează",
  "pressione lunga": "apăsare lungă",
- "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 atingere = echipa câștigă schimbul (punct sau side out) · 2 atingeri = anulează ultima acțiune · apăsare lungă = resetează meciul (se confirmă cu încă o apăsare lungă)."
+ "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 atingere = echipa câștigă schimbul (punct sau side out) · 2 atingeri = anulează ultima acțiune · apăsare lungă = resetează meciul (se confirmă cu încă o apăsare lungă).",
+ "Tempo per il doppio tocco": "Timp pentru atingerea dublă",
+ "Se 2 tocchi segnano due punti invece di annullare, allunga questo tempo.": "Dacă 2 atingeri dau două puncte în loc să anuleze, mărește acest timp.",
+ "Ferma la prova dei tasti": "Oprește testul tastelor",
+ "Prova dei tasti": "Testul tastelor",
+ "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Apasă Flic-urile: mai jos vezi ce ajunge (tastă, jos/sus, milisecunde de la precedenta).",
+ "Ancora nessun tasto.": "Încă nicio tastă."
 });

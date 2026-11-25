@@ -1297,5 +1297,11 @@ I18n.add('sw', {
  "Conferma con un’altra pressione lunga entro 5 secondi, oppure qui.": "Thibitisha kwa kubonyeza tena kwa muda mrefu ndani ya sekunde 5, au hapa.",
  "Simulatore: 1 tocco = vince lo scambio · 2 tocchi = annulla · tieni premuto = azzera": "Kiigaji: mguso 1 = inashinda ralli · miguso 2 = tendua · shikilia = anza upya",
  "pressione lunga": "kubonyeza kwa muda mrefu",
- "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "Mguso 1 = timu inashinda ralli (pointi au side out) · miguso 2 = tendua kitendo cha mwisho · kubonyeza kwa muda mrefu = anza mechi upya (thibitisha kwa kubonyeza tena kwa muda mrefu)."
+ "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "Mguso 1 = timu inashinda ralli (pointi au side out) · miguso 2 = tendua kitendo cha mwisho · kubonyeza kwa muda mrefu = anza mechi upya (thibitisha kwa kubonyeza tena kwa muda mrefu).",
+ "Tempo per il doppio tocco": "Muda wa mguso mara mbili",
+ "Se 2 tocchi segnano due punti invece di annullare, allunga questo tempo.": "Ikiwa miguso 2 inahesabu pointi mbili badala ya kutendua, ongeza muda huu.",
+ "Ferma la prova dei tasti": "Simamisha jaribio la vitufe",
+ "Prova dei tasti": "Jaribio la vitufe",
+ "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Bonyeza Flic: hapa chini unaona kinachofika (kitufe, chini/juu, milisekunde tangu cha awali).",
+ "Ancora nessun tasto.": "Bado hakuna kitufe."
 });

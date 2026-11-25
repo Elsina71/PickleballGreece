@@ -1297,5 +1297,11 @@ I18n.add('ru', {
  "Conferma con un’altra pressione lunga entro 5 secondi, oppure qui.": "Подтвердите ещё одним долгим нажатием в течение 5 секунд или здесь.",
  "Simulatore: 1 tocco = vince lo scambio · 2 tocchi = annulla · tieni premuto = azzera": "Симулятор: 1 нажатие = выигрыш розыгрыша · 2 нажатия = отменить · удерживать = сбросить",
  "pressione lunga": "долгое нажатие",
- "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 нажатие = команда выигрывает розыгрыш (очко или переход подачи) · 2 нажатия = отменить последнее действие · долгое нажатие = сбросить матч (подтверждается ещё одним долгим нажатием)."
+ "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 нажатие = команда выигрывает розыгрыш (очко или переход подачи) · 2 нажатия = отменить последнее действие · долгое нажатие = сбросить матч (подтверждается ещё одним долгим нажатием).",
+ "Tempo per il doppio tocco": "Время двойного нажатия",
+ "Se 2 tocchi segnano due punti invece di annullare, allunga questo tempo.": "Если 2 нажатия засчитывают два очка вместо отмены, увеличьте это время.",
+ "Ferma la prova dei tasti": "Остановить проверку клавиш",
+ "Prova dei tasti": "Проверка клавиш",
+ "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Нажимайте Flic: ниже видно, что приходит (клавиша, нажатие/отпускание, миллисекунды с предыдущего).",
+ "Ancora nessun tasto.": "Пока нет клавиш."
 });

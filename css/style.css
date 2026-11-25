@@ -752,3 +752,6 @@ label, legend { font-size: .92rem; }
   touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; }
 .flic-sim-btn small { font-weight: 500; font-size: .7rem; padding: 0 8px; text-align: center; }
 .flic-sim-btn.down { transform: scale(.94); background: color-mix(in srgb, var(--sim) 25%, var(--surface)); }
+.flic-test { border-top: 1px solid var(--border); padding: 8px 0; }
+.flic-log { font-size: .85rem; max-height: 220px; overflow: auto; }
+.flic-test input[type=range] { width: 100%; }

@@ -1297,5 +1297,11 @@ I18n.add('en', {
  "Conferma con un’altra pressione lunga entro 5 secondi, oppure qui.": "Confirm with another long press within 5 seconds, or here.",
  "Simulatore: 1 tocco = vince lo scambio · 2 tocchi = annulla · tieni premuto = azzera": "Simulator: 1 tap = wins the rally · 2 taps = undo · hold = reset",
  "pressione lunga": "long press",
- "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 tap = the team wins the rally (point or side out) · 2 taps = undo the last action · long press = reset the match (confirm with another long press)."
+ "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 tap = the team wins the rally (point or side out) · 2 taps = undo the last action · long press = reset the match (confirm with another long press).",
+ "Tempo per il doppio tocco": "Double-tap time",
+ "Se 2 tocchi segnano due punti invece di annullare, allunga questo tempo.": "If 2 taps score two points instead of undoing, make this time longer.",
+ "Ferma la prova dei tasti": "Stop the key test",
+ "Prova dei tasti": "Key test",
+ "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Press the Flics: below you see what arrives (key, down/up, milliseconds since the previous one).",
+ "Ancora nessun tasto.": "No key yet."
 });

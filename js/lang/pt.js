@@ -1297,5 +1297,11 @@ I18n.add('pt', {
  "Conferma con un’altra pressione lunga entro 5 secondi, oppure qui.": "Confirma com outra pressão longa em 5 segundos, ou aqui.",
  "Simulatore: 1 tocco = vince lo scambio · 2 tocchi = annulla · tieni premuto = azzera": "Simulador: 1 toque = ganha a troca de bolas · 2 toques = anular · manter premido = repor",
  "pressione lunga": "pressão longa",
- "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 toque = a equipa ganha a troca de bolas (ponto ou side out) · 2 toques = anular a última ação · pressão longa = repor o jogo (confirma-se com outra pressão longa)."
+ "1 tocco = la squadra vince lo scambio (punto o cambio palla) · 2 tocchi = annulla l’ultima azione · pressione lunga = azzera la partita (si conferma con un’altra pressione lunga).": "1 toque = a equipa ganha a troca de bolas (ponto ou side out) · 2 toques = anular a última ação · pressão longa = repor o jogo (confirma-se com outra pressão longa).",
+ "Tempo per il doppio tocco": "Tempo do toque duplo",
+ "Se 2 tocchi segnano due punti invece di annullare, allunga questo tempo.": "Se 2 toques marcam dois pontos em vez de anular, aumenta este tempo.",
+ "Ferma la prova dei tasti": "Parar o teste de teclas",
+ "Prova dei tasti": "Teste de teclas",
+ "Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).": "Prime os Flic: abaixo vês o que chega (tecla, baixo/cima, milissegundos desde o anterior).",
+ "Ancora nessun tasto.": "Ainda nenhuma tecla."
 });

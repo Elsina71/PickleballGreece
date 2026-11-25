@@ -18,7 +18,9 @@
 
   // ---------- conteggio dei tocchi (giù/su -> click, double, triple, hold) ----------
   // clock: { set(fn, ms), clear(id) }, sostituibile nei test.
-  function Detector(emit, clock) {
+  // tap: tempo massimo tra un tocco e l'altro (ms), anche come funzione (si legge dalle impostazioni)
+  function Detector(emit, clock, tap) {
+    const tapMs = () => (typeof tap === 'function' ? tap() : tap) || TAP_MS;
     const C = clock || { set: (f, ms) => setTimeout(f, ms), clear: id => clearTimeout(id) };
     const st = {};
     const s = b => (st[b] = st[b] || { down: false, n: 0, t: null, h: null, held: false });
@@ -38,7 +40,7 @@
         x.down = false;
         if (x.h != null) { C.clear(x.h); x.h = null; }
         if (x.held) { x.held = false; return; }
-        x.t = C.set(() => finish(b, x), TAP_MS);
+        x.t = C.set(() => finish(b, x), tapMs());
       },
       reset() { Object.values(st).forEach(x => { if (x.t != null) C.clear(x.t); if (x.h != null) C.clear(x.h); }); Object.keys(st).forEach(k => delete st[k]); }
     };
@@ -51,7 +53,7 @@
 
   // ---------- impostazioni (su questo dispositivo) ----------
   // keys[i] = { press: codice del tasto (giù/su), click, double, hold: tasti già "pronti" (facoltativi) }
-  const def = () => ({ keys: [{ press: 'Digit1' }, { press: 'Digit2' }], ws: 'ws://localhost:8765', bridge: ['', ''], swap: false, sim: false, ponte: false });
+  const def = () => ({ keys: [{ press: 'Digit1' }, { press: 'Digit2' }], ws: 'ws://localhost:8765', bridge: ['', ''], swap: false, sim: false, ponte: false, tap: TAP_MS });
   let cfg = def();
   try { cfg = Object.assign(def(), JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) { cfg = def(); }
   const save = () => { try { localStorage.setItem(LS, JSON.stringify(cfg)); } catch (e) { /* ignora */ } };
@@ -64,7 +66,18 @@
   // pulsante fisico (0/1) -> squadra, con l'eventuale inversione
   const teamOf = b => (cfg.swap ? 1 - b : b);
   function fire(b, g) { if (handler) handler(teamOf(b), g); }
-  const det = Detector(fire);
+  const det = Detector(fire, null, () => Number(cfg.tap) || TAP_MS);
+  // registro di prova: gli ultimi tasti arrivati (per capire cosa manda il Flic)
+  const log = [];
+  let logOn = false, lastT = 0;
+  function note(code, kind) {
+    if (!logOn) return;
+    const now = Date.now();
+    log.unshift({ code, kind, dt: lastT ? now - lastT : 0 });
+    lastT = now;
+    log.length = Math.min(log.length, 12);
+    changed();
+  }
 
   // ---------- Bluetooth diretto (Flic come tastiera) ----------
   const typing = el => el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
@@ -78,6 +91,7 @@
   }
   document.addEventListener('keydown', e => {
     const code = e.code || e.key;
+    if (!typing(e.target)) note(code, e.repeat ? 'ripetizione' : 'giù');
     if (learning && code === 'Escape') { learning = null; changed(); return; }
     if (learning && learning.slot !== 'bridge') {
       e.preventDefault();
@@ -99,6 +113,7 @@
     else if (!e.repeat) fire(m.b, m.slot);
   }, true);
   document.addEventListener('keyup', e => {
+    if (!typing(e.target)) note(e.code || e.key, 'su');
     if (!handler || typing(e.target)) return;
     const m = keyMatch(e.code || e.key);
     if (m && m.slot === 'press') { e.preventDefault(); det.up(m.b); }
@@ -183,6 +198,9 @@
     cancelLearn() { learning = null; changed(); },
     clearKey(team, slot) { if (cfg.keys[team]) delete cfg.keys[team][slot]; save(); changed(); },
     set(k, v) { cfg[k] = v; save(); changed(); },
+    get log() { return log; },
+    get logOn() { return logOn; },
+    setLog(on) { logOn = !!on; log.length = 0; lastT = 0; changed(); },
     connect, disconnect,
     // per le prove: gesto come se arrivasse dal pulsante b
     emit: fire

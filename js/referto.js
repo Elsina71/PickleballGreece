@@ -363,6 +363,8 @@
     } else if (!on && lock && lock !== 'attesa') { lock.release().catch(() => {}); lock = null; }
   }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && /^#\/referto/.test(location.hash) && H) H.render(); });
+  // tempo per il doppio tocco (cursore nel pannello dei pulsanti)
+  document.addEventListener('change', e => { if (e.target.matches && e.target.matches('[data-flic-tap]') && window.Flic) window.Flic.set('tap', Number(e.target.value)); });
   if (window.Flic) window.Flic.onChange(() => { if (/^#\/referto/.test(location.hash) && H) H.render(); });
 
   // due pulsanti sullo schermo che si comportano come i Flic (prove senza pulsanti)
@@ -403,6 +405,14 @@
         </ol>
         ${wiz}
         ${[0, 1].map(row).join('')}
+        <div class="flic-test">
+          <label>${T("Tempo per il doppio tocco")}: <strong>${Number(c.tap) || 450} ms</strong>
+            <input type="range" data-flic-tap min="300" max="1000" step="50" value="${Number(c.tap) || 450}"></label>
+          <p class="muted small">${T("Se 2 tocchi segnano due punti invece di annullare, allunga questo tempo.")}</p>
+          <button class="btn small ${F.logOn ? 'primary' : ''}" data-action="ref-flic-log">${H.icon('keyboard')} ${F.logOn ? T("Ferma la prova dei tasti") : T("Prova dei tasti")}</button>
+          ${F.logOn ? `<p class="muted small">${T("Premi i Flic: qui sotto vedi cosa arriva (tasto, giù/su, millisecondi dal precedente).")}</p>
+            <ul class="plain flic-log">${F.log.map(x => `<li><code>${H.esc(F.keyLabel(x.code))}</code> ${H.esc(x.kind)} <span class="muted">+${x.dt} ms</span></li>`).join('') || `<li class="muted">${T("Ancora nessun tasto.")}</li>`}</ul>` : ''}
+        </div>
         <div class="actions wrap"><button class="btn small" data-action="ref-flic-swap">${H.icon('arrows-exchange')} ${T("Inverti i pulsanti")}</button>
           <button class="btn small ${c.sim ? 'primary' : ''}" data-action="ref-flic-sim">${H.icon('device-gamepad-2')} ${c.sim ? T("Nascondi simulatore") : T("Mostra simulatore")}</button></div>
         <details class="small"><summary>${T("In alternativa: ponte su PC Windows o Linux (programma ufficiale Flic)")}</summary>
@@ -452,6 +462,7 @@
     },
     'ref-flic-cancel': () => { ui.wizard = null; window.Flic.cancelLearn(); },
     'ref-flic-clear': d => window.Flic.clearKey(Number(d.b), d.slot),
+    'ref-flic-log': () => window.Flic.setLog(!window.Flic.logOn),
     'ref-flic-swap': () => window.Flic.set('swap', !window.Flic.cfg.swap),
     'ref-flic-sim': () => window.Flic.set('sim', !window.Flic.cfg.sim),
     'ref-ponte-off': () => window.Flic.disconnect(),
