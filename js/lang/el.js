@@ -1340,4 +1340,6 @@ I18n.add('el', {
  "URL: incolla il link del gesto (qui sotto). Metodo: POST. Content Type: application/json. Body: vuoto.": "URL: επικόλλησε τον σύνδεσμο της κίνησης (παρακάτω). Μέθοδος: POST. Content Type: application/json. Body: κενό.",
  "Ripeti per “Double Click” e “Hold”, poi per l’altro pulsante: 6 link in tutto, uno per gesto.": "Επανάλαβε για «Double Click» και «Hold», μετά για το άλλο κουμπί: 6 σύνδεσμοι συνολικά, ένας ανά κίνηση.",
  "Non condividere questi link: chi li ha può segnare punti. Con “Nuovo codice” cambiano (poi vanno rifatte le azioni nell’app Flic).": "Μη μοιράζεσαι αυτούς τους συνδέσμους: όποιος τους έχει μπορεί να βάλει πόντους. Με «Νέος κωδικός» αλλάζουν (μετά ξαναφτιάχνεις τις ενέργειες στην εφαρμογή Flic).",
+ "È il modo più indicato su iPhone e Android: il telefono tiene la sua tastiera.": "Ο καλύτερος τρόπος σε iPhone και Android: το τηλέφωνο κρατά το δικό του πληκτρολόγιο.",
+ "Il Flic si abbina come una tastiera Bluetooth: è il modo più indicato se tieni il punteggio da un PC o da un Mac.": "Το Flic συνδέεται ως πληκτρολόγιο Bluetooth: ο καλύτερος τρόπος αν κρατάς το σκορ από PC ή Mac."
 });

@@ -1340,4 +1340,6 @@ I18n.add('en', {
  "URL: incolla il link del gesto (qui sotto). Metodo: POST. Content Type: application/json. Body: vuoto.": "URL: paste the gesture link (below). Method: POST. Content Type: application/json. Body: empty.",
  "Ripeti per “Double Click” e “Hold”, poi per l’altro pulsante: 6 link in tutto, uno per gesto.": "Repeat for “Double Click” and “Hold”, then for the other button: 6 links in all, one per gesture.",
  "Non condividere questi link: chi li ha può segnare punti. Con “Nuovo codice” cambiano (poi vanno rifatte le azioni nell’app Flic).": "Do not share these links: whoever has them can score points. “New code” changes them (then redo the actions in the Flic app).",
+ "È il modo più indicato su iPhone e Android: il telefono tiene la sua tastiera.": "Best on iPhone and Android: the phone keeps its own keyboard.",
+ "Il Flic si abbina come una tastiera Bluetooth: è il modo più indicato se tieni il punteggio da un PC o da un Mac.": "The Flic pairs as a Bluetooth keyboard: best if you keep score from a PC or a Mac."
 });

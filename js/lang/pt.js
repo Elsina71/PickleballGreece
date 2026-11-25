@@ -1334,5 +1334,7 @@ I18n.add('pt', {
  "Non condividere questo indirizzo: chi lo ha può segnare punti. Con “Nuovo codice” lo cambi (poi vanno rifatte le azioni nell’app Flic).": "Não partilhe este endereço: quem o tiver pode marcar pontos. Com “Novo código” muda-o (depois refaça as ações na app Flic).",
  "Nuovo codice": "Novo código",
  "Il codice cambia: dovrai rifare le azioni nell’app Flic. Continuare?": "O código vai mudar: terá de refazer as ações na app Flic. Continuar?",
- "Copiato.": "Copiado."
+ "Copiato.": "Copiado.",
+ "È il modo più indicato su iPhone e Android: il telefono tiene la sua tastiera.": "É a melhor opção no iPhone e Android: o telemóvel mantém o seu teclado.",
+ "Il Flic si abbina come una tastiera Bluetooth: è il modo più indicato se tieni il punteggio da un PC o da un Mac.": "O Flic emparelha como teclado Bluetooth: é a melhor opção se marcar a pontuação num PC ou Mac."
 });

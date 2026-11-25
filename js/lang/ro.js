@@ -1334,5 +1334,7 @@ I18n.add('ro', {
  "Non condividere questo indirizzo: chi lo ha può segnare punti. Con “Nuovo codice” lo cambi (poi vanno rifatte le azioni nell’app Flic).": "Nu partaja această adresă: cine o are poate marca puncte. Cu „Cod nou” o schimbi (apoi refaci acțiunile în aplicația Flic).",
  "Nuovo codice": "Cod nou",
  "Il codice cambia: dovrai rifare le azioni nell’app Flic. Continuare?": "Codul se schimbă: va trebui să refaci acțiunile în aplicația Flic. Continui?",
- "Copiato.": "Copiat."
+ "Copiato.": "Copiat.",
+ "È il modo più indicato su iPhone e Android: il telefono tiene la sua tastiera.": "Cea mai bună variantă pe iPhone și Android: telefonul își păstrează tastatura.",
+ "Il Flic si abbina come una tastiera Bluetooth: è il modo più indicato se tieni il punteggio da un PC o da un Mac.": "Flic se asociază ca tastatură Bluetooth: cea mai bună variantă dacă ții scorul de pe un PC sau Mac."
 });

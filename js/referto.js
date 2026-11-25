@@ -421,6 +421,7 @@
         ${netPanel(r)}
         <div class="flic-row flic-kb">
         <h4>${H.icon('keyboard')} CONNECTION BY KEYBOARD</h4>
+        <p class="small">${T("Il Flic si abbina come una tastiera Bluetooth: è il modo più indicato se tieni il punteggio da un PC o da un Mac.")}</p>
         <ol class="small flic-howto">
           <li>${T("Nell’app Flic imposta ogni pulsante come tastiera (HID) e scegli un tasto diverso per ciascuno.")}</li>
           <li>${T("Abbina il pulsante al telefono, al Mac o al PC dalle impostazioni Bluetooth, come una tastiera.")}</li>
@@ -452,7 +453,7 @@
     const F = window.Flic, N = F.net, team = b => (F.cfg.swap ? 1 - b : b);
     const G = { click: T("1 tocco"), double: T("2 tocchi"), hold: T("pressione lunga") };
     const head = `<h4>${H.icon('world')} Direct connection to FLIC APP</h4>
-      <p class="small">${T("Il Flic resta collegato solo all’app Flic: a ogni pressione l’app Flic manda un segnale via internet allo scoresheet. Serve internet.")}</p>`;
+      <p class="small">${T("Il Flic resta collegato solo all’app Flic: a ogni pressione l’app Flic manda un segnale via internet allo scoresheet. Serve internet.")} ${T("È il modo più indicato su iPhone e Android: il telefono tiene la sua tastiera.")}</p>`;
     if (!N.on) return `<div class="flic-row flic-net">${head}<p><button class="btn primary" data-action="ref-flic-net" data-on="1">${H.icon('world')} ${T("Attiva il collegamento diretto")}</button></p></div>`;
     const last = N.last ? T("Ultimo segnale: {0}", [`${T("Pulsante {0}", [N.last.b + 1])} · ${G[N.last.g]} · ${new Date(N.last.at).toLocaleTimeString()}`]) : T("Ancora nessun segnale: premi un Flic per provare.");
     const copy = txt => `<span class="flic-copy"><code>${H.esc(txt)}</code> <button type="button" class="btn small" data-action="ref-flic-copy" data-txt="${H.esc(txt)}">${H.icon('copy')} ${T("Copia")}</button></span>`;

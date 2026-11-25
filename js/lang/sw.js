@@ -1334,5 +1334,7 @@ I18n.add('sw', {
  "Non condividere questo indirizzo: chi lo ha può segnare punti. Con “Nuovo codice” lo cambi (poi vanno rifatte le azioni nell’app Flic).": "Usishiriki anwani hii: aliye nayo anaweza kuweka pointi. “Msimbo mpya” huibadilisha (kisha rudia vitendo kwenye programu ya Flic).",
  "Nuovo codice": "Msimbo mpya",
  "Il codice cambia: dovrai rifare le azioni nell’app Flic. Continuare?": "Msimbo utabadilika: utalazimika kurudia vitendo kwenye programu ya Flic. Endelea?",
- "Copiato.": "Imenakiliwa."
+ "Copiato.": "Imenakiliwa.",
+ "È il modo più indicato su iPhone e Android: il telefono tiene la sua tastiera.": "Njia bora kwa iPhone na Android: simu inabaki na kibodi yake.",
+ "Il Flic si abbina come una tastiera Bluetooth: è il modo più indicato se tieni il punteggio da un PC o da un Mac.": "Flic inaunganishwa kama kibodi ya Bluetooth: njia bora ukiweka alama kutoka kwenye PC au Mac."
 });
